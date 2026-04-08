@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mhiras Collection — UI Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cr:#C4683A;--cr-light:#F2E8E0;--cr-dark:#8B3E1E;
+  --ch:#1A1614;--ch-mid:#3D3330;--ch-soft:#6B5E5A;
+  --cream:#FAF7F4;--cream-dark:#EDE7E1;
+  --white:#FFFFFF;--border:#E0D5CE;
+  --font-display:'Cormorant Garamond',serif;
+  --font-body:'DM Sans',sans-serif;
+  --success:#3B6D11;--warning:#BA7517;
+}
+body{font-family:var(--font-body);background:#F5F0EB;color:var(--ch);padding:2rem;}
+h1{font-family:var(--font-display);font-size:42px;font-weight:300;font-style:italic;text-align:center;margin-bottom:6px;}
+.tagline{text-align:center;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:3rem;}
+.screen-label{font-family:var(--font-body);font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--cr);padding:2rem 0 0.5rem;display:flex;align-items:center;gap:8px;max-width:1100px;margin:0 auto;}
+.screen-label::after{content:'';flex:1;height:0.5px;background:var(--border);}
+.screen-subtitle{font-family:var(--font-display);font-size:26px;font-weight:300;font-style:italic;color:var(--ch);margin-bottom:1.25rem;max-width:1100px;margin-left:auto;margin-right:auto;}
+.desktop-frame{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--white);margin:0 auto 2.5rem;max-width:1100px;box-shadow:0 4px 40px rgba(26,22,20,0.08);}
+.mobile-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1100px;margin:0 auto 2.5rem;}
+.mobile-frame{border:0.5px solid var(--border);border-radius:16px;overflow:hidden;background:var(--white);box-shadow:0 4px 30px rgba(26,22,20,0.08);}
+.mobile-notch{background:var(--ch);height:34px;display:flex;align-items:center;justify-content:center;}
+.notch-pill{background:#0D0D0D;width:60px;height:16px;border-radius:8px;}
+.nav-bar{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--ch);color:var(--cream);}
+.nav-logo{font-family:var(--font-display);font-size:22px;font-weight:300;letter-spacing:3px;text-transform:uppercase;color:var(--cream);}
+.nav-links{display:flex;gap:24px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#8A7B76;}
+.announcement-bar{background:var(--cr);color:white;text-align:center;font-size:12px;letter-spacing:1px;padding:8px;}
+.hero{background:var(--ch);min-height:320px;display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden;}
+.hero-left{padding:2.5rem;display:flex;flex-direction:column;justify-content:center;}
+.hero-tag{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--cr);margin-bottom:1rem;}
+.hero-title{font-family:var(--font-display);font-size:56px;line-height:1;font-weight:300;color:var(--cream);margin-bottom:0.5rem;}
+.hero-title em{font-style:italic;color:#C4A882;}
+.hero-sub{font-size:13px;color:#8A7B76;margin-bottom:2rem;line-height:1.6;}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--cr);color:white;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:12px 24px;border:none;cursor:pointer;width:fit-content;}
+.btn-outline{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--cream);font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:12px 24px;border:0.5px solid #4A3E3A;cursor:pointer;width:fit-content;}
+.hero-right{background:linear-gradient(135deg,#2A2220,#1A1614);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.hero-decor{position:absolute;font-family:var(--font-display);font-size:180px;font-weight:300;color:#1E1614;top:50%;transform:translateY(-50%);right:-20px;font-style:italic;}
+.hero-img-placeholder{width:160px;height:220px;background:linear-gradient(160deg,#3D2E28,#2A1F1C);border:0.5px solid #4A3A35;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:1;}
+.category-bar{display:grid;grid-template-columns:repeat(4,1fr);background:var(--cr-light);}
+.cat-item{padding:14px;text-align:center;border-right:0.5px solid #D9C8BC;cursor:pointer;}
+.cat-item:last-child{border-right:none;}
+.cat-name{font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--ch-mid);}
+.cat-count{font-size:11px;color:var(--ch-soft);margin-top:2px;}
+.section-header{display:flex;justify-content:space-between;align-items:baseline;padding:1.5rem 1.5rem 0;}
+.section-title{font-family:var(--font-display);font-size:28px;font-weight:300;font-style:italic;}
+.see-all{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--cr);text-decoration:underline;cursor:pointer;}
+.products-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin:1rem 0 0;}
+.product-card{background:var(--white);cursor:pointer;}
+.product-img{height:160px;background:linear-gradient(160deg,#EDE7E1,#D9CEC5);display:flex;align-items:center;justify-content:center;position:relative;}
+.product-img-placeholder{width:70px;height:100px;background:linear-gradient(160deg,#C4A882,#A88E6E);opacity:0.6;}
+.product-badge{position:absolute;top:8px;left:8px;background:var(--cr);color:white;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;}
+.product-info{padding:10px 12px;}
+.product-name{font-size:13px;font-weight:500;color:var(--ch);margin-bottom:2px;}
+.product-category{font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;}
+.product-price{font-size:14px;font-weight:500;color:var(--cr);margin-top:4px;}
+.product-old-price{font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-left:4px;}
+.product-footer{display:flex;justify-content:space-between;align-items:center;padding:0 12px 10px;}
+.wishlist-btn{font-size:18px;cursor:pointer;color:var(--ch-soft);}
+.add-cart-btn{background:var(--ch);color:var(--cream);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:7px 12px;border:none;cursor:pointer;}
+.filter-bar{display:flex;gap:8px;padding:12px 1.5rem;background:var(--cream-dark);align-items:center;flex-wrap:wrap;}
+.filter-chip{padding:6px 14px;border:0.5px solid var(--border);background:var(--white);font-size:12px;color:var(--ch-mid);cursor:pointer;border-radius:2px;}
+.filter-chip.active{background:var(--ch);color:var(--cream);border-color:var(--ch);}
+.sort-select{margin-left:auto;font-size:12px;padding:6px 10px;border:0.5px solid var(--border);background:var(--white);color:var(--ch);cursor:pointer;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;}
+.detail-gallery{background:var(--cream-dark);display:flex;align-items:center;justify-content:center;min-height:340px;position:relative;}
+.detail-img-main{width:150px;height:210px;background:linear-gradient(160deg,#C4A882,#A88E6E);opacity:0.7;}
+.detail-thumbs{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;}
+.thumb{width:44px;height:56px;background:var(--cream-dark);border:0.5px solid var(--border);}
+.thumb.active{border-color:var(--cr);}
+.detail-info{padding:2rem;}
+.detail-brand{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:6px;}
+.detail-name{font-family:var(--font-display);font-size:30px;font-weight:300;line-height:1.2;margin-bottom:10px;}
+.detail-price-row{display:flex;align-items:baseline;gap:10px;margin-bottom:1rem;}
+.detail-price{font-size:26px;font-weight:500;color:var(--cr);}
+.detail-orig{font-size:14px;color:var(--ch-soft);text-decoration:line-through;}
+.size-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:6px;}
+.size-options{display:flex;gap:6px;margin-bottom:1rem;}
+.size-btn{width:38px;height:38px;border:0.5px solid var(--border);background:var(--white);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.size-btn.active{border-color:var(--ch);background:var(--ch);color:var(--cream);}
+.condition-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase;background:var(--cr-light);color:var(--cr-dark);padding:4px 10px;}
+.condition-dot{width:6px;height:6px;border-radius:50%;background:var(--cr);}
+.cart-layout{display:grid;grid-template-columns:1fr 320px;}
+.cart-items{padding:1.5rem;border-right:0.5px solid var(--border);}
+.cart-item{display:grid;grid-template-columns:80px 1fr auto;gap:14px;padding:16px 0;border-bottom:0.5px solid var(--border);}
+.cart-thumb{width:80px;height:100px;background:linear-gradient(160deg,#EDE7E1,#C4A882);opacity:0.8;}
+.cart-summary{padding:1.5rem;background:var(--cream-dark);}
+.summary-title{font-family:var(--font-display);font-size:22px;font-weight:300;font-style:italic;margin-bottom:1rem;}
+.summary-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:0.5px solid var(--border);}
+.summary-row.total{font-weight:500;font-size:16px;border-bottom:none;padding-top:12px;}
+.promo-input{display:flex;margin:14px 0;}
+.promo-field{flex:1;border:0.5px solid var(--border);padding:10px;font-size:13px;background:var(--white);outline:none;}
+.promo-apply{background:var(--ch);color:var(--cream);border:none;padding:10px 18px;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.checkout-grid{display:grid;grid-template-columns:1fr 320px;}
+.checkout-form{padding:1.5rem;}
+.checkout-step{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--cr);margin-bottom:1rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-field{display:flex;flex-direction:column;gap:4px;}
+.form-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);}
+.form-input{border:0.5px solid var(--border);padding:10px;font-size:13px;background:var(--white);outline:none;width:100%;}
+.payment-methods{display:flex;gap:8px;margin-bottom:14px;}
+.pay-method{padding:8px 14px;border:0.5px solid var(--border);font-size:12px;cursor:pointer;background:var(--white);}
+.pay-method.active{border-color:var(--cr);background:var(--cr-light);}
+.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:460px;}
+.admin-sidebar{background:var(--ch);padding:1rem 0;}
+.admin-logo{font-family:var(--font-display);font-size:18px;font-weight:300;letter-spacing:2px;color:var(--cream);padding:0.5rem 1.25rem 1rem;text-transform:uppercase;border-bottom:0.5px solid #2A2220;}
+.admin-logo span{color:var(--cr);font-style:italic;}
+.admin-nav-item{display:flex;align-items:center;gap:10px;padding:11px 1.25rem;font-size:13px;color:#8A7B76;cursor:pointer;}
+.admin-nav-item.active{color:var(--cream);background:#2A2220;border-left:2px solid var(--cr);}
+.admin-content{background:var(--cream);padding:1.5rem;}
+.admin-title{font-family:var(--font-display);font-size:26px;font-weight:300;font-style:italic;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:1rem 0 1.5rem;}
+.kpi-card{background:var(--white);border:0.5px solid var(--border);padding:1rem;border-radius:8px;}
+.kpi-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:6px;}
+.kpi-value{font-size:24px;font-weight:500;color:var(--ch);}
+.kpi-change{font-size:11px;margin-top:3px;}
+.kpi-change.up{color:var(--success);}
+.kpi-change.down{color:#A32D2D;}
+.chart-area{background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1.5rem;}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:110px;}
+.bar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.bar{width:100%;background:var(--cr-light);border-radius:2px 2px 0 0;transition:background 0.2s;}
+.bar:hover{background:var(--cr);}
+.bar-label{font-size:9px;color:var(--ch-soft);}
+.admin-table{width:100%;background:var(--white);border:0.5px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px;border-collapse:collapse;}
+.admin-table th{background:var(--cream-dark);padding:10px 14px;text-align:left;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);font-weight:500;}
+.admin-table td{padding:10px 14px;border-top:0.5px solid var(--border);}
+.status-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;padding:3px 8px;border-radius:2px;}
+.status-pill.delivered{background:#EAF3DE;color:#3B6D11;}
+.status-pill.pending{background:#FAEEDA;color:#BA7517;}
+.status-pill.processing{background:#E6F1FB;color:#185FA5;}
+.status-pill.cancelled{background:#FCEBEB;color:#A32D2D;}
+.tracking-steps{padding:1.5rem;}
+.track-step{display:flex;gap:14px;align-items:flex-start;padding-bottom:22px;position:relative;}
+.track-step::after{content:'';position:absolute;left:12px;top:30px;bottom:0;width:0.5px;background:var(--border);}
+.track-step:last-child::after{display:none;}
+.track-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.track-dot.done{border-color:var(--cr);background:var(--cr);color:white;font-size:12px;}
+.track-dot.active{border-color:var(--cr);}
+.track-dot-inner{width:8px;height:8px;border-radius:50%;background:var(--cr);}
+.m-hero{background:var(--ch);padding:1.5rem;min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;}
+.m-hero-tag{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--cr);margin-bottom:6px;}
+.m-hero-title{font-family:var(--font-display);font-size:34px;font-weight:300;color:var(--cream);line-height:1;}
+.m-hero-title em{font-style:italic;color:#C4A882;}
+.m-hero-sub{font-size:11px;color:#8A7B76;margin:8px 0 14px;}
+.m-btn{display:inline-flex;align-items:center;gap:6px;background:var(--cr);color:white;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:10px 18px;border:none;cursor:pointer;}
+.m-section{padding:1rem;}
+.m-section-title{font-family:var(--font-display);font-size:22px;font-weight:300;font-style:italic;margin-bottom:10px;}
+.m-products{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.m-product{background:var(--cream-dark);border-radius:4px;overflow:hidden;}
+.m-product-img{height:100px;background:linear-gradient(160deg,#EDE7E1,#C4A882);opacity:0.8;}
+.m-product-info{padding:8px;}
+.m-product-name{font-size:11px;font-weight:500;}
+.m-product-price{font-size:12px;color:var(--cr);font-weight:500;margin-top:2px;}
+.m-nav-bottom{display:flex;background:var(--ch);padding:10px 0 16px;}
+.m-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#8A7B76;cursor:pointer;}
+.m-nav-item.active{color:var(--cr);}
+.m-nav-dot{width:4px;height:4px;border-radius:50%;background:var(--cr);}
+.m-menu-item{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:0.5px solid var(--border);font-size:13px;}
+.divider{height:0.5px;background:var(--border);margin:1rem 0;}
+.footer-band{background:var(--ch);padding:2rem;text-align:center;max-width:1100px;margin:0 auto;border-radius:12px;}
+</style>
+</head>
+<body>
+
+<h1>Mhiras Collection</h1>
+<p class="tagline">UI Prototype — 10 Screens · Desktop + Mobile</p>
+
+<!-- ========== 01: HOMEPAGE ========== -->
+<div class="screen-label">01 — Desktop · Homepage / Landing</div>
+<div class="desktop-frame">
+  <div class="announcement-bar">✦ New arrivals every week — Free delivery on orders over ₦15,000 ✦</div>
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span>About</span></div>
+    <div style="display:flex;gap:16px;align-items:center;">
+      <span style="font-size:13px;color:#8A7B76;cursor:pointer;">Search</span>
+      <span style="position:relative;cursor:pointer;color:var(--cream);font-size:16px;">♡</span>
+      <span style="position:relative;cursor:pointer;color:var(--cream);font-size:16px;">🛍<span style="position:absolute;top:-8px;right:-8px;background:var(--cr);color:white;font-size:9px;border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;">3</span></span>
+      <div style="width:1px;height:20px;background:#3D3330;"></div>
+      <span style="font-size:13px;color:#8A7B76;cursor:pointer;">Sign in</span>
+    </div>
+  </div>
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-tag">✦ New Arrivals — Spring Edit</div>
+      <div class="hero-title">Curated<br>Thrift,<br><em>Elevated.</em></div>
+      <div class="hero-sub">Handpicked fashion pieces, pre-loved and premium.<br>Every item is unique — once it's gone, it's gone.</div>
+      <div style="display:flex;gap:10px;">
+        <div class="btn-primary">Shop Now →</div>
+        <div class="btn-outline">View Lookbook</div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-decor">M</div>
+      <div class="hero-img-placeholder">
+        <div style="width:40px;height:2px;background:#C4A882;margin-bottom:8px;"></div>
+        <div style="font-size:9px;letter-spacing:2px;color:#C4A882;text-transform:uppercase;">Featured Piece</div>
+        <div style="font-size:9px;letter-spacing:2px;color:#6B5040;text-transform:uppercase;margin-top:4px;">₦8,500</div>
+      </div>
+    </div>
+  </div>
+  <div class="category-bar">
+    <div class="cat-item"><div class="cat-name">Women</div><div class="cat-count">142 items</div></div>
+    <div class="cat-item"><div class="cat-name">Men</div><div class="cat-count">89 items</div></div>
+    <div class="cat-item"><div class="cat-name">Bags</div><div class="cat-count">47 items</div></div>
+    <div class="cat-item"><div class="cat-name">Shoes</div><div class="cat-count">63 items</div></div>
+  </div>
+  <div class="section-header">
+    <div class="section-title">Just Dropped</div>
+    <div class="see-all">See all →</div>
+  </div>
+  <div class="products-grid">
+    <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div><div class="product-badge">New</div></div><div class="product-info"><div class="product-category">Dresses</div><div class="product-name">Vintage Wrap Dress</div><div><span class="product-price">₦8,500</span><span class="product-old-price">₦18,000</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add to Cart</div></div></div>
+    <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div><div class="product-badge">Hot</div></div><div class="product-info"><div class="product-category">Tops</div><div class="product-name">Silk Blouse — Cream</div><div><span class="product-price">₦5,200</span><span class="product-old-price">₦12,000</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add to Cart</div></div></div>
+    <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div></div><div class="product-info"><div class="product-category">Bags</div><div class="product-name">Leather Tote — Brown</div><div><span class="product-price">₦14,000</span><span class="product-old-price">₦35,000</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add to Cart</div></div></div>
+  </div>
+  <div style="padding:1.5rem;">
+    <div style="background:var(--cr-light);padding:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-family:var(--font-display);font-size:24px;font-weight:300;font-style:italic;">Never miss a drop</div><div style="font-size:12px;color:var(--ch-soft);margin-top:4px;">Get notified when new items land.</div></div>
+      <div style="display:flex;gap:0;"><input placeholder="Your WhatsApp number" style="padding:10px 14px;border:0.5px solid var(--border);font-size:13px;width:240px;outline:none;"><div class="btn-primary" style="padding:10px 18px;">Notify Me</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 02: CATALOG ========== -->
+<div class="screen-label">02 — Desktop · Shop / Catalog</div>
+<div class="desktop-frame">
+  <div class="nav-bar"><div class="nav-logo">Mhiras Collection</div><div class="nav-links"><span>Shop</span><span style="color:var(--cream);border-bottom:1px solid var(--cr);">New In</span><span>Collections</span><span>About</span></div><div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;"><span>♡</span><span>🛍 3</span><span>Account</span></div></div>
+  <div class="filter-bar">
+    <div class="filter-chip active">All</div>
+    <div class="filter-chip">Women</div>
+    <div class="filter-chip">Men</div>
+    <div class="filter-chip">Bags & Accessories</div>
+    <div class="filter-chip">Shoes</div>
+    <div class="filter-chip">Under ₦5k</div>
+    <div class="filter-chip">Size M</div>
+    <select class="sort-select"><option>Sort: Newest First</option><option>Price: Low–High</option><option>Price: High–Low</option></select>
+  </div>
+  <div style="display:grid;grid-template-columns:200px 1fr;">
+    <div style="padding:1rem;border-right:0.5px solid var(--border);background:var(--cream);">
+      <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:12px;font-weight:500;">Filter By</div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Price Range</div>
+      <div style="display:flex;gap:6px;margin-bottom:16px;"><input placeholder="₦ Min" style="flex:1;padding:6px;border:0.5px solid var(--border);font-size:11px;"><input placeholder="₦ Max" style="flex:1;padding:6px;border:0.5px solid var(--border);font-size:11px;"></div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Category</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;font-size:12px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked> Dresses (34)</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox"> Tops (28)</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox"> Bottoms (19)</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox"> Bags (47)</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox"> Shoes (63)</label>
+      </div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Condition</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;font-size:12px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked> Like New</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" checked> Good</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox"> Fair</label>
+      </div>
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Size</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;font-size:11px;">
+        <span style="padding:4px 8px;border:0.5px solid var(--border);cursor:pointer;">XS</span>
+        <span style="padding:4px 8px;border:0.5px solid var(--ch);background:var(--ch);color:var(--cream);cursor:pointer;">S</span>
+        <span style="padding:4px 8px;border:0.5px solid var(--cr);background:var(--cr-light);color:var(--cr-dark);cursor:pointer;">M</span>
+        <span style="padding:4px 8px;border:0.5px solid var(--border);cursor:pointer;">L</span>
+        <span style="padding:4px 8px;border:0.5px solid var(--border);cursor:pointer;">XL</span>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;background:var(--cream-dark);font-size:12px;color:var(--ch-soft);border-bottom:0.5px solid var(--border);">
+        <span>Showing 34 results for <strong>All Items</strong></span>
+        <div style="display:flex;gap:10px;font-size:16px;cursor:pointer;"><span>⊞</span><span style="color:var(--cr);">⊟</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5px;background:var(--border);">
+        <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div><div class="product-badge">Like New</div></div><div class="product-info"><div class="product-category">Dresses · Size M</div><div class="product-name">Midi Floral Dress</div><div><span class="product-price">₦7,000</span><span class="product-old-price">₦22,000</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add</div></div></div>
+        <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div></div><div class="product-info"><div class="product-category">Tops · Size S</div><div class="product-name">Linen Button-Up</div><div><span class="product-price">₦4,500</span></div></div><div class="product-footer"><span class="wishlist-btn">♥</span><div class="add-cart-btn">Add</div></div></div>
+        <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div><div class="product-badge">1 left!</div></div><div class="product-info"><div class="product-category">Bags</div><div class="product-name">Structured Handbag</div><div><span class="product-price">₦11,000</span><span class="product-old-price">₦28,000</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add</div></div></div>
+        <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div></div><div class="product-info"><div class="product-category">Shoes · Size 40</div><div class="product-name">Block Heel Mules</div><div><span class="product-price">₦9,500</span><span class="product-old-price">₦24,000</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add</div></div></div>
+        <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div><div class="product-badge">New</div></div><div class="product-info"><div class="product-category">Dresses · Size XS</div><div class="product-name">Slip Midi Dress</div><div><span class="product-price">₦6,000</span><span class="product-old-price">₦15,000</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add</div></div></div>
+        <div class="product-card"><div class="product-img"><div class="product-img-placeholder"></div></div><div class="product-info"><div class="product-category">Men · Tops · L</div><div class="product-name">Oxford Shirt — Navy</div><div><span class="product-price">₦5,500</span></div></div><div class="product-footer"><span class="wishlist-btn">♡</span><div class="add-cart-btn">Add</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 03: PRODUCT DETAIL ========== -->
+<div class="screen-label">03 — Desktop · Product Detail</div>
+<div class="desktop-frame">
+  <div class="nav-bar"><div class="nav-logo">Mhiras Collection</div><div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span></div><div style="display:flex;gap:14px;font-size:13px;color:#8A7B76;"><span>♡ Wishlist</span><span>🛍 3</span></div></div>
+  <div style="padding:0.75rem 1.5rem;font-size:12px;color:var(--ch-soft);border-bottom:0.5px solid var(--border);">Home / Shop / Dresses / <span style="color:var(--ch);">Vintage Wrap Dress</span></div>
+  <div class="detail-grid">
+    <div class="detail-gallery">
+      <div class="detail-img-main"></div>
+      <div class="detail-thumbs"><div class="thumb active"></div><div class="thumb"></div><div class="thumb"></div></div>
+    </div>
+    <div class="detail-info">
+      <div class="detail-brand">Mhiras Collection</div>
+      <div class="detail-name">Vintage Wrap Dress<br>— Burgundy Floral</div>
+      <div class="detail-price-row"><span class="detail-price">₦8,500</span><span class="detail-orig">₦22,000</span><span style="font-size:11px;background:#EAF3DE;color:#3B6D11;padding:3px 8px;">61% off</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <div class="condition-badge"><div class="condition-dot"></div>Like New</div>
+        <div style="font-size:11px;background:var(--cream-dark);padding:4px 10px;">Size M</div>
+        <div style="font-size:11px;background:var(--cream-dark);padding:4px 10px;">1 Available</div>
+      </div>
+      <div style="display:flex;gap:16px;margin:10px 0;font-size:12px;color:var(--ch-soft);">
+        <span>✓ Verified &amp; Inspected</span><span>↩ 48hr Return Policy</span><span>🚚 Nationwide Delivery</span>
+      </div>
+      <div class="divider"></div>
+      <div class="size-label">Available Sizes</div>
+      <div class="size-options">
+        <div class="size-btn">XS</div><div class="size-btn active">M</div><div class="size-btn" style="opacity:0.3;text-decoration:line-through;">L</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div class="btn-primary" style="width:100%;justify-content:center;">Add to Cart</div>
+        <div class="btn-outline" style="width:100%;justify-content:center;color:var(--ch);border-color:var(--ch);">♡ Add to Wishlist</div>
+      </div>
+      <div style="margin-top:16px;padding:14px;background:var(--cream-dark);font-size:12px;line-height:1.7;color:var(--ch-soft);">
+        <strong style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-mid);">Description</strong><br>
+        Beautiful wrap dress in a burgundy floral print. Fully lined, midi length. Excellent pre-loved condition — no stains, no tears. A true vintage find.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 04: CART ========== -->
+<div class="screen-label">04 — Desktop · Shopping Cart</div>
+<div class="desktop-frame">
+  <div class="nav-bar"><div class="nav-logo">Mhiras Collection</div><div style="font-size:13px;color:#8A7B76;">Your Cart (2 items)</div><div style="font-size:13px;color:#8A7B76;cursor:pointer;">Continue Shopping</div></div>
+  <div class="cart-layout">
+    <div class="cart-items">
+      <div class="cart-item">
+        <div class="cart-thumb"></div>
+        <div><div style="font-size:14px;font-weight:500;">Vintage Wrap Dress</div><div style="font-size:12px;color:var(--ch-soft);margin:3px 0;">Size: M · Condition: Like New</div><div style="display:flex;align-items:center;gap:8px;margin-top:8px;"><div style="width:26px;height:26px;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;">−</div><span style="font-size:14px;font-weight:500;">1</span><div style="width:26px;height:26px;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;">+</div><span style="font-size:11px;color:var(--cr-dark);margin-left:6px;">(1 left)</span></div></div>
+        <div style="text-align:right;"><div style="font-size:16px;font-weight:500;color:var(--cr);">₦8,500</div><div style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-top:2px;">₦22,000</div><div style="font-size:11px;color:var(--ch-soft);margin-top:12px;cursor:pointer;">Remove</div></div>
+      </div>
+      <div class="cart-item">
+        <div class="cart-thumb" style="background:linear-gradient(160deg,#C4A882,#8B6A4E);opacity:0.8;"></div>
+        <div><div style="font-size:14px;font-weight:500;">Leather Tote — Brown</div><div style="font-size:12px;color:var(--ch-soft);margin:3px 0;">Condition: Good</div><div style="display:flex;align-items:center;gap:8px;margin-top:8px;"><div style="width:26px;height:26px;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;">−</div><span style="font-size:14px;font-weight:500;">1</span><div style="width:26px;height:26px;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;">+</div></div></div>
+        <div style="text-align:right;"><div style="font-size:16px;font-weight:500;color:var(--cr);">₦14,000</div><div style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-top:2px;">₦35,000</div><div style="font-size:11px;color:var(--ch-soft);margin-top:12px;cursor:pointer;">Remove</div></div>
+      </div>
+    </div>
+    <div class="cart-summary">
+      <div class="summary-title">Order Summary</div>
+      <div class="summary-row"><span>Subtotal (2 items)</span><span>₦22,500</span></div>
+      <div class="summary-row"><span>Delivery — Lagos</span><span>₦1,500</span></div>
+      <div class="summary-row" style="color:var(--success);"><span>Promo discount</span><span>−₦0</span></div>
+      <div class="summary-row total"><span>Total</span><span style="color:var(--cr);">₦24,000</span></div>
+      <div class="promo-input"><input class="promo-field" placeholder="Enter promo code"><button class="promo-apply">Apply</button></div>
+      <div class="btn-primary" style="width:100%;justify-content:center;margin-top:6px;">Checkout →</div>
+      <div style="margin-top:12px;font-size:11px;color:var(--ch-soft);text-align:center;">🔒 Paystack · Flutterwave · Bank Transfer</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 05: CHECKOUT ========== -->
+<div class="screen-label">05 — Desktop · Checkout & Payment</div>
+<div class="desktop-frame">
+  <div class="nav-bar"><div class="nav-logo">Mhiras Collection</div><div style="display:flex;align-items:center;font-size:13px;color:#8A7B76;gap:6px;"><span style="color:var(--cream);">Delivery</span><span>›</span><span>Payment</span><span>›</span><span>Confirm</span></div><div style="font-size:11px;color:#8A7B76;">🔒 Secure Checkout</div></div>
+  <div class="checkout-grid">
+    <div class="checkout-form">
+      <div class="checkout-step">Step 1 of 2 — Delivery Details</div>
+      <div class="form-row"><div class="form-field"><div class="form-label">First Name</div><input class="form-input" value="Amara"></div><div class="form-field"><div class="form-label">Last Name</div><input class="form-input" value="Okonkwo"></div></div>
+      <div class="form-row"><div class="form-field"><div class="form-label">Phone Number</div><input class="form-input" value="+234 801 234 5678"></div><div class="form-field"><div class="form-label">Email</div><input class="form-input" value="amara@email.com"></div></div>
+      <div style="margin-bottom:12px;"><div class="form-label" style="margin-bottom:4px;">Delivery Address</div><input class="form-input" value="14 Adeniyi Jones Ave, Ikeja, Lagos" style="width:100%;"></div>
+      <div class="form-row"><div class="form-field"><div class="form-label">State</div><select class="form-input"><option>Lagos</option><option>Abuja</option><option>Port Harcourt</option></select></div><div class="form-field"><div class="form-label">LGA</div><input class="form-input" value="Ikeja"></div></div>
+      <div class="divider"></div>
+      <div class="checkout-step">Payment Method</div>
+      <div class="payment-methods"><div class="pay-method active">Card Payment</div><div class="pay-method">Bank Transfer</div><div class="pay-method">Pay on Delivery</div></div>
+      <div style="background:var(--cream-dark);padding:14px;border:0.5px solid var(--border);">
+        <div class="form-label" style="margin-bottom:10px;">Card Details</div>
+        <input class="form-input" placeholder="1234 5678 9012 3456" style="width:100%;margin-bottom:8px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input class="form-input" placeholder="MM / YY"><input class="form-input" placeholder="CVV"></div>
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:var(--ch-soft);display:flex;align-items:center;gap:6px;">🔒 Your payment is secured by Paystack. We never store your card details.</div>
+    </div>
+    <div class="cart-summary">
+      <div class="summary-title">Your Order</div>
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);"><div style="width:44px;height:58px;background:var(--cream-dark);flex-shrink:0;"></div><div><div style="font-size:12px;font-weight:500;">Vintage Wrap Dress</div><div style="font-size:11px;color:var(--ch-soft);">Size M · ₦8,500</div></div></div>
+        <div style="display:flex;gap:10px;align-items:center;padding:8px 0;"><div style="width:44px;height:58px;background:linear-gradient(160deg,#C4A882,#8B6A4E);opacity:0.6;flex-shrink:0;"></div><div><div style="font-size:12px;font-weight:500;">Leather Tote</div><div style="font-size:11px;color:var(--ch-soft);">₦14,000</div></div></div>
+      </div>
+      <div class="summary-row"><span>Subtotal</span><span>₦22,500</span></div>
+      <div class="summary-row"><span>Delivery</span><span>₦1,500</span></div>
+      <div class="summary-row total"><span>Total</span><span style="color:var(--cr);">₦24,000</span></div>
+      <div class="btn-primary" style="width:100%;justify-content:center;margin-top:1rem;">Pay ₦24,000 →</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 06: ORDER CONFIRMATION + TRACKING ========== -->
+<div class="screen-label">06 — Desktop · Order Confirmation & Tracking</div>
+<div class="desktop-frame">
+  <div class="nav-bar"><div class="nav-logo">Mhiras Collection</div></div>
+  <div style="background:var(--ch);padding:2rem;text-align:center;color:var(--cream);">
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--cr);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px;">✓</div>
+    <div style="font-family:var(--font-display);font-size:32px;font-weight:300;font-style:italic;margin-bottom:8px;">Order Confirmed!</div>
+    <div style="font-size:13px;color:#8A7B76;">Order #MH-2024-0847 · Thank you, Amara. Your items are being prepared for delivery.</div>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;"><div class="btn-primary">Track My Order</div><div class="btn-outline">Continue Shopping</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 320px;padding:1.5rem;gap:1.5rem;">
+    <div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:1rem;letter-spacing:0.5px;">Delivery Progress</div>
+      <div class="tracking-steps">
+        <div class="track-step"><div class="track-dot done">✓</div><div><div style="font-size:13px;font-weight:500;">Order Placed</div><div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">Wed, 8 Apr 2026 · 2:14 PM</div></div></div>
+        <div class="track-step"><div class="track-dot done">✓</div><div><div style="font-size:13px;font-weight:500;">Payment Confirmed</div><div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">Wed, 8 Apr 2026 · 2:17 PM</div></div></div>
+        <div class="track-step"><div class="track-dot active"><div class="track-dot-inner"></div></div><div><div style="font-size:13px;font-weight:500;color:var(--cr);">Being Packaged</div><div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">In progress...</div></div></div>
+        <div class="track-step"><div class="track-dot"></div><div><div style="font-size:13px;color:var(--ch-soft);">Out for Delivery</div><div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">Expected: Thu, 9 Apr</div></div></div>
+        <div class="track-step"><div class="track-dot"></div><div><div style="font-size:13px;color:var(--ch-soft);">Delivered</div><div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">—</div></div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Order Summary</div>
+      <div style="background:var(--cream-dark);padding:14px;font-size:12px;">
+        <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border);"><strong>Amara Okonkwo</strong><br>14 Adeniyi Jones Ave, Ikeja, Lagos<br>+234 801 234 5678</div>
+        <div style="margin-bottom:5px;">Vintage Wrap Dress · M — <strong>₦8,500</strong></div>
+        <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border);">Leather Tote — <strong>₦14,000</strong></div>
+        <div style="display:flex;justify-content:space-between;font-weight:500;font-size:13px;">Total Paid<span style="color:var(--cr);">₦24,000</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 07: ADMIN DASHBOARD ========== -->
+<div class="screen-label">07 — Admin · Dashboard Overview</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item active">⬛ Dashboard</div>
+      <div class="admin-nav-item">☰ Products</div>
+      <div class="admin-nav-item">📋 Orders</div>
+      <div class="admin-nav-item">👥 Customers</div>
+      <div class="admin-nav-item">💳 Payments</div>
+      <div class="admin-nav-item">📦 Inventory</div>
+      <div class="admin-nav-item">📢 Promotions</div>
+      <div class="admin-nav-item">⚙ Settings</div>
+      <div style="padding:1rem 1.25rem 0.5rem;margin-top:2rem;border-top:0.5px solid #2A2220;">
+        <div style="display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:50%;background:var(--cr);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:white;">MC</div><div style="font-size:12px;color:#8A7B76;">Admin · Mhiras</div></div>
+      </div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div><div class="admin-title">Good afternoon, Mhiras ✦</div><div style="font-size:12px;color:var(--ch-soft);">Wednesday, 8 April 2026</div></div>
+        <div class="btn-primary" style="font-size:11px;padding:9px 18px;">+ Add New Item</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Revenue (Month)</div><div class="kpi-value">₦384,500</div><div class="kpi-change up">↑ 23% vs last month</div></div>
+        <div class="kpi-card"><div class="kpi-label">Orders (Month)</div><div class="kpi-value">47</div><div class="kpi-change up">↑ 12 more than last</div></div>
+        <div class="kpi-card"><div class="kpi-label">Active Listings</div><div class="kpi-value">134</div><div class="kpi-change down">↓ 8 sold today</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pending Orders</div><div class="kpi-value">9</div><div class="kpi-change" style="color:var(--warning);">3 need action</div></div>
+      </div>
+      <div class="chart-area">
+        <div style="font-size:13px;font-weight:500;margin-bottom:14px;">Revenue — Last 7 Days</div>
+        <div class="bar-chart">
+          <div class="bar-wrap"><div class="bar" style="height:55%;"></div><div class="bar-label">Mon</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:72%;"></div><div class="bar-label">Tue</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:40%;"></div><div class="bar-label">Wed</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:90%;background:var(--cr);"></div><div class="bar-label">Thu</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:65%;"></div><div class="bar-label">Fri</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:85%;"></div><div class="bar-label">Sat</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:60%;"></div><div class="bar-label">Sun</div></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><div style="font-size:13px;font-weight:500;">Recent Orders</div><span style="font-size:12px;color:var(--cr);cursor:pointer;">View all →</span></div>
+      <table class="admin-table">
+        <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Status</th><th>Date</th><th></th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:500;">#MH-0847</td><td>Amara Okonkwo</td><td>2 items</td><td>₦24,000</td><td><span class="status-pill processing">Processing</span></td><td>Today 2:14 PM</td><td style="color:var(--cr);cursor:pointer;font-size:12px;">Manage</td></tr>
+          <tr><td style="font-weight:500;">#MH-0846</td><td>Fatima Bello</td><td>1 item</td><td>₦8,500</td><td><span class="status-pill delivered">Delivered</span></td><td>Today 11:20 AM</td><td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td></tr>
+          <tr><td style="font-weight:500;">#MH-0845</td><td>Chioma Eze</td><td>3 items</td><td>₦31,000</td><td><span class="status-pill pending">Pending</span></td><td>Yesterday</td><td style="color:var(--cr);cursor:pointer;font-size:12px;">Manage</td></tr>
+          <tr><td style="font-weight:500;">#MH-0844</td><td>Kemi Adeyemi</td><td>1 item</td><td>₦14,000</td><td><span class="status-pill cancelled">Cancelled</span></td><td>Yesterday</td><td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 08: ADMIN ADD ITEM ========== -->
+<div class="screen-label">08 — Admin · Product Management — Add New Item</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item">⬛ Dashboard</div>
+      <div class="admin-nav-item active">☰ Products</div>
+      <div class="admin-nav-item">📋 Orders</div>
+      <div class="admin-nav-item">👥 Customers</div>
+      <div class="admin-nav-item">💳 Payments</div>
+      <div class="admin-nav-item">📦 Inventory</div>
+      <div class="admin-nav-item">📢 Promotions</div>
+      <div class="admin-nav-item">⚙ Settings</div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><div class="admin-title">Add New Item</div><div style="display:flex;gap:8px;"><div class="btn-outline" style="font-size:11px;padding:8px 14px;color:var(--ch);border-color:var(--border);">Save Draft</div><div class="btn-primary" style="font-size:11px;padding:8px 16px;">Publish Listing</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:1.5rem;">
+        <div>
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:14px;letter-spacing:0.3px;">Item Details</div>
+            <div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">Item Name</div><input class="form-input" placeholder="e.g. Vintage Wrap Dress — Burgundy" style="width:100%;"></div>
+            <div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:4px;">Description</div><textarea class="form-input" rows="3" placeholder="Describe the item, material, fit, and any notable details..." style="width:100%;resize:vertical;"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+              <div class="form-field"><div class="form-label">Category</div><select class="form-input"><option>Dresses</option><option>Tops</option><option>Bags</option><option>Shoes</option></select></div>
+              <div class="form-field"><div class="form-label">Size</div><select class="form-input"><option>XS</option><option>S</option><option selected>M</option><option>L</option><option>XL</option></select></div>
+              <div class="form-field"><div class="form-label">Condition</div><select class="form-input"><option>Like New</option><option>Good</option><option>Fair</option></select></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-field"><div class="form-label">Selling Price (₦)</div><input class="form-input" value="8500"></div>
+              <div class="form-field"><div class="form-label">Original Price (₦)</div><input class="form-input" value="22000"></div>
+            </div>
+          </div>
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:12px;">Shipping Info</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-field"><div class="form-label">Weight (kg)</div><input class="form-input" placeholder="0.5"></div>
+              <div class="form-field"><div class="form-label">Delivery Option</div><select class="form-input"><option>Standard (2-4 days)</option><option>Express (1-2 days)</option></select></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:12px;">Photos</div>
+            <div style="border:1.5px dashed var(--border);border-radius:8px;padding:2rem;text-align:center;background:var(--cream);cursor:pointer;">
+              <div style="font-size:28px;margin-bottom:6px;opacity:0.35;">📷</div>
+              <div style="font-size:12px;color:var(--ch-soft);">Drag &amp; drop photos<br>or click to upload</div>
+              <div style="font-size:11px;color:var(--border);margin-top:4px;">Max 6 photos · JPG, PNG</div>
+            </div>
+          </div>
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:12px;">Visibility</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;cursor:pointer;"><input type="radio" name="vis" checked> Published (visible on shop)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="radio" name="vis"> Draft (hidden)</label>
+            <div style="margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+              <div style="font-size:12px;font-weight:500;margin-bottom:8px;">Share to Social</div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;"><input type="checkbox" checked> Auto-post to WhatsApp Status</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-top:6px;"><input type="checkbox"> Generate Instagram caption</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-top:6px;"><input type="checkbox"> Share to Facebook Page</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 09 & 10: MOBILE SCREENS ========== -->
+<div class="screen-label">09–10 — Mobile · Home + Product Detail</div>
+<div class="mobile-row">
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--ch);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-family:var(--font-display);font-size:17px;font-weight:300;letter-spacing:2px;color:var(--cream);text-transform:uppercase;">Mhiras</span>
+      <div style="display:flex;gap:14px;"><span style="color:#8A7B76;font-size:15px;">🔍</span><span style="position:relative;color:#8A7B76;font-size:15px;">🛍<span style="position:absolute;top:-7px;right:-7px;background:var(--cr);color:white;font-size:8px;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;line-height:1;">3</span></span></div>
+    </div>
+    <div class="m-hero">
+      <div class="m-hero-tag">✦ New Arrivals</div>
+      <div class="m-hero-title">Curated<br>Thrift,<br><em>Elevated.</em></div>
+      <div class="m-hero-sub">Pre-loved fashion, handpicked for you.</div>
+      <div class="m-btn">Shop Now →</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);background:var(--cr-light);border-bottom:0.5px solid var(--border);">
+      <div style="padding:10px 4px;text-align:center;border-right:0.5px solid var(--border);"><div style="font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Women</div></div>
+      <div style="padding:10px 4px;text-align:center;border-right:0.5px solid var(--border);"><div style="font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Men</div></div>
+      <div style="padding:10px 4px;text-align:center;border-right:0.5px solid var(--border);"><div style="font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Bags</div></div>
+      <div style="padding:10px 4px;text-align:center;"><div style="font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Shoes</div></div>
+    </div>
+    <div class="m-section">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;"><div class="m-section-title">Just Dropped</div><span style="font-size:10px;color:var(--cr);text-transform:uppercase;letter-spacing:0.5px;">See all</span></div>
+      <div class="m-products">
+        <div class="m-product"><div class="m-product-img"></div><div class="m-product-info"><div class="m-product-name">Wrap Dress · M</div><div class="m-product-price">₦8,500</div></div></div>
+        <div class="m-product"><div class="m-product-img" style="background:linear-gradient(160deg,#D9CEC5,#C4A882);"></div><div class="m-product-info"><div class="m-product-name">Silk Blouse · S</div><div class="m-product-price">₦5,200</div></div></div>
+        <div class="m-product"><div class="m-product-img" style="background:linear-gradient(160deg,#C4A882,#8B6A4E);"></div><div class="m-product-info"><div class="m-product-name">Leather Tote</div><div class="m-product-price">₦14,000</div></div></div>
+        <div class="m-product"><div class="m-product-img" style="background:linear-gradient(160deg,#EDE7E1,#D4C4B0);"></div><div class="m-product-info"><div class="m-product-name">Linen Top · M</div><div class="m-product-price">₦4,500</div></div></div>
+      </div>
+    </div>
+    <div class="m-nav-bottom">
+      <div class="m-nav-item active"><span style="font-size:15px;">🏠</span>Home<div class="m-nav-dot"></div></div>
+      <div class="m-nav-item"><span style="font-size:15px;">🔍</span>Shop</div>
+      <div class="m-nav-item"><span style="font-size:15px;">♡</span>Saved</div>
+      <div class="m-nav-item"><span style="font-size:15px;">🛍</span>Cart</div>
+      <div class="m-nav-item"><span style="font-size:15px;">👤</span>Account</div>
+    </div>
+  </div>
+
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:17px;color:var(--ch-soft);">←</span>
+      <span style="font-family:var(--font-display);font-size:15px;font-style:italic;">Product Detail</span>
+      <span style="font-size:15px;color:var(--ch-soft);">♡</span>
+    </div>
+    <div style="height:220px;background:linear-gradient(160deg,#EDE7E1,#C4A882,#A88E6E);display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="width:90px;height:130px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);"></div>
+      <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;">
+        <div style="width:28px;height:3px;background:white;border-radius:2px;"></div>
+        <div style="width:10px;height:3px;background:rgba(255,255,255,0.35);border-radius:2px;"></div>
+        <div style="width:10px;height:3px;background:rgba(255,255,255,0.35);border-radius:2px;"></div>
+      </div>
+    </div>
+    <div style="padding:14px;">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:4px;">Dresses · Size M</div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:300;line-height:1.2;margin-bottom:8px;">Vintage Wrap Dress<br><em>Burgundy Floral</em></div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px;"><span style="font-size:20px;font-weight:500;color:var(--cr);">₦8,500</span><span style="font-size:12px;color:var(--ch-soft);text-decoration:line-through;">₦22,000</span><span style="font-size:10px;background:#EAF3DE;color:#3B6D11;padding:2px 6px;">61% off</span></div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;"><div class="condition-badge" style="font-size:9px;"><div class="condition-dot"></div>Like New</div><div style="font-size:10px;background:var(--cream-dark);padding:3px 8px;">1 Available</div></div>
+      <div style="font-size:11px;color:var(--ch-soft);line-height:1.7;margin-bottom:14px;">Beautiful wrap dress in a burgundy floral print. Fully lined, midi length. No stains or tears.</div>
+    </div>
+    <div style="padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;">
+      <div class="m-btn" style="width:100%;justify-content:center;">Add to Cart</div>
+      <div class="m-btn" style="width:100%;justify-content:center;background:transparent;border:0.5px solid var(--ch);color:var(--ch);">♡ Save to Wishlist</div>
+    </div>
+    <div class="m-nav-bottom">
+      <div class="m-nav-item"><span style="font-size:15px;">🏠</span>Home</div>
+      <div class="m-nav-item active"><span style="font-size:15px;">🔍</span>Shop<div class="m-nav-dot"></div></div>
+      <div class="m-nav-item"><span style="font-size:15px;">♡</span>Saved</div>
+      <div class="m-nav-item"><span style="font-size:15px;">🛍</span>Cart</div>
+      <div class="m-nav-item"><span style="font-size:15px;">👤</span>Account</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen-label">11–12 — Mobile · Cart + Account</div>
+<div class="mobile-row">
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:17px;color:var(--ch-soft);">←</span>
+      <span style="font-family:var(--font-display);font-size:15px;font-style:italic;">My Cart (2)</span>
+      <span style="font-size:11px;color:var(--ch-soft);">Clear</span>
+    </div>
+    <div style="padding:12px 14px;">
+      <div style="display:flex;gap:10px;padding:12px 0;border-bottom:0.5px solid var(--border);">
+        <div style="width:58px;height:76px;background:linear-gradient(160deg,#EDE7E1,#C4A882);flex-shrink:0;border-radius:4px;"></div>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:500;">Vintage Wrap Dress</div><div style="font-size:10px;color:var(--ch-soft);margin:3px 0;">Size M · Like New</div><div style="font-size:14px;font-weight:500;color:var(--cr);">₦8,500</div><div style="display:flex;align-items:center;gap:8px;margin-top:6px;"><div style="width:22px;height:22px;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">−</div><span style="font-size:13px;min-width:18px;text-align:center;">1</span><div style="width:22px;height:22px;border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;">+</div></div></div>
+        <span style="font-size:18px;color:var(--ch-soft);cursor:pointer;line-height:1;">×</span>
+      </div>
+      <div style="display:flex;gap:10px;padding:12px 0;">
+        <div style="width:58px;height:76px;background:linear-gradient(160deg,#C4A882,#8B6A4E);flex-shrink:0;border-radius:4px;opacity:0.8;"></div>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:500;">Leather Tote — Brown</div><div style="font-size:10px;color:var(--ch-soft);margin:3px 0;">Condition: Good</div><div style="font-size:14px;font-weight:500;color:var(--cr);">₦14,000</div></div>
+        <span style="font-size:18px;color:var(--ch-soft);cursor:pointer;line-height:1;">×</span>
+      </div>
+      <div style="padding:12px 0;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ch-soft);margin-bottom:5px;"><span>Subtotal</span><span>₦22,500</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ch-soft);margin-bottom:10px;"><span>Delivery — Lagos</span><span>₦1,500</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:500;border-top:0.5px solid var(--border);padding-top:10px;"><span>Total</span><span style="color:var(--cr);">₦24,000</span></div>
+      </div>
+    </div>
+    <div style="padding:12px 14px;border-top:0.5px solid var(--border);">
+      <div class="m-btn" style="width:100%;justify-content:center;">Checkout →</div>
+    </div>
+    <div class="m-nav-bottom">
+      <div class="m-nav-item"><span style="font-size:15px;">🏠</span>Home</div>
+      <div class="m-nav-item"><span style="font-size:15px;">🔍</span>Shop</div>
+      <div class="m-nav-item"><span style="font-size:15px;">♡</span>Saved</div>
+      <div class="m-nav-item active"><span style="font-size:15px;">🛍</span>Cart<div class="m-nav-dot"></div></div>
+      <div class="m-nav-item"><span style="font-size:15px;">👤</span>Account</div>
+    </div>
+  </div>
+
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:15px;color:var(--ch-soft);">←</span>
+      <span style="font-family:var(--font-display);font-size:15px;font-style:italic;">My Account</span>
+      <span style="font-size:11px;color:var(--cr);">Edit</span>
+    </div>
+    <div style="background:var(--ch);padding:1.5rem 14px;text-align:center;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(196,104,58,0.15);border:2px solid var(--cr);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:24px;font-weight:300;color:var(--cr);margin:0 auto 10px;">AO</div>
+      <div style="font-family:var(--font-display);font-size:20px;font-weight:300;color:var(--cream);">Amara Okonkwo</div>
+      <div style="font-size:11px;color:#8A7B76;margin-top:4px;">amara@email.com</div>
+    </div>
+    <div style="display:flex;border-bottom:0.5px solid var(--border);">
+      <div style="flex:1;text-align:center;padding:12px;background:var(--cr-light);"><div style="font-size:18px;font-weight:500;color:var(--cr);">12</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ch-soft);">Orders</div></div>
+      <div style="flex:1;text-align:center;padding:12px;border-left:0.5px solid var(--border);"><div style="font-size:18px;font-weight:500;">5</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ch-soft);">Wishlist</div></div>
+      <div style="flex:1;text-align:center;padding:12px;border-left:0.5px solid var(--border);"><div style="font-size:18px;font-weight:500;">2</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ch-soft);">Reviews</div></div>
+    </div>
+    <div style="padding:0 14px;">
+      <div class="m-menu-item"><span>📋 My Orders</span><span style="color:var(--ch-soft);">›</span></div>
+      <div class="m-menu-item"><span>❤️ Saved Items</span><span style="color:var(--ch-soft);">›</span></div>
+      <div class="m-menu-item"><span>📍 Delivery Addresses</span><span style="color:var(--ch-soft);">›</span></div>
+      <div class="m-menu-item"><span>🔔 Notifications</span><span style="color:var(--ch-soft);">›</span></div>
+      <div class="m-menu-item"><span>💳 Payment Methods</span><span style="color:var(--ch-soft);">›</span></div>
+      <div class="m-menu-item" style="color:var(--cr);"><span>Sign Out</span><span>›</span></div>
+    </div>
+    <div class="m-nav-bottom">
+      <div class="m-nav-item"><span style="font-size:15px;">🏠</span>Home</div>
+      <div class="m-nav-item"><span style="font-size:15px;">🔍</span>Shop</div>
+      <div class="m-nav-item"><span style="font-size:15px;">♡</span>Saved</div>
+      <div class="m-nav-item"><span style="font-size:15px;">🛍</span>Cart</div>
+      <div class="m-nav-item active"><span style="font-size:15px;">👤</span>Account<div class="m-nav-dot"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-band">
+  <div style="font-family:var(--font-display);font-size:36px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:6px;">Mhiras Collection</div>
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6B5E5A;">12 Screens · Desktop + Mobile Prototype</div>
+  <div style="margin-top:14px;font-size:11px;color:#3D3330;">Screens covered: Homepage · Catalog · Product Detail · Cart · Checkout · Order Confirmation & Tracking · Admin Dashboard · Admin Product Manager · Mobile Home · Mobile Product Detail · Mobile Cart · Mobile Account</div>
+</div>
+
+</body>
+</html>

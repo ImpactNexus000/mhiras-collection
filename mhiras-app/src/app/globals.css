@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* ========================================
+   MHIRAS COLLECTION — Design System
+   ======================================== */
+
+@theme inline {
+  /* Brand Colors */
+  --color-copper: #C4683A;
+  --color-copper-light: #F2E8E0;
+  --color-copper-dark: #8B3E1E;
+
+  /* Neutrals */
+  --color-charcoal: #1A1614;
+  --color-charcoal-mid: #3D3330;
+  --color-charcoal-soft: #6B5E5A;
+
+  /* Backgrounds */
+  --color-cream: #FAF7F4;
+  --color-cream-dark: #EDE7E1;
+  --color-surface: #F5F0EB;
+
+  /* Borders */
+  --color-border: #E0D5CE;
+
+  /* Semantic */
+  --color-success: #3B6D11;
+  --color-warning: #BA7517;
+  --color-info: #185FA5;
+  --color-danger: #A32D2D;
+
+  /* Gold accent */
+  --color-gold: #C4A882;
+
+  /* Fonts */
+  --font-display: var(--font-cormorant), 'Cormorant Garamond', serif;
+  --font-body: var(--font-dm-sans), 'DM Sans', sans-serif;
+}
+
+/* Base body styles */
+body {
+  font-family: var(--font-body);
+  background: var(--color-surface);
+  color: var(--color-charcoal);
+}
+
+/* ========================================
+   Custom Utility Classes
+   ======================================== */
+
+/* Form inputs */
+.input-base {
+  border: 0.5px solid var(--color-border);
+  padding: 12px 14px;
+  font-size: 15px;
+  background: white;
+  outline: none;
+  width: 100%;
+  font-family: var(--font-body);
+  transition: border-color 0.2s;
+}
+.input-base:focus {
+  border-color: var(--color-copper);
+}
+
+/* Status pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+.pill-delivered { background: #EAF3DE; color: #3B6D11; }
+.pill-pending   { background: #FAEEDA; color: #BA7517; }
+.pill-processing{ background: #E6F1FB; color: #185FA5; }
+.pill-cancelled { background: #FCEBEB; color: #A32D2D; }
+.pill-active    { background: #EAF3DE; color: #3B6D11; }
+
+/* Announcement bar scrolling (optional) */
+@keyframes slide {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(-100%); }
+}

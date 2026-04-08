@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mhiras Collection — Extended UI Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --cr:#C4683A;--cr-light:#F2E8E0;--cr-dark:#8B3E1E;
+  --ch:#1A1614;--ch-mid:#3D3330;--ch-soft:#6B5E5A;
+  --cream:#FAF7F4;--cream-dark:#EDE7E1;
+  --white:#FFFFFF;--border:#E0D5CE;
+  --font-display:'Cormorant Garamond',serif;
+  --font-body:'DM Sans',sans-serif;
+  --success:#3B6D11;--warning:#BA7517;--info:#185FA5;--danger:#A32D2D;
+}
+body{font-family:var(--font-body);background:#F5F0EB;color:var(--ch);padding:2rem;}
+h1{font-family:var(--font-display);font-size:42px;font-weight:300;font-style:italic;text-align:center;margin-bottom:6px;}
+.tagline{text-align:center;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:3rem;}
+.screen-label{font-family:var(--font-body);font-size:11px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--cr);padding:2rem 0 0.5rem;display:flex;align-items:center;gap:8px;max-width:1100px;margin:0 auto;}
+.screen-label::after{content:'';flex:1;height:0.5px;background:var(--border);}
+.screen-subtitle{font-family:var(--font-display);font-size:26px;font-weight:300;font-style:italic;color:var(--ch);margin-bottom:1.25rem;max-width:1100px;margin-left:auto;margin-right:auto;}
+.desktop-frame{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--white);margin:0 auto 2.5rem;max-width:1100px;box-shadow:0 4px 40px rgba(26,22,20,0.08);}
+.mobile-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1100px;margin:0 auto 2.5rem;}
+.mobile-frame{border:0.5px solid var(--border);border-radius:16px;overflow:hidden;background:var(--white);box-shadow:0 4px 30px rgba(26,22,20,0.08);}
+.mobile-notch{background:var(--ch);height:34px;display:flex;align-items:center;justify-content:center;}
+.notch-pill{background:#0D0D0D;width:60px;height:16px;border-radius:8px;}
+.nav-bar{display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;background:var(--ch);color:var(--cream);}
+.nav-logo{font-family:var(--font-display);font-size:22px;font-weight:300;letter-spacing:3px;text-transform:uppercase;color:var(--cream);}
+.nav-links{display:flex;gap:24px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#8A7B76;}
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--cr);color:white;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:12px 24px;border:none;cursor:pointer;width:fit-content;}
+.btn-outline{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--cream);font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:12px 24px;border:0.5px solid #4A3E3A;cursor:pointer;width:fit-content;}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;background:var(--ch);color:var(--cream);font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:12px 24px;border:none;cursor:pointer;width:fit-content;}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--ch);font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;padding:12px 24px;border:0.5px solid var(--border);cursor:pointer;width:fit-content;}
+.form-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);}
+.form-input{border:0.5px solid var(--border);padding:10px;font-size:13px;background:var(--white);outline:none;width:100%;font-family:var(--font-body);}
+.form-input:focus{border-color:var(--cr);}
+.divider{height:0.5px;background:var(--border);margin:1rem 0;}
+.status-pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;letter-spacing:0.5px;text-transform:uppercase;padding:3px 8px;border-radius:2px;}
+.status-pill.delivered{background:#EAF3DE;color:#3B6D11;}
+.status-pill.pending{background:#FAEEDA;color:#BA7517;}
+.status-pill.processing{background:#E6F1FB;color:#185FA5;}
+.status-pill.cancelled{background:#FCEBEB;color:#A32D2D;}
+.status-pill.active{background:#EAF3DE;color:#3B6D11;}
+.status-pill.expired{background:#FCEBEB;color:#A32D2D;}
+.status-pill.scheduled{background:#E6F1FB;color:#185FA5;}
+.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:460px;}
+.admin-sidebar{background:var(--ch);padding:1rem 0;}
+.admin-logo{font-family:var(--font-display);font-size:18px;font-weight:300;letter-spacing:2px;color:var(--cream);padding:0.5rem 1.25rem 1rem;text-transform:uppercase;border-bottom:0.5px solid #2A2220;}
+.admin-logo span{color:var(--cr);font-style:italic;}
+.admin-nav-item{display:flex;align-items:center;gap:10px;padding:11px 1.25rem;font-size:13px;color:#8A7B76;cursor:pointer;}
+.admin-nav-item.active{color:var(--cream);background:#2A2220;border-left:2px solid var(--cr);}
+.admin-content{background:var(--cream);padding:1.5rem;overflow-y:auto;}
+.admin-title{font-family:var(--font-display);font-size:26px;font-weight:300;font-style:italic;}
+.admin-table{width:100%;background:var(--white);border:0.5px solid var(--border);border-radius:8px;overflow:hidden;font-size:13px;border-collapse:collapse;}
+.admin-table th{background:var(--cream-dark);padding:10px 14px;text-align:left;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);font-weight:500;}
+.admin-table td{padding:10px 14px;border-top:0.5px solid var(--border);}
+.kpi-card{background:var(--white);border:0.5px solid var(--border);padding:1rem;border-radius:8px;}
+.kpi-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-bottom:6px;}
+.kpi-value{font-size:24px;font-weight:500;color:var(--ch);}
+.kpi-change{font-size:11px;margin-top:3px;}
+.kpi-change.up{color:var(--success);}
+.kpi-change.down{color:#A32D2D;}
+.m-btn{display:inline-flex;align-items:center;gap:6px;background:var(--cr);color:white;font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:10px 18px;border:none;cursor:pointer;}
+.m-nav-bottom{display:flex;background:var(--ch);padding:10px 0 16px;}
+.m-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9px;letter-spacing:0.5px;text-transform:uppercase;color:#8A7B76;cursor:pointer;}
+.m-nav-item.active{color:var(--cr);}
+.m-nav-dot{width:4px;height:4px;border-radius:50%;background:var(--cr);}
+.chart-area{background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;height:110px;}
+.bar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.bar{width:100%;background:var(--cr-light);border-radius:2px 2px 0 0;transition:background 0.2s;}
+.bar:hover{background:var(--cr);}
+.bar-label{font-size:9px;color:var(--ch-soft);}
+.product-img-placeholder{width:70px;height:100px;background:linear-gradient(160deg,#C4A882,#A88E6E);opacity:0.6;}
+.footer-band{background:var(--ch);padding:2rem;text-align:center;max-width:1100px;margin:0 auto;border-radius:12px;}
+
+/* Tabs */
+.tab-bar{display:flex;border-bottom:0.5px solid var(--border);}
+.tab{padding:12px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);cursor:pointer;border-bottom:2px solid transparent;}
+.tab.active{color:var(--cr);border-bottom-color:var(--cr);}
+
+/* Toggle switch */
+.toggle{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;}
+.toggle.on{background:var(--cr);}
+.toggle::after{content:'';width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left 0.2s;}
+.toggle.on::after{left:18px;}
+</style>
+</head>
+<body>
+
+<h1>Mhiras Collection</h1>
+<p class="tagline">Extended Prototype — Additional Screens &middot; Desktop + Mobile</p>
+
+<!-- ============================================================ -->
+<!-- SECTION A: AUTHENTICATION SCREENS                            -->
+<!-- ============================================================ -->
+
+<!-- ========== A1: SIGN IN — DESKTOP ========== -->
+<div class="screen-label">A1 — Desktop &middot; Sign In</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span>About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span>Search</span><span style="color:var(--cream);">&#9825;</span><span>&#128717; 0</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;min-height:480px;">
+    <!-- Left: Brand panel -->
+    <div style="background:var(--ch);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;position:relative;overflow:hidden;">
+      <div style="position:absolute;font-family:var(--font-display);font-size:280px;font-weight:300;color:#1E1614;top:50%;left:50%;transform:translate(-50%,-50%);font-style:italic;opacity:0.6;">M</div>
+      <div style="z-index:1;text-align:center;">
+        <div style="font-family:var(--font-display);font-size:48px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:8px;">Welcome Back</div>
+        <div style="font-size:13px;color:#8A7B76;line-height:1.6;">Your curated wardrobe awaits.<br>Sign in to continue shopping.</div>
+      </div>
+    </div>
+    <!-- Right: Form -->
+    <div style="padding:3rem;display:flex;flex-direction:column;justify-content:center;max-width:400px;margin:0 auto;width:100%;">
+      <div style="font-family:var(--font-display);font-size:32px;font-weight:300;font-style:italic;margin-bottom:6px;">Sign In</div>
+      <div style="font-size:12px;color:var(--ch-soft);margin-bottom:2rem;">Enter your details to access your account</div>
+
+      <div style="margin-bottom:14px;">
+        <div class="form-label" style="margin-bottom:4px;">Email or Phone Number</div>
+        <input class="form-input" placeholder="amara@email.com or +234 801 234 5678">
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div class="form-label">Password</div>
+          <span style="font-size:11px;color:var(--cr);cursor:pointer;">Forgot password?</span>
+        </div>
+        <input class="form-input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;">
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ch-soft);margin-bottom:1.5rem;cursor:pointer;">
+        <input type="checkbox"> Remember me
+      </label>
+      <div class="btn-primary" style="width:100%;justify-content:center;margin-bottom:1rem;">Sign In &rarr;</div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin:0.5rem 0;">
+        <div style="flex:1;height:0.5px;background:var(--border);"></div>
+        <span style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:1px;">Or continue with</span>
+        <div style="flex:1;height:0.5px;background:var(--border);"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin:1rem 0;">
+        <div style="flex:1;padding:10px;border:0.5px solid var(--border);text-align:center;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span style="font-size:16px;">G</span> Google
+        </div>
+        <div style="flex:1;padding:10px;border:0.5px solid var(--border);text-align:center;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span style="font-size:16px;">&#9742;</span> Phone OTP
+        </div>
+      </div>
+
+      <div style="text-align:center;font-size:12px;color:var(--ch-soft);margin-top:1rem;">
+        Don't have an account? <span style="color:var(--cr);cursor:pointer;font-weight:500;">Create one</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== A2: SIGN UP — DESKTOP ========== -->
+<div class="screen-label">A2 — Desktop &middot; Sign Up</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span>About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span>Search</span><span style="color:var(--cream);">&#9825;</span><span>&#128717; 0</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;min-height:520px;">
+    <div style="background:var(--ch);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem;position:relative;overflow:hidden;">
+      <div style="position:absolute;font-family:var(--font-display);font-size:280px;font-weight:300;color:#1E1614;top:50%;left:50%;transform:translate(-50%,-50%);font-style:italic;opacity:0.6;">M</div>
+      <div style="z-index:1;text-align:center;">
+        <div style="font-family:var(--font-display);font-size:48px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:8px;">Join the Collection</div>
+        <div style="font-size:13px;color:#8A7B76;line-height:1.6;">Create your account and never miss<br>a drop of curated thrift fashion.</div>
+        <div style="margin-top:2rem;display:flex;flex-direction:column;gap:12px;text-align:left;">
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#8A7B76;">
+            <div style="width:24px;height:24px;border-radius:50%;border:0.5px solid var(--cr);display:flex;align-items:center;justify-content:center;color:var(--cr);font-size:10px;">&#10003;</div>
+            Get notified about new arrivals
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#8A7B76;">
+            <div style="width:24px;height:24px;border-radius:50%;border:0.5px solid var(--cr);display:flex;align-items:center;justify-content:center;color:var(--cr);font-size:10px;">&#10003;</div>
+            Save items to your wishlist
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#8A7B76;">
+            <div style="width:24px;height:24px;border-radius:50%;border:0.5px solid var(--cr);display:flex;align-items:center;justify-content:center;color:var(--cr);font-size:10px;">&#10003;</div>
+            Track your orders in real time
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:2.5rem;display:flex;flex-direction:column;justify-content:center;max-width:420px;margin:0 auto;width:100%;">
+      <div style="font-family:var(--font-display);font-size:32px;font-weight:300;font-style:italic;margin-bottom:6px;">Create Account</div>
+      <div style="font-size:12px;color:var(--ch-soft);margin-bottom:1.5rem;">It takes less than a minute</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div><div class="form-label" style="margin-bottom:4px;">First Name</div><input class="form-input" placeholder="Amara"></div>
+        <div><div class="form-label" style="margin-bottom:4px;">Last Name</div><input class="form-input" placeholder="Okonkwo"></div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="form-label" style="margin-bottom:4px;">Email Address</div>
+        <input class="form-input" placeholder="amara@email.com">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="form-label" style="margin-bottom:4px;">Phone Number (WhatsApp)</div>
+        <input class="form-input" placeholder="+234 801 234 5678">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="form-label" style="margin-bottom:4px;">Password</div>
+        <input class="form-input" type="password" placeholder="Min. 8 characters">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="form-label" style="margin-bottom:4px;">Confirm Password</div>
+        <input class="form-input" type="password" placeholder="Re-enter password">
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--ch-soft);margin-bottom:1.5rem;cursor:pointer;line-height:1.5;">
+        <input type="checkbox" style="margin-top:2px;"> I agree to the <span style="color:var(--cr);text-decoration:underline;">Terms of Service</span> and <span style="color:var(--cr);text-decoration:underline;">Privacy Policy</span>
+      </label>
+      <div class="btn-primary" style="width:100%;justify-content:center;margin-bottom:1rem;">Create Account &rarr;</div>
+      <div style="text-align:center;font-size:12px;color:var(--ch-soft);">
+        Already have an account? <span style="color:var(--cr);cursor:pointer;font-weight:500;">Sign In</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== A3: FORGOT PASSWORD — DESKTOP ========== -->
+<div class="screen-label">A3 — Desktop &middot; Forgot Password</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span>About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span>Search</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:center;min-height:420px;background:var(--cream-dark);">
+    <div style="background:var(--white);border:0.5px solid var(--border);border-radius:12px;padding:2.5rem;max-width:420px;width:100%;box-shadow:0 4px 40px rgba(26,22,20,0.06);">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px;">&#128274;</div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:300;font-style:italic;margin-bottom:6px;">Reset Password</div>
+        <div style="font-size:12px;color:var(--ch-soft);line-height:1.6;">Enter your email or phone number and we'll<br>send you a link to reset your password.</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="form-label" style="margin-bottom:4px;">Email or Phone Number</div>
+        <input class="form-input" placeholder="amara@email.com or +234 801 234 5678">
+      </div>
+      <div class="btn-primary" style="width:100%;justify-content:center;margin-bottom:1rem;">Send Reset Link &rarr;</div>
+      <div style="text-align:center;font-size:12px;color:var(--ch-soft);">
+        <span style="color:var(--cr);cursor:pointer;">&#8592; Back to Sign In</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION B: ADDITIONAL CUSTOMER SCREENS                       -->
+<!-- ============================================================ -->
+
+<!-- ========== B1: SEARCH RESULTS — DESKTOP ========== -->
+<div class="screen-label">B1 — Desktop &middot; Search Results</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span>About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span style="color:var(--cream);">&#9825;</span><span>&#128717; 3</span><span>Account</span>
+    </div>
+  </div>
+  <!-- Search bar -->
+  <div style="background:var(--ch);padding:1.5rem 2rem;">
+    <div style="max-width:600px;margin:0 auto;position:relative;">
+      <input class="form-input" placeholder="Search for dresses, bags, shoes..." style="width:100%;padding:14px 18px 14px 44px;font-size:14px;border-radius:4px;border:none;" value="vintage dress">
+      <span style="position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--ch-soft);">&#128269;</span>
+      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--ch-soft);cursor:pointer;text-transform:uppercase;letter-spacing:1px;">Clear</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+      <span style="font-size:11px;color:#8A7B76;padding:4px 10px;border:0.5px solid #3D3330;cursor:pointer;border-radius:2px;">Popular: Bags</span>
+      <span style="font-size:11px;color:#8A7B76;padding:4px 10px;border:0.5px solid #3D3330;cursor:pointer;border-radius:2px;">Silk blouse</span>
+      <span style="font-size:11px;color:#8A7B76;padding:4px 10px;border:0.5px solid #3D3330;cursor:pointer;border-radius:2px;">Under &#8358;5,000</span>
+      <span style="font-size:11px;color:#8A7B76;padding:4px 10px;border:0.5px solid #3D3330;cursor:pointer;border-radius:2px;">Size M</span>
+    </div>
+  </div>
+  <!-- Results -->
+  <div style="padding:1rem 1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <span style="font-size:13px;color:var(--ch-soft);">Showing <strong style="color:var(--ch);">8 results</strong> for "<strong style="color:var(--ch);">vintage dress</strong>"</span>
+      <select style="font-size:12px;padding:6px 10px;border:0.5px solid var(--border);background:var(--white);color:var(--ch);cursor:pointer;"><option>Relevance</option><option>Price: Low&ndash;High</option><option>Newest</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);">
+      <div style="background:var(--white);cursor:pointer;">
+        <div style="height:160px;background:linear-gradient(160deg,#EDE7E1,#D9CEC5);display:flex;align-items:center;justify-content:center;position:relative;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#C4A882,#A88E6E);opacity:0.6;"></div>
+          <div style="position:absolute;top:8px;left:8px;background:var(--cr);color:white;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;">New</div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Dresses &middot; Size M</div>
+          <div style="font-size:13px;font-weight:500;margin:2px 0;">Vintage Wrap Dress</div>
+          <span style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;8,500</span>
+          <span style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-left:4px;">&#8358;18,000</span>
+        </div>
+      </div>
+      <div style="background:var(--white);cursor:pointer;">
+        <div style="height:160px;background:linear-gradient(160deg,#D9CEC5,#C4A882);display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#B89470,#8B6A4E);opacity:0.6;"></div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Dresses &middot; Size S</div>
+          <div style="font-size:13px;font-weight:500;margin:2px 0;">Vintage A-Line Dress</div>
+          <span style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;6,200</span>
+          <span style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-left:4px;">&#8358;14,000</span>
+        </div>
+      </div>
+      <div style="background:var(--white);cursor:pointer;">
+        <div style="height:160px;background:linear-gradient(160deg,#EDE7E1,#C4A882);display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#D4B896,#A88E6E);opacity:0.5;"></div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Dresses &middot; Size L</div>
+          <div style="font-size:13px;font-weight:500;margin:2px 0;">Vintage Shirt Dress</div>
+          <span style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;7,800</span>
+        </div>
+      </div>
+      <div style="background:var(--white);cursor:pointer;">
+        <div style="height:160px;background:linear-gradient(160deg,#C4A882,#8B6A4E);display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#A88E6E,#6B5040);opacity:0.5;"></div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Dresses &middot; Size M</div>
+          <div style="font-size:13px;font-weight:500;margin:2px 0;">Vintage Maxi Dress</div>
+          <span style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;9,000</span>
+          <span style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-left:4px;">&#8358;25,000</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== B2: WISHLIST — DESKTOP ========== -->
+<div class="screen-label">B2 — Desktop &middot; Wishlist / Saved Items</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span>About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span style="color:var(--cr);">&#9829; 5</span><span>&#128717; 3</span><span>Account</span>
+    </div>
+  </div>
+  <div style="padding:0.75rem 1.5rem;font-size:12px;color:var(--ch-soft);border-bottom:0.5px solid var(--border);">Home / <span style="color:var(--ch);">My Wishlist</span></div>
+  <div style="padding:1.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.25rem;">
+      <div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:300;font-style:italic;">Saved Items</div>
+        <div style="font-size:12px;color:var(--ch-soft);margin-top:4px;">5 items in your wishlist</div>
+      </div>
+      <div class="btn-ghost" style="padding:8px 16px;font-size:11px;">Add All to Cart</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+      <!-- Wishlist item 1 -->
+      <div style="border:0.5px solid var(--border);background:var(--white);border-radius:4px;overflow:hidden;">
+        <div style="height:180px;background:linear-gradient(160deg,#EDE7E1,#C4A882);position:relative;display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#C4A882,#A88E6E);opacity:0.6;"></div>
+          <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;background:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);color:var(--cr);font-size:14px;">&#9829;</div>
+          <div style="position:absolute;top:8px;left:8px;background:var(--cr);color:white;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;">New</div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Dresses &middot; M</div>
+          <div style="font-size:13px;font-weight:500;margin:3px 0;">Vintage Wrap Dress</div>
+          <div><span style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;8,500</span><span style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-left:4px;">&#8358;18,000</span></div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <div style="flex:1;background:var(--ch);color:var(--cream);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px;border:none;cursor:pointer;text-align:center;">Add to Cart</div>
+            <div style="width:34px;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--ch-soft);">&#128465;</div>
+          </div>
+        </div>
+      </div>
+      <!-- Wishlist item 2 -->
+      <div style="border:0.5px solid var(--border);background:var(--white);border-radius:4px;overflow:hidden;">
+        <div style="height:180px;background:linear-gradient(160deg,#D9CEC5,#B89470);position:relative;display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#B89470,#8B6A4E);opacity:0.6;"></div>
+          <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;background:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);color:var(--cr);font-size:14px;">&#9829;</div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Bags</div>
+          <div style="font-size:13px;font-weight:500;margin:3px 0;">Leather Tote &mdash; Brown</div>
+          <div><span style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;14,000</span><span style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-left:4px;">&#8358;35,000</span></div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <div style="flex:1;background:var(--ch);color:var(--cream);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px;border:none;cursor:pointer;text-align:center;">Add to Cart</div>
+            <div style="width:34px;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--ch-soft);">&#128465;</div>
+          </div>
+        </div>
+      </div>
+      <!-- Wishlist item 3 -->
+      <div style="border:0.5px solid var(--border);background:var(--white);border-radius:4px;overflow:hidden;">
+        <div style="height:180px;background:linear-gradient(160deg,#EDE7E1,#D4C4B0);position:relative;display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#D4C4B0,#B89470);opacity:0.5;"></div>
+          <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;background:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);color:var(--cr);font-size:14px;">&#9829;</div>
+          <div style="position:absolute;bottom:8px;left:8px;background:rgba(163,45,45,0.9);color:white;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;">Sold Out</div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Tops &middot; S</div>
+          <div style="font-size:13px;font-weight:500;margin:3px 0;">Silk Blouse &mdash; Cream</div>
+          <div><span style="font-size:14px;font-weight:500;color:var(--ch-soft);">&#8358;5,200</span></div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <div style="flex:1;background:var(--cream-dark);color:var(--ch-soft);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px;border:none;text-align:center;">Sold Out</div>
+            <div style="width:34px;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--ch-soft);">&#128465;</div>
+          </div>
+        </div>
+      </div>
+      <!-- Wishlist item 4 -->
+      <div style="border:0.5px solid var(--border);background:var(--white);border-radius:4px;overflow:hidden;">
+        <div style="height:180px;background:linear-gradient(160deg,#C4A882,#8B6A4E);position:relative;display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:100px;background:linear-gradient(160deg,#A88E6E,#6B5040);opacity:0.5;"></div>
+          <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;background:var(--white);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.1);color:var(--cr);font-size:14px;">&#9829;</div>
+        </div>
+        <div style="padding:10px 12px;">
+          <div style="font-size:11px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:0.5px;">Shoes &middot; 40</div>
+          <div style="font-size:13px;font-weight:500;margin:3px 0;">Block Heel Mules</div>
+          <div><span style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;9,500</span><span style="font-size:11px;color:var(--ch-soft);text-decoration:line-through;margin-left:4px;">&#8358;24,000</span></div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <div style="flex:1;background:var(--ch);color:var(--cream);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px;border:none;cursor:pointer;text-align:center;">Add to Cart</div>
+            <div style="width:34px;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--ch-soft);">&#128465;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== B3: COLLECTIONS / LOOKBOOK — DESKTOP ========== -->
+<div class="screen-label">B3 — Desktop &middot; Collections / Lookbook</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span style="color:var(--cream);border-bottom:1px solid var(--cr);">Collections</span><span>About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span style="color:var(--cream);">&#9825;</span><span>&#128717; 3</span><span>Account</span>
+    </div>
+  </div>
+  <!-- Hero -->
+  <div style="background:var(--ch);padding:3rem 2.5rem;text-align:center;">
+    <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--cr);margin-bottom:8px;">Curated Edits</div>
+    <div style="font-family:var(--font-display);font-size:44px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:8px;">Our Collections</div>
+    <div style="font-size:13px;color:#8A7B76;max-width:480px;margin:0 auto;line-height:1.6;">Each collection is a carefully curated edit of handpicked pieces. Explore our themed selections and find your next favourite.</div>
+  </div>
+  <!-- Collection grid -->
+  <div style="padding:1.5rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <!-- Collection 1 - large -->
+      <div style="background:linear-gradient(160deg,#2A2220,#1A1614);border-radius:8px;overflow:hidden;min-height:280px;display:flex;flex-direction:column;justify-content:flex-end;padding:2rem;cursor:pointer;position:relative;">
+        <div style="position:absolute;top:14px;right:14px;font-size:11px;letter-spacing:1px;text-transform:uppercase;background:var(--cr);color:white;padding:4px 10px;">New</div>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cr);margin-bottom:6px;">Spring Edit 2026</div>
+        <div style="font-family:var(--font-display);font-size:30px;font-weight:300;color:var(--cream);font-style:italic;line-height:1.2;margin-bottom:6px;">Light Layers &<br>Fresh Prints</div>
+        <div style="font-size:12px;color:#8A7B76;margin-bottom:12px;">24 pieces &middot; Starting from &#8358;3,500</div>
+        <div class="btn-primary" style="font-size:10px;padding:8px 16px;">Shop Collection &rarr;</div>
+      </div>
+      <!-- Collection 2 -->
+      <div style="background:linear-gradient(160deg,#3D2E28,#2A1F1C);border-radius:8px;overflow:hidden;min-height:280px;display:flex;flex-direction:column;justify-content:flex-end;padding:2rem;cursor:pointer;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cr);margin-bottom:6px;">Timeless Classics</div>
+        <div style="font-family:var(--font-display);font-size:30px;font-weight:300;color:var(--cream);font-style:italic;line-height:1.2;margin-bottom:6px;">The Workwear<br>Capsule</div>
+        <div style="font-size:12px;color:#8A7B76;margin-bottom:12px;">18 pieces &middot; Starting from &#8358;4,000</div>
+        <div class="btn-primary" style="font-size:10px;padding:8px 16px;">Shop Collection &rarr;</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+      <!-- Collection 3 -->
+      <div style="background:linear-gradient(160deg,#4A3A35,#2A1F1C);border-radius:8px;overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;padding:1.5rem;cursor:pointer;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cr);margin-bottom:4px;">Bags & More</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:4px;">The Accessories Edit</div>
+        <div style="font-size:11px;color:#8A7B76;">47 pieces</div>
+      </div>
+      <!-- Collection 4 -->
+      <div style="background:linear-gradient(160deg,#2A2220,#1A1614);border-radius:8px;overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;padding:1.5rem;cursor:pointer;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#C4A882;margin-bottom:4px;">Under &#8358;5,000</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:4px;">Budget Steals</div>
+        <div style="font-size:11px;color:#8A7B76;">31 pieces</div>
+      </div>
+      <!-- Collection 5 -->
+      <div style="background:linear-gradient(160deg,#3D3330,#1A1614);border-radius:8px;overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;padding:1.5rem;cursor:pointer;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cr);margin-bottom:4px;">Men's Selection</div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:4px;">For Him</div>
+        <div style="font-size:11px;color:#8A7B76;">89 pieces</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== B4: ORDER HISTORY — DESKTOP ========== -->
+<div class="screen-label">B4 — Desktop &middot; Order History (Customer)</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span>About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span style="color:var(--cream);">&#9825;</span><span>&#128717; 3</span><span style="color:var(--cream);">Amara</span>
+    </div>
+  </div>
+  <div style="padding:0.75rem 1.5rem;font-size:12px;color:var(--ch-soft);border-bottom:0.5px solid var(--border);">Home / Account / <span style="color:var(--ch);">My Orders</span></div>
+  <div style="padding:1.5rem;">
+    <div style="font-family:var(--font-display);font-size:28px;font-weight:300;font-style:italic;margin-bottom:1.25rem;">My Orders</div>
+    <div class="tab-bar" style="margin-bottom:1.5rem;">
+      <div class="tab active">All Orders</div>
+      <div class="tab">Processing</div>
+      <div class="tab">Delivered</div>
+      <div class="tab">Cancelled</div>
+    </div>
+    <!-- Order card 1 -->
+    <div style="border:0.5px solid var(--border);border-radius:8px;background:var(--white);padding:1.25rem;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:14px;font-weight:500;">#MH-2024-0847</span>
+          <span class="status-pill processing">Processing</span>
+        </div>
+        <div style="font-size:12px;color:var(--ch-soft);">8 Apr 2026 &middot; 2:14 PM</div>
+      </div>
+      <div style="display:flex;gap:14px;padding:12px 0;border-top:0.5px solid var(--border);">
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#EDE7E1,#C4A882);flex-shrink:0;border-radius:4px;"></div>
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#C4A882,#8B6A4E);flex-shrink:0;border-radius:4px;opacity:0.8;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+          <div style="font-size:13px;">Vintage Wrap Dress, Leather Tote &mdash; Brown</div>
+          <div style="font-size:12px;color:var(--ch-soft);margin-top:3px;">2 items &middot; Total: <strong style="color:var(--cr);">&#8358;24,000</strong></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;justify-content:center;">
+          <div class="btn-primary" style="padding:8px 16px;font-size:10px;">Track Order</div>
+          <div class="btn-ghost" style="padding:8px 16px;font-size:10px;">View Details</div>
+        </div>
+      </div>
+    </div>
+    <!-- Order card 2 -->
+    <div style="border:0.5px solid var(--border);border-radius:8px;background:var(--white);padding:1.25rem;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:14px;font-weight:500;">#MH-2024-0831</span>
+          <span class="status-pill delivered">Delivered</span>
+        </div>
+        <div style="font-size:12px;color:var(--ch-soft);">2 Apr 2026</div>
+      </div>
+      <div style="display:flex;gap:14px;padding:12px 0;border-top:0.5px solid var(--border);">
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#D9CEC5,#B89470);flex-shrink:0;border-radius:4px;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+          <div style="font-size:13px;">Silk Blouse &mdash; Cream</div>
+          <div style="font-size:12px;color:var(--ch-soft);margin-top:3px;">1 item &middot; Total: <strong style="color:var(--cr);">&#8358;5,200</strong></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;justify-content:center;">
+          <div class="btn-ghost" style="padding:8px 16px;font-size:10px;">View Details</div>
+          <div class="btn-ghost" style="padding:8px 16px;font-size:10px;">Buy Again</div>
+        </div>
+      </div>
+    </div>
+    <!-- Order card 3 -->
+    <div style="border:0.5px solid var(--border);border-radius:8px;background:var(--white);padding:1.25rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:14px;font-weight:500;">#MH-2024-0798</span>
+          <span class="status-pill cancelled">Cancelled</span>
+        </div>
+        <div style="font-size:12px;color:var(--ch-soft);">25 Mar 2026</div>
+      </div>
+      <div style="display:flex;gap:14px;padding:12px 0;border-top:0.5px solid var(--border);">
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#EDE7E1,#D4C4B0);flex-shrink:0;border-radius:4px;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+          <div style="font-size:13px;">Structured Handbag</div>
+          <div style="font-size:12px;color:var(--ch-soft);margin-top:3px;">1 item &middot; Refunded: <strong>&#8358;11,000</strong></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;justify-content:center;">
+          <div class="btn-ghost" style="padding:8px 16px;font-size:10px;">View Details</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== B5: ABOUT US — DESKTOP ========== -->
+<div class="screen-label">B5 — Desktop &middot; About Us</div>
+<div class="desktop-frame">
+  <div class="nav-bar">
+    <div class="nav-logo">Mhiras Collection</div>
+    <div class="nav-links"><span>Shop</span><span>New In</span><span>Collections</span><span style="color:var(--cream);border-bottom:1px solid var(--cr);">About</span></div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:13px;color:#8A7B76;">
+      <span style="color:var(--cream);">&#9825;</span><span>&#128717; 3</span><span>Account</span>
+    </div>
+  </div>
+  <!-- Hero section -->
+  <div style="background:var(--ch);padding:3rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem;min-height:340px;">
+    <div style="display:flex;flex-direction:column;justify-content:center;">
+      <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--cr);margin-bottom:10px;">Our Story</div>
+      <div style="font-family:var(--font-display);font-size:42px;font-weight:300;color:var(--cream);font-style:italic;line-height:1.1;margin-bottom:1rem;">Fashion Deserves<br>a <em style="color:#C4A882;">Second Life</em></div>
+      <div style="font-size:13px;color:#8A7B76;line-height:1.8;max-width:420px;">
+        Mhiras Collection started as a passion project &mdash; curating beautiful pre-loved fashion pieces and sharing them on WhatsApp. What began as a small thrift page has grown into a community of fashion-forward individuals who believe style shouldn't break the bank, and great pieces deserve a second life.
+      </div>
+    </div>
+    <div style="background:linear-gradient(160deg,#3D2E28,#2A1F1C);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+      <div style="text-align:center;">
+        <div style="font-family:var(--font-display);font-size:80px;font-weight:300;color:#C4A882;font-style:italic;opacity:0.4;">M</div>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#6B5040;">Founder Photo</div>
+      </div>
+    </div>
+  </div>
+  <!-- Values -->
+  <div style="padding:2rem 2.5rem;">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div style="font-family:var(--font-display);font-size:28px;font-weight:300;font-style:italic;">What We Stand For</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;">
+      <div style="text-align:center;padding:1.5rem 1rem;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px;">&#10003;</div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:6px;">Quality First</div>
+        <div style="font-size:12px;color:var(--ch-soft);line-height:1.6;">Every item is hand-inspected. We only list pieces we'd wear ourselves.</div>
+      </div>
+      <div style="text-align:center;padding:1.5rem 1rem;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px;">&#9851;</div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:6px;">Sustainable Fashion</div>
+        <div style="font-size:12px;color:var(--ch-soft);line-height:1.6;">Pre-loved fashion reduces waste. Every purchase is a step towards a greener future.</div>
+      </div>
+      <div style="text-align:center;padding:1.5rem 1rem;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px;">&#128176;</div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:6px;">Honest Pricing</div>
+        <div style="font-size:12px;color:var(--ch-soft);line-height:1.6;">Premium pieces at fair prices. No hidden fees, no inflated markups.</div>
+      </div>
+      <div style="text-align:center;padding:1.5rem 1rem;">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px;">&#128149;</div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:6px;">Community Driven</div>
+        <div style="font-size:12px;color:var(--ch-soft);line-height:1.6;">Built by our customers' feedback. Your voice shapes what we curate next.</div>
+      </div>
+    </div>
+  </div>
+  <!-- Stats banner -->
+  <div style="background:var(--cr-light);display:grid;grid-template-columns:repeat(4,1fr);text-align:center;padding:1.5rem;">
+    <div><div style="font-family:var(--font-display);font-size:36px;font-weight:300;color:var(--cr-dark);">2,400+</div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-top:4px;">Items Sold</div></div>
+    <div><div style="font-family:var(--font-display);font-size:36px;font-weight:300;color:var(--cr-dark);">800+</div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-top:4px;">Happy Customers</div></div>
+    <div><div style="font-family:var(--font-display);font-size:36px;font-weight:300;color:var(--cr-dark);">4.8</div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-top:4px;">Average Rating</div></div>
+    <div><div style="font-family:var(--font-display);font-size:36px;font-weight:300;color:var(--cr-dark);">36</div><div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ch-soft);margin-top:4px;">States Delivered</div></div>
+  </div>
+  <!-- Contact / FAQ -->
+  <div style="padding:2rem 2.5rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;">
+      <div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:300;font-style:italic;margin-bottom:1rem;">Get in Touch</div>
+        <div style="font-size:13px;line-height:2;color:var(--ch-soft);">
+          <div><strong style="color:var(--ch);">WhatsApp:</strong> +234 801 234 5678</div>
+          <div><strong style="color:var(--ch);">Email:</strong> hello@mhirascollection.com</div>
+          <div><strong style="color:var(--ch);">Instagram:</strong> @mhirascollection</div>
+          <div><strong style="color:var(--ch);">Hours:</strong> Mon&ndash;Sat, 9 AM &ndash; 8 PM</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-display);font-size:22px;font-weight:300;font-style:italic;margin-bottom:1rem;">FAQ</div>
+        <div style="border:0.5px solid var(--border);border-radius:4px;overflow:hidden;">
+          <div style="padding:12px 14px;font-size:13px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;cursor:pointer;background:var(--cream-dark);"><span>How do you source your items?</span><span style="color:var(--cr);">+</span></div>
+          <div style="padding:12px 14px;font-size:13px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;cursor:pointer;"><span>What is your return policy?</span><span style="color:var(--cr);">+</span></div>
+          <div style="padding:12px 14px;font-size:13px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;cursor:pointer;"><span>How long does delivery take?</span><span style="color:var(--cr);">+</span></div>
+          <div style="padding:12px 14px;font-size:13px;display:flex;justify-content:space-between;cursor:pointer;"><span>Can I pay on delivery?</span><span style="color:var(--cr);">+</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION C: MOBILE — ADDITIONAL SCREENS                       -->
+<!-- ============================================================ -->
+
+<!-- ========== C1–C2: MOBILE AUTH ========== -->
+<div class="screen-label">C1&ndash;C2 — Mobile &middot; Sign In + Sign Up</div>
+<div class="mobile-row">
+  <!-- Mobile Sign In -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="background:var(--ch);padding:2rem 1.25rem;text-align:center;">
+      <div style="font-family:var(--font-display);font-size:28px;font-weight:300;letter-spacing:3px;color:var(--cream);text-transform:uppercase;margin-bottom:4px;">Mhiras</div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--cr);">Collection</div>
+    </div>
+    <div style="padding:1.25rem;">
+      <div style="font-family:var(--font-display);font-size:24px;font-weight:300;font-style:italic;margin-bottom:4px;">Welcome Back</div>
+      <div style="font-size:11px;color:var(--ch-soft);margin-bottom:1.25rem;">Sign in to continue shopping</div>
+      <div style="margin-bottom:12px;">
+        <div class="form-label" style="margin-bottom:4px;">Email or Phone</div>
+        <input class="form-input" placeholder="amara@email.com" style="font-size:14px;padding:12px;">
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <div class="form-label">Password</div>
+          <span style="font-size:10px;color:var(--cr);cursor:pointer;">Forgot?</span>
+        </div>
+        <input class="form-input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" style="font-size:14px;padding:12px;">
+      </div>
+      <div class="m-btn" style="width:100%;justify-content:center;margin:1rem 0 0.75rem;padding:12px;">Sign In &rarr;</div>
+      <div style="display:flex;align-items:center;gap:10px;margin:0.75rem 0;">
+        <div style="flex:1;height:0.5px;background:var(--border);"></div>
+        <span style="font-size:10px;color:var(--ch-soft);text-transform:uppercase;letter-spacing:1px;">or</span>
+        <div style="flex:1;height:0.5px;background:var(--border);"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;padding:10px;border:0.5px solid var(--border);text-align:center;font-size:11px;cursor:pointer;">Google</div>
+        <div style="flex:1;padding:10px;border:0.5px solid var(--border);text-align:center;font-size:11px;cursor:pointer;">Phone OTP</div>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--ch-soft);margin-top:1rem;">
+        No account? <span style="color:var(--cr);font-weight:500;">Create one</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Sign Up -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:17px;color:var(--ch-soft);">&larr;</span>
+      <span style="font-family:var(--font-display);font-size:15px;font-style:italic;">Create Account</span>
+      <span></span>
+    </div>
+    <div style="padding:1.25rem;">
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:300;font-style:italic;margin-bottom:4px;">Join Mhiras</div>
+      <div style="font-size:11px;color:var(--ch-soft);margin-bottom:1.25rem;">Create your account in under a minute</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><div class="form-label" style="margin-bottom:3px;font-size:10px;">First Name</div><input class="form-input" placeholder="Amara" style="padding:10px;font-size:13px;"></div>
+        <div><div class="form-label" style="margin-bottom:3px;font-size:10px;">Last Name</div><input class="form-input" placeholder="Okonkwo" style="padding:10px;font-size:13px;"></div>
+      </div>
+      <div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:3px;font-size:10px;">Email</div><input class="form-input" placeholder="amara@email.com" style="padding:10px;font-size:13px;"></div>
+      <div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:3px;font-size:10px;">Phone (WhatsApp)</div><input class="form-input" placeholder="+234 801 234 5678" style="padding:10px;font-size:13px;"></div>
+      <div style="margin-bottom:10px;"><div class="form-label" style="margin-bottom:3px;font-size:10px;">Password</div><input class="form-input" type="password" placeholder="Min. 8 characters" style="padding:10px;font-size:13px;"></div>
+      <label style="display:flex;align-items:flex-start;gap:6px;font-size:10px;color:var(--ch-soft);margin-bottom:1rem;line-height:1.5;">
+        <input type="checkbox" style="margin-top:2px;"> I agree to the <span style="color:var(--cr);">Terms</span> and <span style="color:var(--cr);">Privacy Policy</span>
+      </label>
+      <div class="m-btn" style="width:100%;justify-content:center;padding:12px;">Create Account &rarr;</div>
+      <div style="text-align:center;font-size:11px;color:var(--ch-soft);margin-top:0.75rem;">
+        Have an account? <span style="color:var(--cr);font-weight:500;">Sign In</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== C3–C4: MOBILE CHECKOUT + ORDER TRACKING ========== -->
+<div class="screen-label">C3&ndash;C4 — Mobile &middot; Checkout + Order Tracking</div>
+<div class="mobile-row">
+  <!-- Mobile Checkout -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:17px;color:var(--ch-soft);">&larr;</span>
+      <span style="font-family:var(--font-display);font-size:15px;font-style:italic;">Checkout</span>
+      <span style="font-size:10px;color:var(--ch-soft);">&#128274; Secure</span>
+    </div>
+    <!-- Progress steps -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;background:var(--cream-dark);border-bottom:0.5px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div style="width:20px;height:20px;border-radius:50%;background:var(--cr);color:white;font-size:9px;display:flex;align-items:center;justify-content:center;">1</div>
+        <span style="font-size:10px;color:var(--cr);font-weight:500;letter-spacing:0.5px;">DELIVERY</span>
+      </div>
+      <div style="width:20px;height:0.5px;background:var(--border);"></div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div style="width:20px;height:20px;border-radius:50%;border:0.5px solid var(--border);color:var(--ch-soft);font-size:9px;display:flex;align-items:center;justify-content:center;">2</div>
+        <span style="font-size:10px;color:var(--ch-soft);letter-spacing:0.5px;">PAYMENT</span>
+      </div>
+      <div style="width:20px;height:0.5px;background:var(--border);"></div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <div style="width:20px;height:20px;border-radius:50%;border:0.5px solid var(--border);color:var(--ch-soft);font-size:9px;display:flex;align-items:center;justify-content:center;">3</div>
+        <span style="font-size:10px;color:var(--ch-soft);letter-spacing:0.5px;">CONFIRM</span>
+      </div>
+    </div>
+    <div style="padding:14px;overflow-y:auto;">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cr);margin-bottom:10px;font-weight:500;">Delivery Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div><div class="form-label" style="margin-bottom:3px;font-size:10px;">First Name</div><input class="form-input" value="Amara" style="padding:10px;font-size:13px;"></div>
+        <div><div class="form-label" style="margin-bottom:3px;font-size:10px;">Last Name</div><input class="form-input" value="Okonkwo" style="padding:10px;font-size:13px;"></div>
+      </div>
+      <div style="margin-bottom:8px;"><div class="form-label" style="margin-bottom:3px;font-size:10px;">Phone</div><input class="form-input" value="+234 801 234 5678" style="padding:10px;font-size:13px;"></div>
+      <div style="margin-bottom:8px;"><div class="form-label" style="margin-bottom:3px;font-size:10px;">Address</div><input class="form-input" value="14 Adeniyi Jones Ave, Ikeja" style="padding:10px;font-size:13px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div><div class="form-label" style="margin-bottom:3px;font-size:10px;">State</div><select class="form-input" style="padding:10px;font-size:13px;"><option>Lagos</option></select></div>
+        <div><div class="form-label" style="margin-bottom:3px;font-size:10px;">LGA</div><input class="form-input" value="Ikeja" style="padding:10px;font-size:13px;"></div>
+      </div>
+      <!-- Order summary mini -->
+      <div style="background:var(--cream-dark);padding:10px;border-radius:4px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>2 items</span><span>&#8358;22,500</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Delivery</span><span>&#8358;1,500</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:500;border-top:0.5px solid var(--border);padding-top:6px;"><span>Total</span><span style="color:var(--cr);">&#8358;24,000</span></div>
+      </div>
+      <div class="m-btn" style="width:100%;justify-content:center;padding:12px;">Continue to Payment &rarr;</div>
+    </div>
+  </div>
+
+  <!-- Mobile Order Tracking -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:17px;color:var(--ch-soft);">&larr;</span>
+      <span style="font-family:var(--font-display);font-size:15px;font-style:italic;">Track Order</span>
+      <span style="font-size:11px;color:var(--cr);">Help</span>
+    </div>
+    <!-- Order header -->
+    <div style="background:var(--ch);padding:1.25rem;text-align:center;">
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--cr);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:16px;color:white;">&#10003;</div>
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:300;color:var(--cream);font-style:italic;">Order Confirmed!</div>
+      <div style="font-size:11px;color:#8A7B76;margin-top:4px;">#MH-2024-0847</div>
+    </div>
+    <!-- Tracking timeline -->
+    <div style="padding:1.25rem;">
+      <div style="font-size:12px;font-weight:500;margin-bottom:14px;">Delivery Progress</div>
+      <!-- Step 1 - done -->
+      <div style="display:flex;gap:12px;padding-bottom:18px;position:relative;">
+        <div style="position:absolute;left:11px;top:26px;bottom:0;width:0.5px;background:var(--cr);"></div>
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--cr);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:10px;">&#10003;</div>
+        <div><div style="font-size:12px;font-weight:500;">Order Placed</div><div style="font-size:10px;color:var(--ch-soft);margin-top:2px;">Wed, 8 Apr &middot; 2:14 PM</div></div>
+      </div>
+      <!-- Step 2 - done -->
+      <div style="display:flex;gap:12px;padding-bottom:18px;position:relative;">
+        <div style="position:absolute;left:11px;top:26px;bottom:0;width:0.5px;background:var(--cr);"></div>
+        <div style="width:24px;height:24px;border-radius:50%;background:var(--cr);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:10px;">&#10003;</div>
+        <div><div style="font-size:12px;font-weight:500;">Payment Confirmed</div><div style="font-size:10px;color:var(--ch-soft);margin-top:2px;">Wed, 8 Apr &middot; 2:17 PM</div></div>
+      </div>
+      <!-- Step 3 - active -->
+      <div style="display:flex;gap:12px;padding-bottom:18px;position:relative;">
+        <div style="position:absolute;left:11px;top:26px;bottom:0;width:0.5px;background:var(--border);"></div>
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid var(--cr);background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--cr);"></div>
+        </div>
+        <div><div style="font-size:12px;font-weight:500;color:var(--cr);">Being Packaged</div><div style="font-size:10px;color:var(--ch-soft);margin-top:2px;">In progress...</div></div>
+      </div>
+      <!-- Step 4 - pending -->
+      <div style="display:flex;gap:12px;padding-bottom:18px;position:relative;">
+        <div style="position:absolute;left:11px;top:26px;bottom:0;width:0.5px;background:var(--border);"></div>
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--white);flex-shrink:0;"></div>
+        <div><div style="font-size:12px;color:var(--ch-soft);">Out for Delivery</div><div style="font-size:10px;color:var(--ch-soft);margin-top:2px;">Expected: Thu, 9 Apr</div></div>
+      </div>
+      <!-- Step 5 - pending -->
+      <div style="display:flex;gap:12px;">
+        <div style="width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--white);flex-shrink:0;"></div>
+        <div><div style="font-size:12px;color:var(--ch-soft);">Delivered</div><div style="font-size:10px;color:var(--ch-soft);margin-top:2px;">&mdash;</div></div>
+      </div>
+    </div>
+    <!-- Order items mini -->
+    <div style="padding:0 1.25rem 1rem;">
+      <div style="background:var(--cream-dark);padding:10px;border-radius:4px;">
+        <div style="font-size:11px;font-weight:500;margin-bottom:6px;">Items in this order</div>
+        <div style="display:flex;gap:8px;">
+          <div style="width:40px;height:52px;background:linear-gradient(160deg,#EDE7E1,#C4A882);border-radius:3px;flex-shrink:0;"></div>
+          <div style="width:40px;height:52px;background:linear-gradient(160deg,#C4A882,#8B6A4E);border-radius:3px;flex-shrink:0;opacity:0.8;"></div>
+          <div style="display:flex;flex-direction:column;justify-content:center;font-size:11px;color:var(--ch-soft);">
+            <div>2 items</div>
+            <div style="font-weight:500;color:var(--cr);margin-top:2px;">&#8358;24,000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="m-nav-bottom">
+      <div class="m-nav-item"><span style="font-size:15px;">&#127968;</span>Home</div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#128269;</span>Shop</div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#9825;</span>Saved</div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#128717;</span>Cart</div>
+      <div class="m-nav-item active"><span style="font-size:15px;">&#128100;</span>Account<div class="m-nav-dot"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== C5–C6: MOBILE SEARCH + WISHLIST ========== -->
+<div class="screen-label">C5&ndash;C6 — Mobile &middot; Search + Wishlist</div>
+<div class="mobile-row">
+  <!-- Mobile Search -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);border-bottom:0.5px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:17px;color:var(--ch-soft);">&larr;</span>
+        <div style="flex:1;position:relative;">
+          <input class="form-input" value="vintage dress" style="padding:10px 10px 10px 34px;font-size:13px;border-radius:4px;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--ch-soft);">&#128269;</span>
+        </div>
+        <span style="font-size:11px;color:var(--cr);cursor:pointer;">Cancel</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;overflow-x:auto;">
+        <span style="font-size:10px;color:var(--ch-soft);padding:4px 8px;border:0.5px solid var(--border);white-space:nowrap;border-radius:2px;">Bags</span>
+        <span style="font-size:10px;color:var(--ch-soft);padding:4px 8px;border:0.5px solid var(--border);white-space:nowrap;border-radius:2px;">Silk blouse</span>
+        <span style="font-size:10px;color:var(--ch-soft);padding:4px 8px;border:0.5px solid var(--border);white-space:nowrap;border-radius:2px;">Under &#8358;5k</span>
+        <span style="font-size:10px;color:var(--ch-soft);padding:4px 8px;border:0.5px solid var(--border);white-space:nowrap;border-radius:2px;">Size M</span>
+      </div>
+    </div>
+    <div style="padding:10px 14px;">
+      <div style="font-size:11px;color:var(--ch-soft);margin-bottom:10px;">8 results for "<strong style="color:var(--ch);">vintage dress</strong>"</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:var(--cream-dark);border-radius:4px;overflow:hidden;">
+          <div style="height:110px;background:linear-gradient(160deg,#EDE7E1,#C4A882);position:relative;display:flex;align-items:center;justify-content:center;">
+            <div style="width:50px;height:72px;background:linear-gradient(160deg,#C4A882,#A88E6E);opacity:0.5;"></div>
+            <div style="position:absolute;top:6px;left:6px;background:var(--cr);color:white;font-size:8px;letter-spacing:0.5px;padding:2px 6px;">NEW</div>
+          </div>
+          <div style="padding:8px;"><div style="font-size:11px;font-weight:500;">Wrap Dress &middot; M</div><div style="font-size:12px;color:var(--cr);font-weight:500;margin-top:2px;">&#8358;8,500</div></div>
+        </div>
+        <div style="background:var(--cream-dark);border-radius:4px;overflow:hidden;">
+          <div style="height:110px;background:linear-gradient(160deg,#D9CEC5,#B89470);display:flex;align-items:center;justify-content:center;">
+            <div style="width:50px;height:72px;background:linear-gradient(160deg,#B89470,#8B6A4E);opacity:0.5;"></div>
+          </div>
+          <div style="padding:8px;"><div style="font-size:11px;font-weight:500;">A-Line Dress &middot; S</div><div style="font-size:12px;color:var(--cr);font-weight:500;margin-top:2px;">&#8358;6,200</div></div>
+        </div>
+        <div style="background:var(--cream-dark);border-radius:4px;overflow:hidden;">
+          <div style="height:110px;background:linear-gradient(160deg,#EDE7E1,#D4C4B0);display:flex;align-items:center;justify-content:center;">
+            <div style="width:50px;height:72px;background:linear-gradient(160deg,#D4C4B0,#B89470);opacity:0.5;"></div>
+          </div>
+          <div style="padding:8px;"><div style="font-size:11px;font-weight:500;">Shirt Dress &middot; L</div><div style="font-size:12px;color:var(--cr);font-weight:500;margin-top:2px;">&#8358;7,800</div></div>
+        </div>
+        <div style="background:var(--cream-dark);border-radius:4px;overflow:hidden;">
+          <div style="height:110px;background:linear-gradient(160deg,#C4A882,#8B6A4E);display:flex;align-items:center;justify-content:center;">
+            <div style="width:50px;height:72px;background:linear-gradient(160deg,#A88E6E,#6B5040);opacity:0.5;"></div>
+          </div>
+          <div style="padding:8px;"><div style="font-size:11px;font-weight:500;">Maxi Dress &middot; M</div><div style="font-size:12px;color:var(--cr);font-weight:500;margin-top:2px;">&#8358;9,000</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="m-nav-bottom">
+      <div class="m-nav-item"><span style="font-size:15px;">&#127968;</span>Home</div>
+      <div class="m-nav-item active"><span style="font-size:15px;">&#128269;</span>Shop<div class="m-nav-dot"></div></div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#9825;</span>Saved</div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#128717;</span>Cart</div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#128100;</span>Account</div>
+    </div>
+  </div>
+
+  <!-- Mobile Wishlist -->
+  <div class="mobile-frame">
+    <div class="mobile-notch"><div class="notch-pill"></div></div>
+    <div style="padding:10px 14px;background:var(--white);display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:17px;color:var(--ch-soft);">&larr;</span>
+      <span style="font-family:var(--font-display);font-size:15px;font-style:italic;">Saved Items (5)</span>
+      <span style="font-size:11px;color:var(--cr);cursor:pointer;">Edit</span>
+    </div>
+    <div style="padding:10px 14px;">
+      <!-- Wishlist item -->
+      <div style="display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);">
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#EDE7E1,#C4A882);flex-shrink:0;border-radius:4px;position:relative;">
+          <div style="position:absolute;top:4px;left:4px;background:var(--cr);color:white;font-size:7px;padding:2px 4px;">NEW</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;">Vintage Wrap Dress</div>
+          <div style="font-size:10px;color:var(--ch-soft);margin:2px 0;">Dresses &middot; Size M</div>
+          <div style="font-size:13px;font-weight:500;color:var(--cr);">&#8358;8,500</div>
+          <div class="m-btn" style="font-size:9px;padding:6px 12px;margin-top:6px;">Add to Cart</div>
+        </div>
+        <span style="font-size:16px;color:var(--cr);cursor:pointer;line-height:1;">&#9829;</span>
+      </div>
+      <!-- Wishlist item 2 -->
+      <div style="display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);">
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#C4A882,#8B6A4E);flex-shrink:0;border-radius:4px;opacity:0.8;"></div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;">Leather Tote &mdash; Brown</div>
+          <div style="font-size:10px;color:var(--ch-soft);margin:2px 0;">Bags</div>
+          <div style="font-size:13px;font-weight:500;color:var(--cr);">&#8358;14,000</div>
+          <div class="m-btn" style="font-size:9px;padding:6px 12px;margin-top:6px;">Add to Cart</div>
+        </div>
+        <span style="font-size:16px;color:var(--cr);cursor:pointer;line-height:1;">&#9829;</span>
+      </div>
+      <!-- Wishlist item 3 - sold out -->
+      <div style="display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);opacity:0.6;">
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#EDE7E1,#D4C4B0);flex-shrink:0;border-radius:4px;position:relative;">
+          <div style="position:absolute;bottom:4px;left:4px;background:var(--danger);color:white;font-size:7px;padding:2px 4px;">SOLD</div>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;">Silk Blouse &mdash; Cream</div>
+          <div style="font-size:10px;color:var(--ch-soft);margin:2px 0;">Tops &middot; Size S</div>
+          <div style="font-size:13px;font-weight:500;color:var(--ch-soft);">&#8358;5,200</div>
+          <div style="font-size:10px;color:var(--ch-soft);background:var(--cream-dark);display:inline-block;padding:4px 8px;margin-top:6px;">Sold Out</div>
+        </div>
+        <span style="font-size:16px;color:var(--cr);cursor:pointer;line-height:1;">&#9829;</span>
+      </div>
+      <!-- Wishlist item 4 -->
+      <div style="display:flex;gap:10px;padding:10px 0;">
+        <div style="width:64px;height:80px;background:linear-gradient(160deg,#D9CEC5,#A88E6E);flex-shrink:0;border-radius:4px;"></div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;">Block Heel Mules</div>
+          <div style="font-size:10px;color:var(--ch-soft);margin:2px 0;">Shoes &middot; Size 40</div>
+          <div style="font-size:13px;font-weight:500;color:var(--cr);">&#8358;9,500</div>
+          <div class="m-btn" style="font-size:9px;padding:6px 12px;margin-top:6px;">Add to Cart</div>
+        </div>
+        <span style="font-size:16px;color:var(--cr);cursor:pointer;line-height:1;">&#9829;</span>
+      </div>
+    </div>
+    <div class="m-nav-bottom">
+      <div class="m-nav-item"><span style="font-size:15px;">&#127968;</span>Home</div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#128269;</span>Shop</div>
+      <div class="m-nav-item active"><span style="font-size:15px;">&#9825;</span>Saved<div class="m-nav-dot"></div></div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#128717;</span>Cart</div>
+      <div class="m-nav-item"><span style="font-size:15px;">&#128100;</span>Account</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- SECTION D: ADMIN — ADDITIONAL SCREENS                        -->
+<!-- ============================================================ -->
+
+<!-- ========== D1: ADMIN — ORDER MANAGEMENT DETAIL ========== -->
+<div class="screen-label">D1 — Admin &middot; Order Management &mdash; Detail View</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item">&#11035; Dashboard</div>
+      <div class="admin-nav-item">&#9776; Products</div>
+      <div class="admin-nav-item active">&#128203; Orders</div>
+      <div class="admin-nav-item">&#128101; Customers</div>
+      <div class="admin-nav-item">&#128179; Payments</div>
+      <div class="admin-nav-item">&#128230; Inventory</div>
+      <div class="admin-nav-item">&#128226; Promotions</div>
+      <div class="admin-nav-item">&#9881; Settings</div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:13px;color:var(--cr);cursor:pointer;">&larr; Orders</span>
+          <div class="admin-title">Order #MH-2024-0847</div>
+          <span class="status-pill processing">Processing</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="btn-ghost" style="font-size:11px;padding:8px 14px;">Print Invoice</div>
+          <div class="btn-ghost" style="font-size:11px;padding:8px 14px;">Send WhatsApp</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:1.25rem;">
+        <div>
+          <!-- Status update -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:12px;">Update Order Status</div>
+            <div style="display:flex;gap:8px;">
+              <div style="padding:8px 14px;border:0.5px solid var(--border);font-size:11px;cursor:pointer;background:var(--cream-dark);border-radius:2px;">Pending</div>
+              <div style="padding:8px 14px;border:0.5px solid var(--info);font-size:11px;cursor:pointer;background:#E6F1FB;color:var(--info);border-radius:2px;font-weight:500;">Processing</div>
+              <div style="padding:8px 14px;border:0.5px solid var(--border);font-size:11px;cursor:pointer;border-radius:2px;">Shipped</div>
+              <div style="padding:8px 14px;border:0.5px solid var(--border);font-size:11px;cursor:pointer;border-radius:2px;">Delivered</div>
+              <div style="padding:8px 14px;border:0.5px solid var(--border);font-size:11px;cursor:pointer;border-radius:2px;color:var(--danger);">Cancel</div>
+            </div>
+            <div style="margin-top:10px;">
+              <div class="form-label" style="margin-bottom:4px;">Tracking Number (optional)</div>
+              <div style="display:flex;gap:8px;">
+                <input class="form-input" placeholder="Enter courier tracking number" style="flex:1;">
+                <div class="btn-primary" style="padding:10px 16px;font-size:11px;">Update &amp; Notify</div>
+              </div>
+            </div>
+          </div>
+          <!-- Order items -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:12px;">Order Items</div>
+            <div style="display:flex;gap:14px;padding:12px 0;border-bottom:0.5px solid var(--border);">
+              <div style="width:64px;height:80px;background:linear-gradient(160deg,#EDE7E1,#C4A882);flex-shrink:0;border-radius:4px;"></div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:500;">Vintage Wrap Dress</div>
+                <div style="font-size:12px;color:var(--ch-soft);margin-top:3px;">Size: M &middot; Condition: Like New</div>
+                <div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">SKU: MH-DRS-0142</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;8,500</div>
+                <div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">Qty: 1</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:14px;padding:12px 0;">
+              <div style="width:64px;height:80px;background:linear-gradient(160deg,#C4A882,#8B6A4E);flex-shrink:0;border-radius:4px;opacity:0.8;"></div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:500;">Leather Tote &mdash; Brown</div>
+                <div style="font-size:12px;color:var(--ch-soft);margin-top:3px;">Condition: Good</div>
+                <div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">SKU: MH-BAG-0078</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:14px;font-weight:500;color:var(--cr);">&#8358;14,000</div>
+                <div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">Qty: 1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar info -->
+        <div>
+          <!-- Customer card -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:10px;">Customer</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:14px;color:var(--cr);">AO</div>
+              <div>
+                <div style="font-size:13px;font-weight:500;">Amara Okonkwo</div>
+                <div style="font-size:11px;color:var(--ch-soft);">12 total orders</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--ch-soft);line-height:1.8;">
+              amara@email.com<br>
+              +234 801 234 5678
+            </div>
+            <div style="margin-top:8px;"><span style="font-size:11px;color:var(--cr);cursor:pointer;">View customer profile &rarr;</span></div>
+          </div>
+          <!-- Delivery info -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:10px;">Delivery Address</div>
+            <div style="font-size:12px;color:var(--ch-soft);line-height:1.8;">
+              14 Adeniyi Jones Ave<br>
+              Ikeja, Lagos<br>
+              +234 801 234 5678
+            </div>
+          </div>
+          <!-- Payment info -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:10px;">Payment</div>
+            <div style="font-size:12px;line-height:1.8;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--ch-soft);">Method</span><span>Card (Paystack)</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--ch-soft);">Subtotal</span><span>&#8358;22,500</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--ch-soft);">Delivery</span><span>&#8358;1,500</span></div>
+              <div style="display:flex;justify-content:space-between;font-weight:500;padding-top:6px;border-top:0.5px solid var(--border);margin-top:6px;"><span>Total</span><span style="color:var(--cr);">&#8358;24,000</span></div>
+            </div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--success);">&#10003; Payment confirmed &middot; 8 Apr 2:17 PM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== D2: ADMIN — CUSTOMER MANAGEMENT ========== -->
+<div class="screen-label">D2 — Admin &middot; Customer Management</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item">&#11035; Dashboard</div>
+      <div class="admin-nav-item">&#9776; Products</div>
+      <div class="admin-nav-item">&#128203; Orders</div>
+      <div class="admin-nav-item active">&#128101; Customers</div>
+      <div class="admin-nav-item">&#128179; Payments</div>
+      <div class="admin-nav-item">&#128230; Inventory</div>
+      <div class="admin-nav-item">&#128226; Promotions</div>
+      <div class="admin-nav-item">&#9881; Settings</div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div>
+          <div class="admin-title">Customers</div>
+          <div style="font-size:12px;color:var(--ch-soft);margin-top:4px;">247 registered customers</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div style="position:relative;">
+            <input class="form-input" placeholder="Search customers..." style="padding-left:32px;width:240px;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--ch-soft);">&#128269;</span>
+          </div>
+          <div class="btn-ghost" style="font-size:11px;padding:8px 14px;">Export CSV</div>
+        </div>
+      </div>
+      <!-- KPI row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem;">
+        <div class="kpi-card"><div class="kpi-label">Total Customers</div><div class="kpi-value">247</div><div class="kpi-change up">&#8593; 18 this month</div></div>
+        <div class="kpi-card"><div class="kpi-label">Repeat Customers</div><div class="kpi-value">63%</div><div class="kpi-change up">&#8593; 5% vs last month</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg. Order Value</div><div class="kpi-value">&#8358;12,400</div><div class="kpi-change up">&#8593; 8%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Lifetime Value (Avg)</div><div class="kpi-value">&#8358;38,200</div><div class="kpi-change up">&#8593; 12%</div></div>
+      </div>
+      <!-- Customer table -->
+      <table class="admin-table">
+        <thead>
+          <tr><th>Customer</th><th>Email</th><th>Phone</th><th>Orders</th><th>Total Spent</th><th>Last Order</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cr);font-weight:500;">AO</div>
+                <div style="font-weight:500;">Amara Okonkwo</div>
+              </div>
+            </td>
+            <td style="color:var(--ch-soft);">amara@email.com</td>
+            <td style="color:var(--ch-soft);">+234 801 234 5678</td>
+            <td>12</td>
+            <td style="font-weight:500;">&#8358;148,500</td>
+            <td style="color:var(--ch-soft);">Today</td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cr);font-weight:500;">FB</div>
+                <div style="font-weight:500;">Fatima Bello</div>
+              </div>
+            </td>
+            <td style="color:var(--ch-soft);">fatima.b@email.com</td>
+            <td style="color:var(--ch-soft);">+234 803 456 7890</td>
+            <td>8</td>
+            <td style="font-weight:500;">&#8358;96,000</td>
+            <td style="color:var(--ch-soft);">Today</td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cr);font-weight:500;">CE</div>
+                <div style="font-weight:500;">Chioma Eze</div>
+              </div>
+            </td>
+            <td style="color:var(--ch-soft);">chioma@email.com</td>
+            <td style="color:var(--ch-soft);">+234 805 678 9012</td>
+            <td>15</td>
+            <td style="font-weight:500;">&#8358;201,000</td>
+            <td style="color:var(--ch-soft);">Yesterday</td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cr);font-weight:500;">KA</div>
+                <div style="font-weight:500;">Kemi Adeyemi</div>
+              </div>
+            </td>
+            <td style="color:var(--ch-soft);">kemi.a@email.com</td>
+            <td style="color:var(--ch-soft);">+234 807 890 1234</td>
+            <td>3</td>
+            <td style="font-weight:500;">&#8358;27,500</td>
+            <td style="color:var(--ch-soft);">5 Apr</td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td>
+          </tr>
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--cr-light);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cr);font-weight:500;">TO</div>
+                <div style="font-weight:500;">Tunde Olamide</div>
+              </div>
+            </td>
+            <td style="color:var(--ch-soft);">tunde@email.com</td>
+            <td style="color:var(--ch-soft);">+234 809 012 3456</td>
+            <td>6</td>
+            <td style="font-weight:500;">&#8358;54,000</td>
+            <td style="color:var(--ch-soft);">3 Apr</td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== D3: ADMIN — INVENTORY OVERVIEW ========== -->
+<div class="screen-label">D3 — Admin &middot; Inventory Overview</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item">&#11035; Dashboard</div>
+      <div class="admin-nav-item">&#9776; Products</div>
+      <div class="admin-nav-item">&#128203; Orders</div>
+      <div class="admin-nav-item">&#128101; Customers</div>
+      <div class="admin-nav-item">&#128179; Payments</div>
+      <div class="admin-nav-item active">&#128230; Inventory</div>
+      <div class="admin-nav-item">&#128226; Promotions</div>
+      <div class="admin-nav-item">&#9881; Settings</div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div class="admin-title">Inventory</div>
+        <div style="display:flex;gap:8px;">
+          <div class="btn-ghost" style="font-size:11px;padding:8px 14px;">Export Stock Report</div>
+          <div class="btn-primary" style="font-size:11px;padding:8px 14px;">+ Add New Item</div>
+        </div>
+      </div>
+      <!-- KPI -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem;">
+        <div class="kpi-card"><div class="kpi-label">Total Listings</div><div class="kpi-value">134</div><div class="kpi-change" style="color:var(--ch-soft);">Active items in shop</div></div>
+        <div class="kpi-card"><div class="kpi-label">Low Stock</div><div class="kpi-value" style="color:var(--warning);">12</div><div class="kpi-change" style="color:var(--warning);">Items with 1 left</div></div>
+        <div class="kpi-card"><div class="kpi-label">Sold Out</div><div class="kpi-value" style="color:var(--danger);">23</div><div class="kpi-change" style="color:var(--danger);">Need to remove or restock</div></div>
+        <div class="kpi-card"><div class="kpi-label">New This Week</div><div class="kpi-value">18</div><div class="kpi-change up">&#8593; 6 more than last week</div></div>
+      </div>
+      <!-- Inventory by category -->
+      <div class="chart-area">
+        <div style="font-size:13px;font-weight:500;margin-bottom:14px;">Stock by Category</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;text-align:center;">
+          <div>
+            <div style="height:80px;display:flex;align-items:flex-end;justify-content:center;"><div style="width:60%;background:var(--cr-light);height:70%;border-radius:2px 2px 0 0;"></div></div>
+            <div style="font-size:11px;font-weight:500;margin-top:6px;">Dresses</div>
+            <div style="font-size:10px;color:var(--ch-soft);">34 items</div>
+          </div>
+          <div>
+            <div style="height:80px;display:flex;align-items:flex-end;justify-content:center;"><div style="width:60%;background:var(--cr-light);height:50%;border-radius:2px 2px 0 0;"></div></div>
+            <div style="font-size:11px;font-weight:500;margin-top:6px;">Tops</div>
+            <div style="font-size:10px;color:var(--ch-soft);">28 items</div>
+          </div>
+          <div>
+            <div style="height:80px;display:flex;align-items:flex-end;justify-content:center;"><div style="width:60%;background:var(--cr);height:85%;border-radius:2px 2px 0 0;"></div></div>
+            <div style="font-size:11px;font-weight:500;margin-top:6px;">Bags</div>
+            <div style="font-size:10px;color:var(--ch-soft);">47 items</div>
+          </div>
+          <div>
+            <div style="height:80px;display:flex;align-items:flex-end;justify-content:center;"><div style="width:60%;background:var(--cr-light);height:90%;border-radius:2px 2px 0 0;"></div></div>
+            <div style="font-size:11px;font-weight:500;margin-top:6px;">Shoes</div>
+            <div style="font-size:10px;color:var(--ch-soft);">63 items</div>
+          </div>
+          <div>
+            <div style="height:80px;display:flex;align-items:flex-end;justify-content:center;"><div style="width:60%;background:var(--cr-light);height:30%;border-radius:2px 2px 0 0;"></div></div>
+            <div style="font-size:11px;font-weight:500;margin-top:6px;">Bottoms</div>
+            <div style="font-size:10px;color:var(--ch-soft);">19 items</div>
+          </div>
+        </div>
+      </div>
+      <!-- Low stock alerts -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;color:var(--warning);">&#9888; Low Stock Alerts</div>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Item</th><th>SKU</th><th>Category</th><th>Size</th><th>Stock</th><th>Price</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:500;">Vintage Wrap Dress</td>
+            <td style="color:var(--ch-soft);">MH-DRS-0142</td>
+            <td>Dresses</td>
+            <td>M</td>
+            <td style="color:var(--warning);font-weight:500;">1 left</td>
+            <td>&#8358;8,500</td>
+            <td><span class="status-pill pending">Low Stock</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">Edit</td>
+          </tr>
+          <tr>
+            <td style="font-weight:500;">Structured Handbag</td>
+            <td style="color:var(--ch-soft);">MH-BAG-0091</td>
+            <td>Bags</td>
+            <td>&mdash;</td>
+            <td style="color:var(--warning);font-weight:500;">1 left</td>
+            <td>&#8358;11,000</td>
+            <td><span class="status-pill pending">Low Stock</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">Edit</td>
+          </tr>
+          <tr>
+            <td style="font-weight:500;">Silk Blouse &mdash; Cream</td>
+            <td style="color:var(--ch-soft);">MH-TOP-0056</td>
+            <td>Tops</td>
+            <td>S</td>
+            <td style="color:var(--danger);font-weight:500;">0 left</td>
+            <td>&#8358;5,200</td>
+            <td><span class="status-pill cancelled">Sold Out</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">Edit</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== D4: ADMIN — PAYMENTS & REVENUE ========== -->
+<div class="screen-label">D4 — Admin &middot; Payments & Revenue Reports</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item">&#11035; Dashboard</div>
+      <div class="admin-nav-item">&#9776; Products</div>
+      <div class="admin-nav-item">&#128203; Orders</div>
+      <div class="admin-nav-item">&#128101; Customers</div>
+      <div class="admin-nav-item active">&#128179; Payments</div>
+      <div class="admin-nav-item">&#128230; Inventory</div>
+      <div class="admin-nav-item">&#128226; Promotions</div>
+      <div class="admin-nav-item">&#9881; Settings</div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div class="admin-title">Payments & Revenue</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="form-input" style="width:auto;padding:8px 12px;font-size:12px;"><option>This Month</option><option>Last Month</option><option>This Year</option></select>
+          <div class="btn-ghost" style="font-size:11px;padding:8px 14px;">Download Report</div>
+        </div>
+      </div>
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem;">
+        <div class="kpi-card"><div class="kpi-label">Revenue (Apr)</div><div class="kpi-value">&#8358;384,500</div><div class="kpi-change up">&#8593; 23% vs Mar</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Payouts</div><div class="kpi-value">&#8358;352,100</div><div class="kpi-change" style="color:var(--ch-soft);">After fees &amp; refunds</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pending Payments</div><div class="kpi-value" style="color:var(--warning);">&#8358;24,000</div><div class="kpi-change" style="color:var(--warning);">3 orders unpaid</div></div>
+        <div class="kpi-card"><div class="kpi-label">Refunds (Apr)</div><div class="kpi-value">&#8358;11,000</div><div class="kpi-change" style="color:var(--ch-soft);">1 refund issued</div></div>
+      </div>
+      <!-- Revenue chart -->
+      <div class="chart-area">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:500;">Revenue &mdash; April 2026</div>
+          <div style="display:flex;gap:12px;font-size:11px;color:var(--ch-soft);">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:var(--cr);border-radius:1px;display:inline-block;"></span> Revenue</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:var(--cr-light);border-radius:1px;display:inline-block;"></span> Orders</span>
+          </div>
+        </div>
+        <div class="bar-chart" style="height:130px;">
+          <div class="bar-wrap"><div class="bar" style="height:45%;"></div><div class="bar-label">Wk 1</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:72%;background:var(--cr);"></div><div class="bar-label">Wk 2</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:60%;"></div><div class="bar-label">Wk 3</div></div>
+          <div class="bar-wrap"><div class="bar" style="height:85%;background:var(--cr);"></div><div class="bar-label">Wk 4</div></div>
+        </div>
+      </div>
+      <!-- Transaction list -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:500;">Recent Transactions</div>
+        <div class="tab-bar" style="border:none;">
+          <div class="tab active" style="padding:6px 12px;font-size:11px;">All</div>
+          <div class="tab" style="padding:6px 12px;font-size:11px;">Successful</div>
+          <div class="tab" style="padding:6px 12px;font-size:11px;">Pending</div>
+          <div class="tab" style="padding:6px 12px;font-size:11px;">Refunds</div>
+        </div>
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Transaction ID</th><th>Customer</th><th>Order</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-size:12px;color:var(--ch-soft);">TXN-PSK-4821</td>
+            <td>Amara Okonkwo</td>
+            <td style="font-weight:500;">#MH-0847</td>
+            <td>Card (Paystack)</td>
+            <td style="font-weight:500;">&#8358;24,000</td>
+            <td><span class="status-pill delivered">Paid</span></td>
+            <td style="color:var(--ch-soft);">Today 2:17 PM</td>
+          </tr>
+          <tr>
+            <td style="font-size:12px;color:var(--ch-soft);">TXN-PSK-4820</td>
+            <td>Fatima Bello</td>
+            <td style="font-weight:500;">#MH-0846</td>
+            <td>Bank Transfer</td>
+            <td style="font-weight:500;">&#8358;8,500</td>
+            <td><span class="status-pill delivered">Paid</span></td>
+            <td style="color:var(--ch-soft);">Today 11:20 AM</td>
+          </tr>
+          <tr>
+            <td style="font-size:12px;color:var(--ch-soft);">TXN-FLW-1193</td>
+            <td>Chioma Eze</td>
+            <td style="font-weight:500;">#MH-0845</td>
+            <td>Card (Flutterwave)</td>
+            <td style="font-weight:500;">&#8358;31,000</td>
+            <td><span class="status-pill pending">Pending</span></td>
+            <td style="color:var(--ch-soft);">Yesterday</td>
+          </tr>
+          <tr>
+            <td style="font-size:12px;color:var(--ch-soft);">TXN-REF-0022</td>
+            <td>Kemi Adeyemi</td>
+            <td style="font-weight:500;">#MH-0844</td>
+            <td>Refund &rarr; Card</td>
+            <td style="font-weight:500;color:var(--danger);">&minus;&#8358;14,000</td>
+            <td><span class="status-pill cancelled">Refunded</span></td>
+            <td style="color:var(--ch-soft);">Yesterday</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== D5: ADMIN — PROMOTIONS ========== -->
+<div class="screen-label">D5 — Admin &middot; Promotions & Discount Codes</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item">&#11035; Dashboard</div>
+      <div class="admin-nav-item">&#9776; Products</div>
+      <div class="admin-nav-item">&#128203; Orders</div>
+      <div class="admin-nav-item">&#128101; Customers</div>
+      <div class="admin-nav-item">&#128179; Payments</div>
+      <div class="admin-nav-item">&#128230; Inventory</div>
+      <div class="admin-nav-item active">&#128226; Promotions</div>
+      <div class="admin-nav-item">&#9881; Settings</div>
+    </div>
+    <div class="admin-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <div class="admin-title">Promotions</div>
+        <div class="btn-primary" style="font-size:11px;padding:8px 16px;">+ Create Promo Code</div>
+      </div>
+
+      <!-- Create promo form -->
+      <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1.25rem;">
+        <div style="font-size:12px;font-weight:500;margin-bottom:14px;">Create New Promo Code</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div><div class="form-label" style="margin-bottom:4px;">Code</div><input class="form-input" placeholder="e.g. SPRING20" style="text-transform:uppercase;"></div>
+          <div><div class="form-label" style="margin-bottom:4px;">Discount Type</div><select class="form-input"><option>Percentage (%)</option><option>Fixed Amount (&#8358;)</option><option>Free Delivery</option></select></div>
+          <div><div class="form-label" style="margin-bottom:4px;">Value</div><input class="form-input" placeholder="20"></div>
+          <div><div class="form-label" style="margin-bottom:4px;">Max Uses</div><input class="form-input" placeholder="100"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div><div class="form-label" style="margin-bottom:4px;">Start Date</div><input class="form-input" type="date" value="2026-04-08"></div>
+          <div><div class="form-label" style="margin-bottom:4px;">End Date</div><input class="form-input" type="date" value="2026-04-30"></div>
+          <div><div class="form-label" style="margin-bottom:4px;">Min. Order (&#8358;)</div><input class="form-input" placeholder="10000"></div>
+          <div><div class="form-label" style="margin-bottom:4px;">Applies To</div><select class="form-input"><option>All Items</option><option>Dresses Only</option><option>New Arrivals</option></select></div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="btn-primary" style="font-size:11px;padding:8px 16px;">Create Promo Code</div>
+          <div class="btn-ghost" style="font-size:11px;padding:8px 16px;">Cancel</div>
+        </div>
+      </div>
+
+      <!-- Active promos -->
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px;">Active &amp; Scheduled Promos</div>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Code</th><th>Discount</th><th>Min Order</th><th>Used</th><th>Period</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:500;letter-spacing:1px;">WELCOME10</td>
+            <td>10% off</td>
+            <td>&#8358;5,000</td>
+            <td>124 / unlimited</td>
+            <td style="font-size:12px;color:var(--ch-soft);">Always active</td>
+            <td><span class="status-pill active">Active</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">Edit</td>
+          </tr>
+          <tr>
+            <td style="font-weight:500;letter-spacing:1px;">SPRING20</td>
+            <td>20% off</td>
+            <td>&#8358;10,000</td>
+            <td>23 / 100</td>
+            <td style="font-size:12px;color:var(--ch-soft);">8 Apr &ndash; 30 Apr</td>
+            <td><span class="status-pill active">Active</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">Edit</td>
+          </tr>
+          <tr>
+            <td style="font-weight:500;letter-spacing:1px;">FREESHIP</td>
+            <td>Free Delivery</td>
+            <td>&#8358;15,000</td>
+            <td>56 / 200</td>
+            <td style="font-size:12px;color:var(--ch-soft);">1 Apr &ndash; 15 Apr</td>
+            <td><span class="status-pill active">Active</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">Edit</td>
+          </tr>
+          <tr>
+            <td style="font-weight:500;letter-spacing:1px;">RAMADAN25</td>
+            <td>25% off</td>
+            <td>&#8358;8,000</td>
+            <td>0 / 50</td>
+            <td style="font-size:12px;color:var(--ch-soft);">15 Apr &ndash; 30 Apr</td>
+            <td><span class="status-pill scheduled">Scheduled</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">Edit</td>
+          </tr>
+          <tr>
+            <td style="font-weight:500;letter-spacing:1px;">MARCH15</td>
+            <td>15% off</td>
+            <td>&#8358;7,000</td>
+            <td>89 / 100</td>
+            <td style="font-size:12px;color:var(--ch-soft);">1 Mar &ndash; 31 Mar</td>
+            <td><span class="status-pill expired">Expired</span></td>
+            <td style="color:var(--cr);cursor:pointer;font-size:12px;">View</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========== D6: ADMIN — SETTINGS ========== -->
+<div class="screen-label">D6 — Admin &middot; Settings</div>
+<div class="desktop-frame">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="admin-logo">Mhiras <span>Admin</span></div>
+      <div class="admin-nav-item">&#11035; Dashboard</div>
+      <div class="admin-nav-item">&#9776; Products</div>
+      <div class="admin-nav-item">&#128203; Orders</div>
+      <div class="admin-nav-item">&#128101; Customers</div>
+      <div class="admin-nav-item">&#128179; Payments</div>
+      <div class="admin-nav-item">&#128230; Inventory</div>
+      <div class="admin-nav-item">&#128226; Promotions</div>
+      <div class="admin-nav-item active">&#9881; Settings</div>
+    </div>
+    <div class="admin-content">
+      <div class="admin-title" style="margin-bottom:1.25rem;">Settings</div>
+
+      <div class="tab-bar" style="margin-bottom:1.5rem;">
+        <div class="tab active">Store Info</div>
+        <div class="tab">Delivery Zones</div>
+        <div class="tab">Payment</div>
+        <div class="tab">Notifications</div>
+        <div class="tab">Team</div>
+      </div>
+
+      <!-- Store Info Tab -->
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:1.25rem;">
+        <div>
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:14px;">Store Information</div>
+            <div style="margin-bottom:12px;">
+              <div class="form-label" style="margin-bottom:4px;">Store Name</div>
+              <input class="form-input" value="Mhiras Collection">
+            </div>
+            <div style="margin-bottom:12px;">
+              <div class="form-label" style="margin-bottom:4px;">Store Description</div>
+              <textarea class="form-input" rows="2" style="resize:vertical;">Curated thrift fashion &mdash; handpicked, pre-loved, and premium. Every item is unique.</textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div><div class="form-label" style="margin-bottom:4px;">Contact Email</div><input class="form-input" value="hello@mhirascollection.com"></div>
+              <div><div class="form-label" style="margin-bottom:4px;">Phone / WhatsApp</div><input class="form-input" value="+234 801 234 5678"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div><div class="form-label" style="margin-bottom:4px;">Instagram</div><input class="form-input" value="@mhirascollection"></div>
+              <div><div class="form-label" style="margin-bottom:4px;">Currency</div><select class="form-input"><option>NGN (&#8358;)</option><option>USD ($)</option></select></div>
+            </div>
+          </div>
+
+          <!-- Delivery Zones preview -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <div style="font-size:12px;font-weight:500;">Delivery Zones & Pricing</div>
+              <span style="font-size:11px;color:var(--cr);cursor:pointer;">+ Add Zone</span>
+            </div>
+            <table class="admin-table" style="font-size:12px;">
+              <thead><tr><th>Zone</th><th>States</th><th>Fee</th><th>Est. Days</th><th></th></tr></thead>
+              <tbody>
+                <tr><td style="font-weight:500;">Lagos Mainland</td><td style="color:var(--ch-soft);">Lagos (Ikeja, Surulere, Yaba...)</td><td>&#8358;1,500</td><td>1&ndash;2 days</td><td style="color:var(--cr);cursor:pointer;">Edit</td></tr>
+                <tr><td style="font-weight:500;">Lagos Island</td><td style="color:var(--ch-soft);">Lagos (VI, Lekki, Ikoyi...)</td><td>&#8358;2,000</td><td>1&ndash;2 days</td><td style="color:var(--cr);cursor:pointer;">Edit</td></tr>
+                <tr><td style="font-weight:500;">South West</td><td style="color:var(--ch-soft);">Ogun, Oyo, Osun, Ondo</td><td>&#8358;2,500</td><td>2&ndash;4 days</td><td style="color:var(--cr);cursor:pointer;">Edit</td></tr>
+                <tr><td style="font-weight:500;">Nationwide</td><td style="color:var(--ch-soft);">Rest of Nigeria</td><td>&#8358;3,500</td><td>3&ndash;7 days</td><td style="color:var(--cr);cursor:pointer;">Edit</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div>
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:14px;">Store Logo</div>
+            <div style="width:80px;height:80px;border-radius:50%;background:var(--ch);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+              <span style="font-family:var(--font-display);font-size:28px;font-weight:300;color:var(--cream);letter-spacing:2px;">M</span>
+            </div>
+            <div style="text-align:center;font-size:11px;color:var(--cr);cursor:pointer;">Upload new logo</div>
+          </div>
+
+          <!-- Payment config -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:14px;">Payment Providers</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border);">
+              <div><div style="font-size:13px;font-weight:500;">Paystack</div><div style="font-size:11px;color:var(--success);margin-top:2px;">&#10003; Connected</div></div>
+              <div class="toggle on"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border);">
+              <div><div style="font-size:13px;font-weight:500;">Flutterwave</div><div style="font-size:11px;color:var(--success);margin-top:2px;">&#10003; Connected</div></div>
+              <div class="toggle on"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border);">
+              <div><div style="font-size:13px;font-weight:500;">Bank Transfer</div><div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">GTBank &middot; 012****890</div></div>
+              <div class="toggle on"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+              <div><div style="font-size:13px;font-weight:500;">Pay on Delivery</div><div style="font-size:11px;color:var(--ch-soft);margin-top:2px;">Lagos only</div></div>
+              <div class="toggle on"></div>
+            </div>
+          </div>
+
+          <!-- Notification prefs -->
+          <div style="background:var(--white);border:0.5px solid var(--border);border-radius:8px;padding:1.25rem;">
+            <div style="font-size:12px;font-weight:500;margin-bottom:14px;">Notifications</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);">
+              <div style="font-size:12px;">New order alert (WhatsApp)</div>
+              <div class="toggle on"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);">
+              <div style="font-size:12px;">Customer order updates (WhatsApp)</div>
+              <div class="toggle on"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);">
+              <div style="font-size:12px;">Email receipts to customers</div>
+              <div class="toggle on"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+              <div style="font-size:12px;">Low stock alerts</div>
+              <div class="toggle on"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:1.25rem;">
+        <div class="btn-primary" style="font-size:11px;padding:10px 24px;">Save Changes</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- FOOTER                                                        -->
+<!-- ============================================================ -->
+
+<div class="footer-band" style="margin-top:2rem;">
+  <div style="font-family:var(--font-display);font-size:36px;font-weight:300;color:var(--cream);font-style:italic;margin-bottom:6px;">Mhiras Collection</div>
+  <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6B5E5A;">Extended Prototype &mdash; 18 Additional Screens</div>
+  <div style="margin-top:14px;font-size:11px;color:#3D3330;line-height:1.8;">
+    <strong style="color:#6B5E5A;">Customer:</strong> Sign In &middot; Sign Up &middot; Forgot Password &middot; Search Results &middot; Wishlist &middot; Collections &middot; Order History &middot; About Us<br>
+    <strong style="color:#6B5E5A;">Mobile:</strong> Sign In &middot; Sign Up &middot; Checkout &middot; Order Tracking &middot; Search &middot; Wishlist<br>
+    <strong style="color:#6B5E5A;">Admin:</strong> Order Detail &middot; Customer Management &middot; Inventory &middot; Payments &amp; Revenue &middot; Promotions &middot; Settings
+  </div>
+</div>
+
+</body>
+</html>

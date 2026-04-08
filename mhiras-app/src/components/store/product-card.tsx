@@ -1,0 +1,132 @@
+import Link from "next/link";
+import { Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
+
+export interface ProductCardProps {
+  slug: string;
+  name: string;
+  category: string;
+  price: number;
+  originalPrice?: number | null;
+  size?: string | null;
+  condition?: string;
+  badge?: string | null;
+  image?: string | null;
+  stock?: number;
+  isSoldOut?: boolean;
+  isWishlisted?: boolean;
+  showAddToCart?: boolean;
+  className?: string;
+}
+
+export function ProductCard({
+  slug,
+  name,
+  category,
+  price,
+  originalPrice,
+  size,
+  badge,
+  stock,
+  isSoldOut = false,
+  isWishlisted = false,
+  showAddToCart = true,
+  className,
+}: ProductCardProps) {
+  const discount =
+    originalPrice && originalPrice > price
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : null;
+
+  return (
+    <div
+      className={cn(
+        "bg-white group border border-border rounded overflow-hidden",
+        isSoldOut && "opacity-70",
+        className
+      )}
+    >
+      <Link href={`/shop/${slug}`}>
+        {/* Image */}
+        <div className="h-48 md:h-60 bg-gradient-to-br from-cream-dark to-gold/30 flex items-center justify-center relative">
+          <div className="w-[70px] h-[100px] bg-gradient-to-br from-gold to-copper-dark/40 opacity-50" />
+          {badge && (
+            <span className="absolute top-2 left-2 bg-copper text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
+              {badge}
+            </span>
+          )}
+          {isSoldOut && (
+            <span className="absolute bottom-2 left-2 bg-danger text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
+              Sold Out
+            </span>
+          )}
+          {stock === 1 && !isSoldOut && (
+            <span className="absolute bottom-2 left-2 bg-warning/90 text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
+              1 left!
+            </span>
+          )}
+          {/* Wishlist button */}
+          <button className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors">
+            <Heart
+              size={16}
+              className={cn(
+                "transition-colors",
+                isWishlisted
+                  ? "fill-copper text-copper"
+                  : "text-charcoal-soft group-hover:text-copper"
+              )}
+            />
+          </button>
+        </div>
+
+        {/* Info */}
+        <div className="p-4">
+          <div className="text-xs text-charcoal-soft uppercase tracking-wider">
+            {category}
+            {size && ` · ${size}`}
+          </div>
+          <div className="text-base font-medium mt-1 truncate">{name}</div>
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <span
+              className={cn(
+                "text-lg font-medium",
+                isSoldOut ? "text-charcoal-soft" : "text-copper"
+              )}
+            >
+              {formatPrice(price)}
+            </span>
+            {originalPrice && originalPrice > price && (
+              <span className="text-xs text-charcoal-soft line-through">
+                {formatPrice(originalPrice)}
+              </span>
+            )}
+            {discount && !isSoldOut && (
+              <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5">
+                {discount}% off
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      {/* Actions */}
+      {showAddToCart && (
+        <div className="px-4 pb-4">
+          {isSoldOut ? (
+            <button
+              disabled
+              className="w-full bg-cream-dark text-charcoal-soft text-xs uppercase tracking-wider py-2.5 cursor-not-allowed"
+            >
+              Sold Out
+            </button>
+          ) : (
+            <button className="w-full bg-charcoal text-cream text-xs uppercase tracking-wider py-2.5 hover:bg-copper transition-colors cursor-pointer">
+              Add to Cart
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
