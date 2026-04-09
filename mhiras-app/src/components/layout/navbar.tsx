@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { Search, Heart } from "lucide-react";
 import { CartBadge } from "./cart-badge";
+import { auth } from "@/lib/auth";
 
-export function Navbar() {
+export async function Navbar() {
+  const session = await auth();
+  const user = session?.user;
+
   return (
     <header>
       {/* Announcement Bar */}
@@ -43,12 +47,25 @@ export function Navbar() {
           </Link>
           <CartBadge className="text-cream hover:text-copper transition-colors" />
           <div className="w-px h-5 bg-charcoal-mid mx-1" />
-          <Link
-            href="/auth/signin"
-            className="text-sm text-charcoal-soft hover:text-cream transition-colors"
-          >
-            Sign in
-          </Link>
+          {user ? (
+            <Link
+              href="/account"
+              className="flex items-center gap-2 text-sm text-charcoal-soft hover:text-cream transition-colors"
+            >
+              <span className="w-7 h-7 rounded-full bg-copper/80 flex items-center justify-center text-[11px] font-medium text-white">
+                {user.firstName?.[0]}
+                {user.lastName?.[0]}
+              </span>
+              {user.firstName}
+            </Link>
+          ) : (
+            <Link
+              href="/auth/signin"
+              className="text-sm text-charcoal-soft hover:text-cream transition-colors"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -65,6 +82,18 @@ export function Navbar() {
             <Search size={18} />
           </Link>
           <CartBadge className="text-charcoal-soft" />
+          {user ? (
+            <Link href="/account" className="text-charcoal-soft hover:text-cream transition-colors">
+              <span className="w-7 h-7 rounded-full bg-copper/80 flex items-center justify-center text-[11px] font-medium text-white">
+                {user.firstName?.[0]}
+                {user.lastName?.[0]}
+              </span>
+            </Link>
+          ) : (
+            <Link href="/auth/signin" className="text-xs text-charcoal-soft hover:text-cream transition-colors">
+              Sign in
+            </Link>
+          )}
         </div>
       </nav>
     </header>

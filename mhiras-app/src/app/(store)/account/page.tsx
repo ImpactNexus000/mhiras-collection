@@ -1,5 +1,8 @@
 import { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import {
   Package,
   Heart,
@@ -8,18 +11,12 @@ import {
   CreditCard,
   Bell,
   ChevronRight,
-  LogOut,
 } from "lucide-react";
+import { SignOutButton } from "@/components/auth/signout-button";
 
 export const metadata: Metadata = {
   title: "My Account",
 };
-
-const stats = [
-  { label: "Orders", value: "12", icon: Package },
-  { label: "Wishlist", value: "5", icon: Heart },
-  { label: "Reviews", value: "3", icon: Star },
-];
 
 const menuItems = [
   { label: "Order History", href: "/account/orders", icon: Package },
@@ -29,23 +26,39 @@ const menuItems = [
   { label: "Notifications", href: "/account/notifications", icon: Bell },
 ];
 
-export default function AccountPage() {
+export default async function AccountPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/auth/signin");
+
+  const userId = session.user.id;
+
+  const [orderCount, wishlistCount, reviewCount] = await Promise.all([
+    db.order.count({ where: { userId } }),
+    db.wishlistItem.count({ where: { userId } }),
+    db.review.count({ where: { userId } }),
+  ]);
+
+  const stats = [
+    { label: "Orders", value: orderCount, icon: Package },
+    { label: "Wishlist", value: wishlistCount, icon: Heart },
+    { label: "Reviews", value: reviewCount, icon: Star },
+  ];
+
+  const user = session.user;
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 md:py-14">
       {/* Profile header */}
       <div className="text-center mb-8">
         <div className="w-20 h-20 rounded-full bg-copper/20 flex items-center justify-center mx-auto mb-4">
-          <span className="font-display text-3xl text-copper italic">A</span>
+          <span className="font-display text-3xl text-copper italic">
+            {user.firstName?.[0] ?? "U"}
+          </span>
         </div>
         <h1 className="font-display text-3xl font-light italic mb-1">
-          Amara Okonkwo
+          {user.firstName} {user.lastName}
         </h1>
-        <p className="text-sm text-charcoal-soft">
-          amara@email.com &middot; +234 801 234 5678
-        </p>
-        <button className="text-xs text-copper hover:text-copper-dark mt-2 cursor-pointer">
-          Edit Profile
-        </button>
+        <p className="text-sm text-charcoal-soft">{user.email}</p>
       </div>
 
       {/* Stats */}
@@ -84,10 +97,7 @@ export default function AccountPage() {
       </div>
 
       {/* Sign out */}
-      <button className="flex items-center gap-2 text-sm text-charcoal-soft hover:text-danger transition-colors mx-auto cursor-pointer">
-        <LogOut size={16} />
-        Sign Out
-      </button>
+      <SignOutButton />
     </div>
   );
 }

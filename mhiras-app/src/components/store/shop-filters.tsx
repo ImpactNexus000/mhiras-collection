@@ -1,21 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SlidersHorizontal, X } from "lucide-react";
 
-const categories = [
-  { label: "Dresses", count: 34 },
-  { label: "Tops", count: 28 },
-  { label: "Bottoms", count: 19 },
-  { label: "Bags", count: 47 },
-  { label: "Shoes", count: 63 },
+interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  _count: { products: number };
+}
+
+interface ShopFiltersProps {
+  categories: Category[];
+}
+
+const conditionOptions = [
+  { value: "LIKE_NEW", label: "Like New" },
+  { value: "GOOD", label: "Good" },
+  { value: "FAIR", label: "Fair" },
 ];
 
-const conditions = ["Like New", "Good", "Fair"];
 const sizes = ["XS", "S", "M", "L", "XL"];
-
-const filterChips = ["All", "Women", "Men", "Bags & Accessories", "Shoes", "Under ₦5k"];
 
 const sortOptions = [
   { value: "newest", label: "Newest First" },
@@ -23,65 +30,103 @@ const sortOptions = [
   { value: "price-desc", label: "Price: High–Low" },
 ];
 
-export function ShopFilters() {
-  const [activeChip, setActiveChip] = useState("All");
-  const [activeSize, setActiveSize] = useState<string | null>("M");
+export function ShopFilters({ categories }: ShopFiltersProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  return (
-    <>
-      {/* Filter chips bar */}
-      <div className="flex items-center gap-2 px-4 md:px-6 py-3 bg-cream-dark border-b border-border overflow-x-auto">
-        {filterChips.map((chip) => (
-          <button
-            key={chip}
-            onClick={() => setActiveChip(chip)}
-            className={cn(
-              "px-3.5 py-1.5 border text-sm whitespace-nowrap cursor-pointer transition-colors",
-              activeChip === chip
-                ? "bg-charcoal text-cream border-charcoal"
-                : "bg-white text-charcoal-mid border-border hover:border-charcoal-soft"
-            )}
-          >
-            {chip}
-          </button>
-        ))}
+  // Read current filter state from URL
+  const activeCategory = searchParams.get("category") ?? "";
+  const activeConditions = searchParams.get("condition")?.split(",") ?? [];
+  const activeSize = searchParams.get("size") ?? "";
+  const activeSort = searchParams.get("sort") ?? "newest";
+  const minPrice = searchParams.get("minPrice") ?? "";
+  const maxPrice = searchParams.get("maxPrice") ?? "";
 
-        {/* Mobile filter toggle */}
-        <button
-          onClick={() => setShowMobileFilters(true)}
-          className="md:hidden ml-auto flex items-center gap-1.5 px-3 py-1.5 border border-border bg-white text-sm cursor-pointer"
-        >
-          <SlidersHorizontal size={14} /> Filters
-        </button>
+  // Local state for price inputs (applied on blur/enter)
+  const [localMinPrice, setLocalMinPrice] = useState(minPrice);
+  const [localMaxPrice, setLocalMaxPrice] = useState(maxPrice);
 
-        {/* Sort */}
-        <select className="ml-auto hidden md:block text-sm px-3 py-1.5 border border-border bg-white text-charcoal cursor-pointer">
-          {sortOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              Sort: {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      // Reset to page 1 on any filter change
+      params.delete("page");
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === null || value === "") {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      }
+      router.push(`/shop?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
-      {/* Desktop sidebar filter */}
-      <aside className="hidden md:block w-[220px] p-4 border-r border-border bg-cream flex-shrink-0">
-        <div className="text-xs uppercase tracking-widest text-charcoal-soft font-medium mb-4">
-          Filter By
-        </div>
+  function toggleCategory(slug: string) {
+    updateParams({ category: activeCategory === slug ? null : slug });
+  }
 
+  function toggleCondition(value: string) {
+    const next = activeConditions.includes(value)
+      ? activeConditions.filter((c) => c !== value)
+      : [...activeConditions, value];
+    updateParams({ condition: next.length > 0 ? next.join(",") : null });
+  }
+
+  function toggleSize(size: string) {
+    updateParams({ size: activeSize === size ? null : size });
+  }
+
+  function applyPrice() {
+    updateParams({ minPrice: localMinPrice || null, maxPrice: localMaxPrice || null });
+  }
+
+  function handleSort(value: string) {
+    updateParams({ sort: value === "newest" ? null : value });
+  }
+
+  function clearAll() {
+    router.push("/shop");
+    setLocalMinPrice("");
+    setLocalMaxPrice("");
+  }
+
+  const hasActiveFilters =
+    activeCategory || activeConditions.length > 0 || activeSize || minPrice || maxPrice;
+
+  // Shared filter controls (used in both desktop sidebar and mobile drawer)
+  function FilterControls({ isMobile = false }: { isMobile?: boolean }) {
+    return (
+      <>
         {/* Price Range */}
         <div className="mb-5">
           <div className="text-sm font-medium mb-2">Price Range</div>
           <div className="flex gap-2">
             <input
               placeholder="₦ Min"
-              className="flex-1 px-2 py-1.5 border border-border text-sm bg-white outline-none focus:border-copper"
+              type="number"
+              value={localMinPrice}
+              onChange={(e) => setLocalMinPrice(e.target.value)}
+              onBlur={applyPrice}
+              onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+              className={cn(
+                "flex-1 border border-border text-sm bg-white outline-none focus:border-copper",
+                isMobile ? "px-3 py-2" : "px-2 py-1.5"
+              )}
             />
             <input
               placeholder="₦ Max"
-              className="flex-1 px-2 py-1.5 border border-border text-sm bg-white outline-none focus:border-copper"
+              type="number"
+              value={localMaxPrice}
+              onChange={(e) => setLocalMaxPrice(e.target.value)}
+              onBlur={applyPrice}
+              onKeyDown={(e) => e.key === "Enter" && applyPrice()}
+              className={cn(
+                "flex-1 border border-border text-sm bg-white outline-none focus:border-copper",
+                isMobile ? "px-3 py-2" : "px-2 py-1.5"
+              )}
             />
           </div>
         </div>
@@ -89,14 +134,19 @@ export function ShopFilters() {
         {/* Category */}
         <div className="mb-5">
           <div className="text-sm font-medium mb-2">Category</div>
-          <div className="flex flex-col gap-2">
+          <div className={cn("flex flex-col", isMobile ? "gap-2.5" : "gap-2")}>
             {categories.map((cat) => (
               <label
-                key={cat.label}
+                key={cat.id}
                 className="flex items-center gap-2 text-sm cursor-pointer"
               >
-                <input type="checkbox" className="accent-copper" />
-                {cat.label} ({cat.count})
+                <input
+                  type="checkbox"
+                  className="accent-copper"
+                  checked={activeCategory === cat.slug}
+                  onChange={() => toggleCategory(cat.slug)}
+                />
+                {cat.name} ({cat._count.products})
               </label>
             ))}
           </div>
@@ -105,18 +155,19 @@ export function ShopFilters() {
         {/* Condition */}
         <div className="mb-5">
           <div className="text-sm font-medium mb-2">Condition</div>
-          <div className="flex flex-col gap-2">
-            {conditions.map((c) => (
+          <div className={cn("flex flex-col", isMobile ? "gap-2.5" : "gap-2")}>
+            {conditionOptions.map((c) => (
               <label
-                key={c}
+                key={c.value}
                 className="flex items-center gap-2 text-sm cursor-pointer"
               >
                 <input
                   type="checkbox"
-                  defaultChecked={c !== "Fair"}
                   className="accent-copper"
+                  checked={activeConditions.includes(c.value)}
+                  onChange={() => toggleCondition(c.value)}
                 />
-                {c}
+                {c.label}
               </label>
             ))}
           </div>
@@ -125,13 +176,14 @@ export function ShopFilters() {
         {/* Size */}
         <div className="mb-5">
           <div className="text-sm font-medium mb-2">Size</div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className={cn("flex flex-wrap", isMobile ? "gap-2" : "gap-1.5")}>
             {sizes.map((s) => (
               <button
                 key={s}
-                onClick={() => setActiveSize(activeSize === s ? null : s)}
+                onClick={() => toggleSize(s)}
                 className={cn(
-                  "w-10 h-10 flex items-center justify-center text-sm border cursor-pointer transition-colors",
+                  "flex items-center justify-center text-sm border cursor-pointer transition-colors",
+                  isMobile ? "w-11 h-11" : "w-10 h-10",
                   activeSize === s
                     ? "bg-charcoal text-cream border-charcoal"
                     : "bg-white text-charcoal border-border hover:border-charcoal-soft"
@@ -142,6 +194,82 @@ export function ShopFilters() {
             ))}
           </div>
         </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* Filter chips bar */}
+      <div className="flex items-center gap-2 px-4 md:px-6 py-3 bg-cream-dark border-b border-border overflow-x-auto">
+        {/* Mobile filter toggle */}
+        <button
+          onClick={() => setShowMobileFilters(true)}
+          className="md:hidden flex items-center gap-1.5 px-3 py-1.5 border border-border bg-white text-sm cursor-pointer"
+        >
+          <SlidersHorizontal size={14} /> Filters
+          {hasActiveFilters && (
+            <span className="w-2 h-2 rounded-full bg-copper" />
+          )}
+        </button>
+
+        {/* Active filter pills */}
+        {activeCategory && (
+          <span className="flex items-center gap-1 px-3 py-1.5 bg-charcoal text-cream text-sm">
+            {categories.find((c) => c.slug === activeCategory)?.name}
+            <button onClick={() => toggleCategory(activeCategory)} className="cursor-pointer">
+              <X size={12} />
+            </button>
+          </span>
+        )}
+        {activeSize && (
+          <span className="flex items-center gap-1 px-3 py-1.5 bg-charcoal text-cream text-sm">
+            Size {activeSize}
+            <button onClick={() => toggleSize(activeSize)} className="cursor-pointer">
+              <X size={12} />
+            </button>
+          </span>
+        )}
+        {activeConditions.map((c) => (
+          <span
+            key={c}
+            className="flex items-center gap-1 px-3 py-1.5 bg-charcoal text-cream text-sm"
+          >
+            {conditionOptions.find((o) => o.value === c)?.label}
+            <button onClick={() => toggleCondition(c)} className="cursor-pointer">
+              <X size={12} />
+            </button>
+          </span>
+        ))}
+        {hasActiveFilters && (
+          <button
+            onClick={clearAll}
+            className="text-xs text-copper hover:text-copper-dark cursor-pointer whitespace-nowrap"
+          >
+            Clear all
+          </button>
+        )}
+
+        {/* Sort (desktop) */}
+        <select
+          value={activeSort}
+          onChange={(e) => handleSort(e.target.value)}
+          className="ml-auto hidden md:block text-sm px-3 py-1.5 border border-border bg-white text-charcoal cursor-pointer"
+        >
+          {sortOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              Sort: {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:block w-[220px] p-4 border-r border-border bg-cream flex-shrink-0">
+        <div className="text-xs uppercase tracking-widest text-charcoal-soft font-medium mb-4">
+          Filter By
+        </div>
+        <FilterControls />
       </aside>
 
       {/* Mobile filter drawer */}
@@ -162,80 +290,16 @@ export function ShopFilters() {
               </button>
             </div>
 
-            {/* Price */}
-            <div className="mb-5">
-              <div className="text-sm font-medium mb-2">Price Range</div>
-              <div className="flex gap-2">
-                <input
-                  placeholder="₦ Min"
-                  className="flex-1 px-3 py-2 border border-border text-sm outline-none focus:border-copper"
-                />
-                <input
-                  placeholder="₦ Max"
-                  className="flex-1 px-3 py-2 border border-border text-sm outline-none focus:border-copper"
-                />
-              </div>
-            </div>
-
-            {/* Category */}
-            <div className="mb-5">
-              <div className="text-sm font-medium mb-2">Category</div>
-              <div className="flex flex-col gap-2.5">
-                {categories.map((cat) => (
-                  <label
-                    key={cat.label}
-                    className="flex items-center gap-2 text-sm cursor-pointer"
-                  >
-                    <input type="checkbox" className="accent-copper" />
-                    {cat.label} ({cat.count})
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Condition */}
-            <div className="mb-5">
-              <div className="text-sm font-medium mb-2">Condition</div>
-              <div className="flex flex-col gap-2.5">
-                {conditions.map((c) => (
-                  <label
-                    key={c}
-                    className="flex items-center gap-2 text-sm cursor-pointer"
-                  >
-                    <input type="checkbox" className="accent-copper" />
-                    {c}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Size */}
-            <div className="mb-5">
-              <div className="text-sm font-medium mb-2">Size</div>
-              <div className="flex flex-wrap gap-2">
-                {sizes.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() =>
-                      setActiveSize(activeSize === s ? null : s)
-                    }
-                    className={cn(
-                      "w-11 h-11 flex items-center justify-center text-sm border cursor-pointer",
-                      activeSize === s
-                        ? "bg-charcoal text-cream border-charcoal"
-                        : "bg-white text-charcoal border-border"
-                    )}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <FilterControls isMobile />
 
             {/* Sort (mobile) */}
             <div className="mb-6">
               <div className="text-sm font-medium mb-2">Sort By</div>
-              <select className="w-full text-sm px-3 py-2.5 border border-border bg-white text-charcoal">
+              <select
+                value={activeSort}
+                onChange={(e) => handleSort(e.target.value)}
+                className="w-full text-sm px-3 py-2.5 border border-border bg-white text-charcoal"
+              >
                 {sortOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}

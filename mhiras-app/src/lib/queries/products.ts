@@ -18,7 +18,8 @@ export interface ProductFilters {
 export async function getProducts(
   filters: ProductFilters = {},
   page = 1,
-  pageSize = 12
+  pageSize = 12,
+  sort: { field: string; direction: "asc" | "desc" } = { field: "createdAt", direction: "desc" }
 ) {
   const where: Record<string, unknown> = {
     status: filters.status ?? ProductStatus.PUBLISHED,
@@ -62,7 +63,7 @@ export async function getProducts(
           select: { url: true, alt: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { [sort.field]: sort.direction },
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),

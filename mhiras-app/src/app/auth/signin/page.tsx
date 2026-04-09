@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { SignInForm } from "@/components/auth/signin-form";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -46,46 +46,7 @@ export default function SignInPage() {
             Enter your details to access your account
           </p>
 
-          <form>
-            <div className="mb-4">
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                Email or Phone Number
-              </label>
-              <input
-                className="input-base"
-                type="text"
-                placeholder="amara@email.com or +234 801 234 5678"
-              />
-            </div>
-
-            <div className="mb-2">
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft">
-                  Password
-                </label>
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-xs text-copper hover:text-copper-dark"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <input
-                className="input-base"
-                type="password"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <label className="flex items-center gap-2 text-sm text-charcoal-soft mb-6 cursor-pointer">
-              <input type="checkbox" className="accent-copper" />
-              Remember me
-            </label>
-
-            <Button variant="primary" fullWidth size="lg" type="submit">
-              Sign In →
-            </Button>
-          </form>
+          <SignInForm />
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-5">
@@ -102,7 +63,7 @@ export default function SignInPage() {
               <span className="font-bold">G</span> Google
             </button>
             <button className="flex-1 py-2.5 border border-border text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-cream-dark transition-colors">
-              📱 Phone OTP
+              Phone OTP
             </button>
           </div>
 

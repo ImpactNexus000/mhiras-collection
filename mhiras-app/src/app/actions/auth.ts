@@ -31,6 +31,13 @@ export async function registerUser(formData: FormData) {
     return { error: "An account with this email already exists." };
   }
 
+  if (phone) {
+    const existingPhone = await db.user.findUnique({ where: { phone } });
+    if (existingPhone) {
+      return { error: "An account with this phone number already exists." };
+    }
+  }
+
   // Hash password and create user
   const passwordHash = await bcrypt.hash(password, 12);
 

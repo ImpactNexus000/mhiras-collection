@@ -1,39 +1,73 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, formatDate } from "@/lib/utils";
+import { getOrderByNumber } from "@/lib/queries/orders";
 
-export const metadata: Metadata = {
-  title: "Order Confirmed",
-};
+interface OrderPageProps {
+  params: Promise<{ id: string }>;
+}
 
-// Placeholder data — will be fetched from DB by order ID
-const order = {
-  orderNumber: "MH-2024-0847",
-  customerName: "Amara",
-  items: [
-    { name: "Vintage Wrap Dress", size: "M", price: 8500 },
-    { name: "Leather Tote — Brown", size: null, price: 14000 },
-  ],
-  subtotal: 22500,
-  delivery: 1500,
-  total: 24000,
-  address: {
-    name: "Amara Okonkwo",
-    street: "14 Adeniyi Jones Ave, Ikeja, Lagos",
-    phone: "+234 801 234 5678",
-  },
-  timeline: [
-    { label: "Order Placed", date: "Wed, 8 Apr 2026 · 2:14 PM", status: "done" as const },
-    { label: "Payment Confirmed", date: "Wed, 8 Apr 2026 · 2:17 PM", status: "done" as const },
-    { label: "Being Packaged", date: "In progress...", status: "active" as const },
-    { label: "Out for Delivery", date: "Expected: Thu, 9 Apr", status: "pending" as const },
-    { label: "Delivered", date: "—", status: "pending" as const },
-  ],
-};
+export async function generateMetadata({
+  params,
+}: OrderPageProps): Promise<Metadata> {
+  const { id } = await params;
+  return { title: `Order #${id}` };
+}
 
-export default function OrderConfirmationPage() {
+// Map order statuses to timeline steps
+const timelineSteps = [
+  "Order Placed",
+  "Payment Confirmed",
+  "Processing",
+  "Shipped",
+  "Delivered",
+];
+
+function getStepStatus(
+  stepLabel: string,
+  orderStatus: string,
+  timelineEvents: { status: string; createdAt: Date }[]
+) {
+  const event = timelineEvents.find((e) => e.status === stepLabel);
+
+  if (event) return { status: "done" as const, date: formatDate(event.createdAt) };
+
+  // Determine active step based on order status
+  const statusToStep: Record<string, string> = {
+    PENDING: "Order Placed",
+    CONFIRMED: "Payment Confirmed",
+    PROCESSING: "Processing",
+    SHIPPED: "Shipped",
+    DELIVERED: "Delivered",
+  };
+
+  const currentStep = statusToStep[orderStatus] ?? "Order Placed";
+  const currentIdx = timelineSteps.indexOf(currentStep);
+  const stepIdx = timelineSteps.indexOf(stepLabel);
+
+  if (stepIdx < currentIdx) return { status: "done" as const, date: "—" };
+  if (stepIdx === currentIdx) return { status: "active" as const, date: "In progress..." };
+  return { status: "pending" as const, date: "—" };
+}
+
+export default async function OrderConfirmationPage({
+  params,
+}: OrderPageProps) {
+  const { id } = await params;
+  const order = await getOrderByNumber(id);
+
+  if (!order) notFound();
+
+  const timeline = timelineSteps.map((label) => ({
+    label,
+    ...getStepStatus(label, order.status, order.timeline),
+  }));
+
+  const isCancelled = order.status === "CANCELLED" || order.status === "REFUNDED";
+
   return (
     <>
       {/* Confirmation banner */}
@@ -42,16 +76,23 @@ export default function OrderConfirmationPage() {
           <Check size={28} className="text-white" />
         </div>
         <h1 className="font-display text-3xl md:text-4xl font-light italic mb-2">
-          Order Confirmed!
+          {isCancelled ? "Order Cancelled" : "Order Confirmed!"}
         </h1>
         <p className="text-sm text-charcoal-soft">
-          Order #{order.orderNumber} · Thank you, {order.customerName}. Your items
-          are being prepared for delivery.
+          Order #{order.orderNumber} &middot; Thank you,{" "}
+          {order.user.firstName}. {isCancelled
+            ? "This order has been cancelled."
+            : "Your items are being prepared for delivery."}
         </p>
         <div className="flex gap-3 justify-center mt-5">
-          <Button variant="primary">Track My Order</Button>
+          <Link href="/account/orders">
+            <Button variant="primary">My Orders</Button>
+          </Link>
           <Link href="/shop">
-            <Button variant="outline" className="text-cream border-charcoal-mid hover:bg-charcoal-mid">
+            <Button
+              variant="outline"
+              className="text-cream border-charcoal-mid hover:bg-charcoal-mid"
+            >
               Continue Shopping
             </Button>
           </Link>
@@ -64,10 +105,12 @@ export default function OrderConfirmationPage() {
         <div>
           <h2 className="text-base font-medium mb-5">Delivery Progress</h2>
           <div className="space-y-0">
-            {order.timeline.map((step, i) => (
-              <div key={step.label} className="flex gap-4 items-start pb-6 relative">
-                {/* Connector line */}
-                {i < order.timeline.length - 1 && (
+            {timeline.map((step, i) => (
+              <div
+                key={step.label}
+                className="flex gap-4 items-start pb-6 relative"
+              >
+                {i < timeline.length - 1 && (
                   <div
                     className={`absolute left-[13px] top-[30px] bottom-0 w-px ${
                       step.status === "done" ? "bg-copper" : "bg-border"
@@ -75,7 +118,6 @@ export default function OrderConfirmationPage() {
                   />
                 )}
 
-                {/* Dot */}
                 {step.status === "done" ? (
                   <div className="w-7 h-7 rounded-full bg-copper flex items-center justify-center flex-shrink-0 z-10">
                     <Check size={14} className="text-white" />
@@ -88,7 +130,6 @@ export default function OrderConfirmationPage() {
                   <div className="w-7 h-7 rounded-full border-2 border-border bg-white flex-shrink-0 z-10" />
                 )}
 
-                {/* Content */}
                 <div>
                   <div
                     className={`text-sm font-medium ${
@@ -116,26 +157,50 @@ export default function OrderConfirmationPage() {
           <div className="bg-cream-dark p-4 rounded text-sm">
             {/* Address */}
             <div className="pb-3 mb-3 border-b border-border">
-              <strong>{order.address.name}</strong>
+              <strong>
+                {order.address.firstName} {order.address.lastName}
+              </strong>
               <br />
-              {order.address.street}
+              {order.address.address}, {order.address.city}, {order.address.state}
               <br />
               {order.address.phone}
             </div>
 
             {/* Items */}
             {order.items.map((item) => (
-              <div key={item.name} className="mb-1.5">
-                {item.name}
-                {item.size && ` · ${item.size}`} —{" "}
-                <strong>{formatPrice(item.price)}</strong>
+              <div key={item.id} className="mb-1.5">
+                <Link
+                  href={`/shop/${item.product.slug}`}
+                  className="hover:text-copper transition-colors"
+                >
+                  {item.product.name}
+                </Link>
+                {item.size && ` · ${item.size}`}
+                {item.quantity > 1 && ` × ${item.quantity}`} —{" "}
+                <strong>{formatPrice(item.price * item.quantity)}</strong>
               </div>
             ))}
 
             {/* Totals */}
-            <div className="pt-3 mt-3 border-t border-border flex justify-between font-medium text-base">
-              <span>Total Paid</span>
-              <span className="text-copper">{formatPrice(order.total)}</span>
+            <div className="pt-3 mt-3 border-t border-border space-y-1">
+              <div className="flex justify-between text-charcoal-soft">
+                <span>Subtotal</span>
+                <span>{formatPrice(order.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-charcoal-soft">
+                <span>Delivery</span>
+                <span>{formatPrice(order.deliveryFee)}</span>
+              </div>
+              {order.discount > 0 && (
+                <div className="flex justify-between text-success">
+                  <span>Discount</span>
+                  <span>-{formatPrice(order.discount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-medium text-base pt-2 border-t border-border">
+                <span>Total Paid</span>
+                <span className="text-copper">{formatPrice(order.total)}</span>
+              </div>
             </div>
           </div>
 
@@ -143,7 +208,7 @@ export default function OrderConfirmationPage() {
           <div className="mt-4 p-4 border border-border rounded bg-white text-sm">
             <div className="font-medium mb-1">Need help?</div>
             <p className="text-charcoal-soft text-xs leading-relaxed">
-              Contact us on WhatsApp at +234 801 234 5678 or email
+              Contact us on WhatsApp at +234 901 234 5678 or email
               hello@mhirascollection.com with your order number.
             </p>
           </div>

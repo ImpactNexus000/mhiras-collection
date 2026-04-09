@@ -1,13 +1,24 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export function SearchBar() {
-  const [query, setQuery] = useState("vintage dress");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = query.trim();
+    if (trimmed) {
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    }
+  }
 
   return (
-    <div className="max-w-xl mx-auto relative">
+    <form onSubmit={handleSubmit} className="max-w-xl mx-auto relative">
       <Search
         size={18}
         className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-soft"
@@ -21,12 +32,13 @@ export function SearchBar() {
       />
       {query && (
         <button
+          type="button"
           onClick={() => setQuery("")}
           className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-charcoal-soft uppercase tracking-wider cursor-pointer hover:text-charcoal"
         >
           Clear
         </button>
       )}
-    </div>
+    </form>
   );
 }

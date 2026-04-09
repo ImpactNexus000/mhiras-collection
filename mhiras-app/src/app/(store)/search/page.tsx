@@ -1,75 +1,120 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
+import Link from "next/link";
 import { ProductCard } from "@/components/store/product-card";
 import { SearchBar } from "@/components/store/search-bar";
+import { getProducts } from "@/lib/queries/products";
 
 export const metadata: Metadata = {
   title: "Search",
 };
 
-const trendingTags = ["Bags", "Silk blouse", "Under ₦5,000", "Size M", "Vintage", "Men's shirts"];
-
-const results = [
-  { slug: "vintage-wrap-dress", name: "Vintage Wrap Dress", category: "Dresses", size: "M", price: 8500, originalPrice: 18000, badge: "New" },
-  { slug: "vintage-a-line-dress", name: "Vintage A-Line Dress", category: "Dresses", size: "S", price: 6200, originalPrice: 14000, badge: null },
-  { slug: "vintage-shirt-dress", name: "Vintage Shirt Dress", category: "Dresses", size: "L", price: 7800, originalPrice: null, badge: null },
-  { slug: "vintage-maxi-dress", name: "Vintage Maxi Dress", category: "Dresses", size: "M", price: 9000, originalPrice: 25000, badge: null },
-  { slug: "midi-floral-dress", name: "Midi Floral Dress", category: "Dresses", size: "M", price: 7000, originalPrice: 22000, badge: "Like New" },
-  { slug: "slip-midi-dress", name: "Slip Midi Dress", category: "Dresses", size: "XS", price: 6000, originalPrice: 15000, badge: "New" },
+const trendingTags = [
+  { label: "Bags", href: "/shop?category=bags" },
+  { label: "Silk blouse", href: "/search?q=silk+blouse" },
+  { label: "Under ₦5,000", href: "/shop?maxPrice=5000" },
+  { label: "Size M", href: "/shop?size=M" },
+  { label: "Vintage", href: "/search?q=vintage" },
+  { label: "Men's shirts", href: "/search?q=men+shirt" },
 ];
 
-export default function SearchPage({
-  searchParams,
-}: {
+const conditionLabel: Record<string, string> = {
+  LIKE_NEW: "Like New",
+  GOOD: "Good",
+  FAIR: "Fair",
+};
+
+interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
-}) {
-  // In production, query would come from searchParams and hit the DB
-  const query = "vintage dress";
+}
+
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const { q } = await searchParams;
+  const query = q?.trim() ?? "";
+
+  const { products, total } = query
+    ? await getProducts({ search: query }, 1, 20)
+    : { products: [], total: 0 };
 
   return (
     <>
       {/* Search header */}
       <div className="bg-charcoal px-4 md:px-6 py-6">
-        <SearchBar />
+        <Suspense fallback={null}>
+          <SearchBar />
+        </Suspense>
         <div className="flex flex-wrap gap-2 justify-center mt-3">
           {trendingTags.map((tag) => (
-            <span
-              key={tag}
+            <Link
+              key={tag.label}
+              href={tag.href}
               className="text-xs text-charcoal-soft px-3 py-1 border border-charcoal-mid cursor-pointer hover:text-cream hover:border-cream/30 transition-colors"
             >
-              {tag}
-            </span>
+              {tag.label}
+            </Link>
           ))}
         </div>
       </div>
 
       {/* Results */}
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
-        <div className="flex justify-between items-center mb-5">
-          <span className="text-sm text-charcoal-soft">
-            Showing <strong className="text-charcoal">{results.length} results</strong> for &ldquo;
-            <strong className="text-charcoal">{query}</strong>&rdquo;
-          </span>
-          <select className="text-sm px-3 py-1.5 border border-border bg-white text-charcoal cursor-pointer">
-            <option>Relevance</option>
-            <option>Price: Low–High</option>
-            <option>Newest</option>
-          </select>
-        </div>
+        {!query ? (
+          <div className="text-center py-16">
+            <h2 className="font-display text-2xl italic text-charcoal-soft mb-2">
+              What are you looking for?
+            </h2>
+            <p className="text-sm text-charcoal-soft">
+              Type a keyword above or tap a trending tag to get started.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-between items-center mb-5">
+              <span className="text-sm text-charcoal-soft">
+                Showing{" "}
+                <strong className="text-charcoal">{total} results</strong> for
+                &ldquo;
+                <strong className="text-charcoal">{query}</strong>&rdquo;
+              </span>
+            </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {results.map((product) => (
-            <ProductCard
-              key={product.slug}
-              slug={product.slug}
-              name={product.name}
-              category={product.category}
-              size={product.size}
-              price={product.price}
-              originalPrice={product.originalPrice}
-              badge={product.badge}
-            />
-          ))}
-        </div>
+            {products.length === 0 ? (
+              <div className="text-center py-16">
+                <h2 className="font-display text-2xl italic text-charcoal-soft mb-2">
+                  No results found
+                </h2>
+                <p className="text-sm text-charcoal-soft mb-4">
+                  We couldn&apos;t find anything matching &ldquo;{query}&rdquo;.
+                  Try a different search.
+                </p>
+                <Link
+                  href="/shop"
+                  className="text-copper font-medium hover:text-copper-dark text-sm"
+                >
+                  Browse all items &rarr;
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    slug={product.slug}
+                    name={product.name}
+                    category={product.category.name}
+                    size={product.size}
+                    price={product.sellingPrice}
+                    originalPrice={product.originalPrice}
+                    badge={conditionLabel[product.condition]}
+                    image={product.images[0]?.url ?? null}
+                    stock={product.stock}
+                    isSoldOut={product.stock === 0}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </>
   );

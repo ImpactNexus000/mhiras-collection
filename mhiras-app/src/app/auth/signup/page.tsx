@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { SignUpForm } from "@/components/auth/signup-form";
 
 export const metadata: Metadata = {
   title: "Create Account",
@@ -62,64 +62,7 @@ export default function SignUpPage() {
             It takes less than a minute
           </p>
 
-          <form>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  First Name
-                </label>
-                <input className="input-base" placeholder="Amara" name="firstName" />
-              </div>
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  Last Name
-                </label>
-                <input className="input-base" placeholder="Okonkwo" name="lastName" />
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                Email Address
-              </label>
-              <input className="input-base" type="email" placeholder="amara@email.com" name="email" />
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                Phone Number (WhatsApp)
-              </label>
-              <input className="input-base" type="tel" placeholder="+234 801 234 5678" name="phone" />
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                Password
-              </label>
-              <input className="input-base" type="password" placeholder="Min. 8 characters" name="password" />
-            </div>
-
-            <div className="mb-4">
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                Confirm Password
-              </label>
-              <input className="input-base" type="password" placeholder="Re-enter password" name="confirmPassword" />
-            </div>
-
-            <label className="flex items-start gap-2 text-xs text-charcoal-soft mb-5 cursor-pointer leading-relaxed">
-              <input type="checkbox" className="accent-copper mt-0.5" />
-              <span>
-                I agree to the{" "}
-                <Link href="/terms" className="text-copper underline">Terms of Service</Link>
-                {" "}and{" "}
-                <Link href="/privacy" className="text-copper underline">Privacy Policy</Link>
-              </span>
-            </label>
-
-            <Button variant="primary" fullWidth size="lg" type="submit">
-              Create Account →
-            </Button>
-          </form>
+          <SignUpForm />
 
           <p className="text-center text-sm text-charcoal-soft mt-6">
             Already have an account?{" "}
