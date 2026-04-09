@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Search, Heart, ShoppingBag, User, Menu } from "lucide-react";
+import { Search, Heart } from "lucide-react";
+import { CartBadge } from "./cart-badge";
 
 export function Navbar() {
   return (
@@ -40,12 +41,7 @@ export function Navbar() {
           <Link href="/wishlist" className="text-cream hover:text-copper transition-colors relative">
             <Heart size={18} />
           </Link>
-          <Link href="/cart" className="text-cream hover:text-copper transition-colors relative">
-            <ShoppingBag size={18} />
-            <span className="absolute -top-2 -right-2 bg-copper text-white text-[10px] rounded-full w-4.5 h-4.5 flex items-center justify-center">
-              0
-            </span>
-          </Link>
+          <CartBadge className="text-cream hover:text-copper transition-colors" />
           <div className="w-px h-5 bg-charcoal-mid mx-1" />
           <Link
             href="/auth/signin"
@@ -68,12 +64,7 @@ export function Navbar() {
           <Link href="/search" className="text-charcoal-soft">
             <Search size={18} />
           </Link>
-          <Link href="/cart" className="relative text-charcoal-soft">
-            <ShoppingBag size={18} />
-            <span className="absolute -top-2 -right-2 bg-copper text-white text-[8px] rounded-full w-3.5 h-3.5 flex items-center justify-center">
-              0
-            </span>
-          </Link>
+          <CartBadge className="text-charcoal-soft" />
         </div>
       </nav>
     </header>
