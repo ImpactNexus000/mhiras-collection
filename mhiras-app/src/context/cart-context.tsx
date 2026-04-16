@@ -1,8 +1,23 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useTransition,
+} from "react";
+import {
+  getCart,
+  addToCart,
+  updateCartItemQuantity,
+  removeFromCart,
+  clearCart as clearCartAction,
+} from "@/app/actions/cart";
 
 export interface CartItem {
+  cartItemId: string;
   productId: string;
   slug: string;
   name: string;
@@ -20,85 +35,126 @@ interface CartContextType {
   items: CartItem[];
   itemCount: number;
   subtotal: number;
-  addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
+  loading: boolean;
+  addItem: (productId: string, quantity?: number) => Promise<{ error?: string }>;
+  removeItem: (cartItemId: string) => Promise<void>;
+  updateQuantity: (cartItemId: string, quantity: number) => Promise<void>;
+  clearCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
 
-const CART_STORAGE_KEY = "mhiras-cart";
-
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
 
-  // Load cart from localStorage on mount
-  useEffect(() => {
+  const mapCartToItems = (cart: Awaited<ReturnType<typeof getCart>>): CartItem[] => {
+    if (!cart) return [];
+    return cart.items.map((item) => ({
+      cartItemId: item.id,
+      productId: item.productId,
+      slug: item.product.slug,
+      name: item.product.name,
+      category: item.product.category?.name ?? "",
+      size: item.product.size,
+      condition: item.product.condition,
+      price: item.product.sellingPrice,
+      originalPrice: item.product.originalPrice,
+      image: item.product.images[0]?.url ?? null,
+      quantity: item.quantity,
+      maxStock: item.product.stock,
+    }));
+  };
+
+  const refreshCart = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
-      if (stored) {
-        setItems(JSON.parse(stored));
-      }
+      const cart = await getCart();
+      setItems(mapCartToItems(cart));
     } catch {
-      // ignore parse errors
+      // User not signed in or error — empty cart
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
-    setHydrated(true);
   }, []);
 
-  // Persist cart to localStorage on change
+  // Load cart from database on mount
   useEffect(() => {
-    if (hydrated) {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-    }
-  }, [items, hydrated]);
+    refreshCart();
+  }, [refreshCart]);
 
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
-  const addItem = useCallback(
-    (newItem: Omit<CartItem, "quantity"> & { quantity?: number }) => {
-      setItems((prev) => {
-        const existing = prev.find((i) => i.productId === newItem.productId);
-        if (existing) {
-          return prev.map((i) =>
-            i.productId === newItem.productId
-              ? { ...i, quantity: Math.min(i.quantity + (newItem.quantity ?? 1), i.maxStock) }
-              : i
-          );
-        }
-        return [...prev, { ...newItem, quantity: newItem.quantity ?? 1 }];
-      });
-    },
-    []
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
   );
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
-  }, []);
+  const addItemFn = useCallback(
+    async (productId: string, quantity: number = 1) => {
+      const result = await addToCart(productId, quantity);
+      if (result.error) {
+        return { error: result.error };
+      }
+      await refreshCart();
+      return {};
+    },
+    [refreshCart]
+  );
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.productId !== productId));
-      return;
-    }
-    setItems((prev) =>
-      prev.map((i) =>
-        i.productId === productId
-          ? { ...i, quantity: Math.min(quantity, i.maxStock) }
-          : i
-      )
-    );
-  }, []);
+  const removeItemFn = useCallback(
+    async (cartItemId: string) => {
+      startTransition(async () => {
+        // Optimistic update
+        setItems((prev) => prev.filter((i) => i.cartItemId !== cartItemId));
+        await removeFromCart(cartItemId);
+        await refreshCart();
+      });
+    },
+    [refreshCart]
+  );
 
-  const clearCart = useCallback(() => {
-    setItems([]);
+  const updateQuantityFn = useCallback(
+    async (cartItemId: string, quantity: number) => {
+      if (quantity <= 0) {
+        await removeItemFn(cartItemId);
+        return;
+      }
+      startTransition(async () => {
+        // Optimistic update
+        setItems((prev) =>
+          prev.map((i) =>
+            i.cartItemId === cartItemId ? { ...i, quantity } : i
+          )
+        );
+        await updateCartItemQuantity(cartItemId, quantity);
+        await refreshCart();
+      });
+    },
+    [refreshCart, removeItemFn]
+  );
+
+  const clearCartFn = useCallback(async () => {
+    startTransition(async () => {
+      setItems([]);
+      await clearCartAction();
+    });
   }, []);
 
   return (
     <CartContext.Provider
-      value={{ items, itemCount, subtotal, addItem, removeItem, updateQuantity, clearCart }}
+      value={{
+        items,
+        itemCount,
+        subtotal,
+        loading: loading || isPending,
+        addItem: addItemFn,
+        removeItem: removeItemFn,
+        updateQuantity: updateQuantityFn,
+        clearCart: clearCartFn,
+        refreshCart,
+      }}
     >
       {children}
     </CartContext.Provider>

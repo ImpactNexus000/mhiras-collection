@@ -1,11 +1,12 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/store/product-card";
+import { AddToCartButton } from "@/components/store/add-to-cart-button";
+import { WishlistButton } from "@/components/store/wishlist-button";
 import { formatPrice } from "@/lib/utils";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries/products";
-import { Heart, ShieldCheck, RotateCcw, Truck } from "lucide-react";
+import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
 
 const conditionLabel: Record<string, string> = {
   LIKE_NEW: "Like New",
@@ -175,23 +176,8 @@ export default async function ProductDetailPage({
 
           {/* CTA buttons */}
           <div className="flex flex-col gap-3">
-            {isSoldOut ? (
-              <Button variant="primary" fullWidth size="lg" disabled>
-                Sold Out
-              </Button>
-            ) : (
-              <Button variant="primary" fullWidth size="lg">
-                Add to Cart
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              fullWidth
-              size="lg"
-              className="text-charcoal border-charcoal hover:bg-cream-dark"
-            >
-              <Heart size={16} /> Add to Wishlist
-            </Button>
+            <AddToCartButton productId={product.id} stock={product.stock} />
+            <WishlistButton productId={product.id} />
           </div>
 
           {/* Description */}
@@ -256,6 +242,7 @@ export default async function ProductDetailPage({
             {relatedProducts.map((p) => (
               <ProductCard
                 key={p.id}
+                productId={p.id}
                 slug={p.slug}
                 name={p.name}
                 category={p.category.name}

@@ -2,20 +2,22 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { ProductCard } from "@/components/store/product-card";
 import { Button } from "@/components/ui/button";
+import { getWishlist } from "@/app/actions/wishlist";
+import { Heart } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Wishlist",
 };
 
-const wishlistItems = [
-  { slug: "vintage-wrap-dress", name: "Vintage Wrap Dress", category: "Dresses", size: "M", price: 8500, originalPrice: 18000, badge: "New", stock: 1, isWishlisted: true },
-  { slug: "leather-tote-brown", name: "Leather Tote — Brown", category: "Bags", size: null, price: 14000, originalPrice: 35000, badge: null, stock: 2, isWishlisted: true },
-  { slug: "silk-blouse-cream", name: "Silk Blouse — Cream", category: "Tops", size: "S", price: 5200, originalPrice: null, badge: null, stock: 0, isWishlisted: true },
-  { slug: "block-heel-mules", name: "Block Heel Mules", category: "Shoes", size: "40", price: 9500, originalPrice: 24000, badge: null, stock: 4, isWishlisted: true },
-  { slug: "structured-handbag", name: "Structured Handbag", category: "Bags", size: null, price: 11000, originalPrice: 28000, badge: null, stock: 1, isWishlisted: true },
-];
+const conditionLabel: Record<string, string> = {
+  LIKE_NEW: "Like New",
+  GOOD: "Good",
+  FAIR: "Fair",
+};
 
-export default function WishlistPage() {
+export default async function WishlistPage() {
+  const wishlistItems = await getWishlist();
+
   return (
     <>
       {/* Breadcrumb */}
@@ -32,34 +34,34 @@ export default function WishlistPage() {
               Saved Items
             </h1>
             <p className="text-sm text-charcoal-soft mt-1">
-              {wishlistItems.length} items in your wishlist
+              {wishlistItems.length} item{wishlistItems.length !== 1 ? "s" : ""} in your wishlist
             </p>
           </div>
-          <Button variant="outline" className="text-charcoal border-border hover:bg-cream-dark">
-            Add All to Cart
-          </Button>
         </div>
 
         {wishlistItems.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {wishlistItems.map((item) => (
               <ProductCard
-                key={item.slug}
-                slug={item.slug}
-                name={item.name}
-                category={item.category}
-                size={item.size}
-                price={item.price}
-                originalPrice={item.originalPrice}
-                badge={item.badge}
-                stock={item.stock}
-                isSoldOut={item.stock === 0}
-                isWishlisted={item.isWishlisted}
+                key={item.id}
+                productId={item.product.id}
+                slug={item.product.slug}
+                name={item.product.name}
+                category={item.product.category.name}
+                size={item.product.size}
+                price={item.product.sellingPrice}
+                originalPrice={item.product.originalPrice}
+                badge={conditionLabel[item.product.condition]}
+                image={item.product.images[0]?.url ?? null}
+                stock={item.product.stock}
+                isSoldOut={item.product.stock === 0}
+                isWishlisted={true}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-20">
+            <Heart size={48} className="mx-auto text-charcoal-soft/40 mb-4" />
             <div className="font-display text-2xl italic text-charcoal-soft mb-2">
               Your wishlist is empty
             </div>

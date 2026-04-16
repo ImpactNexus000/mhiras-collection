@@ -117,6 +117,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                   {products.map((product) => (
                     <ProductCard
                       key={product.id}
+                      productId={product.id}
                       slug={product.slug}
                       name={product.name}
                       category={product.category.name}

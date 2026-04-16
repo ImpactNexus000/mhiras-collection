@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
+import { AddToCartButton } from "@/components/store/add-to-cart-button";
+import { WishlistButton } from "@/components/store/wishlist-button";
 
 export interface ProductCardProps {
+  productId?: string;
   slug: string;
   name: string;
   category: string;
@@ -21,6 +23,7 @@ export interface ProductCardProps {
 }
 
 export function ProductCard({
+  productId,
   slug,
   name,
   category,
@@ -28,9 +31,10 @@ export function ProductCard({
   originalPrice,
   size,
   badge,
-  stock,
+  image,
+  stock = 0,
   isSoldOut = false,
-  isWishlisted = false,
+  isWishlisted,
   showAddToCart = true,
   className,
 }: ProductCardProps) {
@@ -50,7 +54,15 @@ export function ProductCard({
       <Link href={`/shop/${slug}`}>
         {/* Image */}
         <div className="h-48 md:h-60 bg-gradient-to-br from-cream-dark to-gold/30 flex items-center justify-center relative">
-          <div className="w-[70px] h-[100px] bg-gradient-to-br from-gold to-copper-dark/40 opacity-50" />
+          {image ? (
+            <img
+              src={image}
+              alt={name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-[70px] h-[100px] bg-gradient-to-br from-gold to-copper-dark/40 opacity-50" />
+          )}
           {badge && (
             <span className="absolute top-2 left-2 bg-copper text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
               {badge}
@@ -67,17 +79,13 @@ export function ProductCard({
             </span>
           )}
           {/* Wishlist button */}
-          <button className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors">
-            <Heart
-              size={16}
-              className={cn(
-                "transition-colors",
-                isWishlisted
-                  ? "fill-copper text-copper"
-                  : "text-charcoal-soft group-hover:text-copper"
-              )}
+          {productId ? (
+            <WishlistButton
+              productId={productId}
+              variant="icon"
+              initialWishlisted={isWishlisted}
             />
-          </button>
+          ) : null}
         </div>
 
         {/* Info */}
@@ -111,20 +119,13 @@ export function ProductCard({
       </Link>
 
       {/* Actions */}
-      {showAddToCart && (
+      {showAddToCart && productId && (
         <div className="px-4 pb-4">
-          {isSoldOut ? (
-            <button
-              disabled
-              className="w-full bg-cream-dark text-charcoal-soft text-xs uppercase tracking-wider py-2.5 cursor-not-allowed"
-            >
-              Sold Out
-            </button>
-          ) : (
-            <button className="w-full bg-charcoal text-cream text-xs uppercase tracking-wider py-2.5 hover:bg-copper transition-colors cursor-pointer">
-              Add to Cart
-            </button>
-          )}
+          <AddToCartButton
+            productId={productId}
+            stock={stock}
+            variant="card"
+          />
         </div>
       )}
     </div>

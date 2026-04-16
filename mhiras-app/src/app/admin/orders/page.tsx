@@ -1,174 +1,245 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Search, Filter, Download } from "lucide-react";
+import { getAdminOrders } from "@/lib/queries/admin";
+import { OrderStatus } from "@/generated/prisma/client";
+import { formatPrice, formatDate } from "@/lib/utils";
+import { OrdersSearch } from "@/components/admin/orders-search";
 
-type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-
-const statusStyles: Record<OrderStatus, string> = {
-  pending: "pill pill-pending",
-  processing: "pill pill-processing",
-  shipped: "pill pill-shipped",
-  delivered: "pill pill-delivered",
-  cancelled: "pill pill-cancelled",
+const statusStyles: Record<string, string> = {
+  PENDING: "pill pill-pending",
+  CONFIRMED: "pill pill-confirmed",
+  PROCESSING: "pill pill-processing",
+  SHIPPED: "pill pill-shipped",
+  DELIVERED: "pill pill-delivered",
+  CANCELLED: "pill pill-cancelled",
+  REFUNDED: "pill pill-refunded",
 };
 
-const orders = [
-  { id: "MH-0847", customer: "Amara Okonkwo", email: "amara@email.com", items: 2, amount: "₦24,000", status: "processing" as OrderStatus, payment: "Paystack", date: "Apr 9, 2026 2:14 PM" },
-  { id: "MH-0846", customer: "Fatima Bello", email: "fatima@email.com", items: 1, amount: "₦8,500", status: "delivered" as OrderStatus, payment: "Bank Transfer", date: "Apr 9, 2026 11:20 AM" },
-  { id: "MH-0845", customer: "Chioma Eze", email: "chioma@email.com", items: 3, amount: "₦31,000", status: "pending" as OrderStatus, payment: "Paystack", date: "Apr 8, 2026 4:30 PM" },
-  { id: "MH-0844", customer: "Kemi Adeyemi", email: "kemi@email.com", items: 1, amount: "₦14,000", status: "cancelled" as OrderStatus, payment: "Flutterwave", date: "Apr 8, 2026 1:05 PM" },
-  { id: "MH-0843", customer: "Blessing Nwosu", email: "blessing@email.com", items: 2, amount: "₦19,500", status: "shipped" as OrderStatus, payment: "Paystack", date: "Apr 7, 2026 9:45 AM" },
-  { id: "MH-0842", customer: "Ngozi Obi", email: "ngozi@email.com", items: 4, amount: "₦42,000", status: "delivered" as OrderStatus, payment: "Bank Transfer", date: "Apr 6, 2026 3:20 PM" },
-  { id: "MH-0841", customer: "Aisha Mohammed", email: "aisha@email.com", items: 1, amount: "₦9,800", status: "delivered" as OrderStatus, payment: "Paystack", date: "Apr 5, 2026 10:10 AM" },
-  { id: "MH-0840", customer: "Temi Oladipo", email: "temi@email.com", items: 2, amount: "₦22,000", status: "processing" as OrderStatus, payment: "Flutterwave", date: "Apr 5, 2026 8:30 AM" },
-];
+const paymentMethodLabel: Record<string, string> = {
+  CARD: "Card",
+  BANK_TRANSFER: "Bank Transfer",
+  PAY_ON_DELIVERY: "Pay on Delivery",
+};
 
-const tabs: { label: string; count: number }[] = [
-  { label: "All Orders", count: 47 },
-  { label: "Pending", count: 9 },
-  { label: "Processing", count: 5 },
-  { label: "Shipped", count: 3 },
-  { label: "Delivered", count: 28 },
-  { label: "Cancelled", count: 2 },
-];
+interface AdminOrdersPageProps {
+  searchParams: Promise<{
+    status?: string;
+    search?: string;
+    page?: string;
+  }>;
+}
 
-export default function AdminOrdersPage() {
+export default async function AdminOrdersPage({
+  searchParams,
+}: AdminOrdersPageProps) {
+  const params = await searchParams;
+  const page = parseInt(params.page ?? "1", 10);
+  const status = params.status as OrderStatus | undefined;
+  const search = params.search;
+
+  const [data, countAll, countPending, countProcessing, countShipped, countDelivered, countCancelled] =
+    await Promise.all([
+      getAdminOrders({ status, search }, page),
+      getAdminOrders({}).then((r) => r.total),
+      getAdminOrders({ status: "PENDING" as OrderStatus }).then((r) => r.total),
+      getAdminOrders({ status: "PROCESSING" as OrderStatus }).then((r) => r.total),
+      getAdminOrders({ status: "SHIPPED" as OrderStatus }).then((r) => r.total),
+      getAdminOrders({ status: "DELIVERED" as OrderStatus }).then((r) => r.total),
+      getAdminOrders({ status: "CANCELLED" as OrderStatus }).then((r) => r.total),
+    ]);
+
+  const { orders, total, totalPages } = data;
+
+  const tabs = [
+    { label: "All Orders", count: countAll, href: "/admin/orders" },
+    { label: "Pending", count: countPending, href: "/admin/orders?status=PENDING" },
+    { label: "Processing", count: countProcessing, href: "/admin/orders?status=PROCESSING" },
+    { label: "Shipped", count: countShipped, href: "/admin/orders?status=SHIPPED" },
+    { label: "Delivered", count: countDelivered, href: "/admin/orders?status=DELIVERED" },
+    { label: "Cancelled", count: countCancelled, href: "/admin/orders?status=CANCELLED" },
+  ];
+
+  const activeTab = status
+    ? tabs.findIndex((t) => t.href.includes(`status=${status}`))
+    : 0;
+
   return (
     <>
       <div className="flex justify-between items-center mb-5">
         <h1 className="font-display text-3xl md:text-4xl font-light italic">
           Orders
         </h1>
-        <Button size="sm" variant="outline">
-          <Download size={14} className="mr-1.5" />
-          Export CSV
-        </Button>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto mb-4">
         {tabs.map((tab, i) => (
-          <button
+          <Link
             key={tab.label}
-            className={`px-4 py-2 text-sm whitespace-nowrap rounded-t-lg cursor-pointer transition-colors ${
-              i === 0
+            href={tab.href}
+            className={`px-4 py-2 text-sm whitespace-nowrap rounded-t-lg transition-colors ${
+              i === activeTab
                 ? "bg-white text-charcoal border border-border border-b-white -mb-px z-10"
                 : "text-charcoal-soft hover:text-charcoal"
             }`}
           >
             {tab.label}{" "}
             <span className="text-xs text-charcoal-soft">({tab.count})</span>
-          </button>
+          </Link>
         ))}
       </div>
 
-      {/* Filters bar */}
-      <div className="bg-white border border-border rounded-lg p-3 flex items-center gap-3 mb-4">
-        <div className="flex-1 flex items-center gap-2 border border-border rounded px-3 py-2">
-          <Search size={14} className="text-charcoal-soft" />
-          <input
-            type="text"
-            placeholder="Search by order ID, customer name, or email..."
-            className="flex-1 text-sm outline-none bg-transparent"
-          />
-        </div>
-        <button className="flex items-center gap-1.5 px-3 py-2 border border-border rounded text-sm text-charcoal-soft hover:text-charcoal cursor-pointer transition-colors">
-          <Filter size={14} />
-          Filters
-        </button>
-      </div>
+      {/* Search */}
+      <OrdersSearch initialSearch={search ?? ""} status={status} />
 
       {/* Orders table */}
-      <div className="bg-white border border-border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-cream-dark">
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                <input type="checkbox" className="accent-copper" />
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Order
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Customer
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Items
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Amount
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Payment
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Status
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Date
-              </th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className="border-t border-border hover:bg-cream/50">
-                <td className="px-4 py-3">
-                  <input type="checkbox" className="accent-copper" />
-                </td>
-                <td className="px-4 py-3 font-medium">#{order.id}</td>
-                <td className="px-4 py-3">
-                  <div>{order.customer}</div>
-                  <div className="text-xs text-charcoal-soft">{order.email}</div>
-                </td>
-                <td className="px-4 py-3">{order.items}</td>
-                <td className="px-4 py-3 font-medium">{order.amount}</td>
-                <td className="px-4 py-3 text-charcoal-soft">{order.payment}</td>
-                <td className="px-4 py-3">
-                  <span className={statusStyles[order.status]}>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-charcoal-soft text-xs">
-                  {order.date}
-                </td>
-                <td className="px-4 py-3">
-                  <Link
-                    href={`/admin/orders/${order.id}`}
-                    className="text-copper text-sm hover:text-copper-dark"
+      {orders.length > 0 ? (
+        <div className="bg-white border border-border rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-cream-dark">
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Order
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Customer
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Items
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Amount
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Payment
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Date
+                  </th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="border-t border-border hover:bg-cream/50"
                   >
-                    View
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-cream-dark">
-          <span className="text-xs text-charcoal-soft">
-            Showing 1–8 of 47 orders
-          </span>
-          <div className="flex gap-1">
-            <button className="px-3 py-1.5 text-xs border border-border rounded bg-white cursor-pointer hover:bg-cream-dark">
-              Previous
-            </button>
-            <button className="px-3 py-1.5 text-xs border border-copper rounded bg-copper text-white">
-              1
-            </button>
-            <button className="px-3 py-1.5 text-xs border border-border rounded bg-white cursor-pointer hover:bg-cream-dark">
-              2
-            </button>
-            <button className="px-3 py-1.5 text-xs border border-border rounded bg-white cursor-pointer hover:bg-cream-dark">
-              3
-            </button>
-            <button className="px-3 py-1.5 text-xs border border-border rounded bg-white cursor-pointer hover:bg-cream-dark">
-              Next
-            </button>
+                    <td className="px-4 py-3 font-medium">
+                      #{order.orderNumber}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div>
+                        {order.user.firstName} {order.user.lastName}
+                      </div>
+                      <div className="text-xs text-charcoal-soft">
+                        {order.user.email}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {order.items.length} item
+                      {order.items.length !== 1 ? "s" : ""}
+                    </td>
+                    <td className="px-4 py-3 font-medium">
+                      {formatPrice(order.total)}
+                    </td>
+                    <td className="px-4 py-3 text-charcoal-soft">
+                      {paymentMethodLabel[order.paymentMethod] ??
+                        order.paymentMethod}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={
+                          statusStyles[order.status] ?? "pill"
+                        }
+                      >
+                        {order.status.toLowerCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-charcoal-soft text-xs">
+                      {formatDate(order.createdAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        className="text-copper text-sm hover:text-copper-dark"
+                      >
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-cream-dark">
+              <span className="text-xs text-charcoal-soft">
+                Showing {(page - 1) * 20 + 1}–
+                {Math.min(page * 20, total)} of {total} orders
+              </span>
+              <div className="flex gap-1">
+                {page > 1 && (
+                  <Link
+                    href={`/admin/orders?${new URLSearchParams({
+                      ...(status ? { status } : {}),
+                      ...(search ? { search } : {}),
+                      page: String(page - 1),
+                    }).toString()}`}
+                    className="px-3 py-1.5 text-xs border border-border rounded bg-white hover:bg-cream-dark"
+                  >
+                    Previous
+                  </Link>
+                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (p) => (
+                    <Link
+                      key={p}
+                      href={`/admin/orders?${new URLSearchParams({
+                        ...(status ? { status } : {}),
+                        ...(search ? { search } : {}),
+                        page: String(p),
+                      }).toString()}`}
+                      className={`px-3 py-1.5 text-xs border rounded ${
+                        p === page
+                          ? "border-copper bg-copper text-white"
+                          : "border-border bg-white hover:bg-cream-dark"
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  )
+                )}
+                {page < totalPages && (
+                  <Link
+                    href={`/admin/orders?${new URLSearchParams({
+                      ...(status ? { status } : {}),
+                      ...(search ? { search } : {}),
+                      page: String(page + 1),
+                    }).toString()}`}
+                    className="px-3 py-1.5 text-xs border border-border rounded bg-white hover:bg-cream-dark"
+                  >
+                    Next
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="bg-white border border-border rounded-lg p-12 text-center">
+          <p className="text-charcoal-soft">
+            {search
+              ? `No orders found for "${search}"`
+              : "No orders yet."}
+          </p>
+        </div>
+      )}
     </>
   );
 }

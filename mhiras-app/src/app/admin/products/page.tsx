@@ -1,171 +1,267 @@
-import { Button } from "@/components/ui/button";
-import { Search, Filter, Plus } from "lucide-react";
+import Link from "next/link";
+import { getAdminProducts } from "@/lib/queries/admin";
+import { getCategories } from "@/lib/queries/products";
+import { formatPrice } from "@/lib/utils";
+import { ProductsClient } from "@/components/admin/products-client";
 
-type ProductStatus = "active" | "draft" | "sold";
-
-const statusStyles: Record<ProductStatus, string> = {
-  active: "bg-green-100 text-green-700",
-  draft: "bg-gray-100 text-gray-600",
-  sold: "bg-copper-light text-copper-dark",
+const conditionLabel: Record<string, string> = {
+  LIKE_NEW: "Like New",
+  GOOD: "Good",
+  FAIR: "Fair",
 };
 
-const products = [
-  { id: 1, name: "Vintage Denim Jacket", category: "Jackets", size: "M", condition: "Like New", price: "₦12,000", stock: 1, status: "active" as ProductStatus, views: 234 },
-  { id: 2, name: "Silk Midi Skirt", category: "Skirts", size: "S", condition: "Good", price: "₦8,500", stock: 1, status: "active" as ProductStatus, views: 189 },
-  { id: 3, name: "Oversized Linen Blazer", category: "Blazers", size: "L", condition: "Like New", price: "₦15,000", stock: 1, status: "active" as ProductStatus, views: 156 },
-  { id: 4, name: "Floral Wrap Dress", category: "Dresses", size: "M", condition: "Good", price: "₦10,000", stock: 0, status: "sold" as ProductStatus, views: 312 },
-  { id: 5, name: "Cashmere Cardigan", category: "Knitwear", size: "M", condition: "Fair", price: "₦7,500", stock: 1, status: "draft" as ProductStatus, views: 0 },
-  { id: 6, name: "Wide-Leg Trousers", category: "Trousers", size: "S", condition: "Like New", price: "₦9,000", stock: 2, status: "active" as ProductStatus, views: 98 },
-  { id: 7, name: "Leather Crossbody Bag", category: "Bags", size: "One Size", condition: "Good", price: "₦14,000", stock: 1, status: "active" as ProductStatus, views: 275 },
-  { id: 8, name: "Pleated Maxi Skirt", category: "Skirts", size: "M", condition: "Like New", price: "₦11,500", stock: 0, status: "sold" as ProductStatus, views: 201 },
-];
+const statusStyles: Record<string, string> = {
+  PUBLISHED: "bg-green-100 text-green-700",
+  DRAFT: "bg-gray-100 text-gray-600",
+  SOLD_OUT: "bg-copper-light text-copper-dark",
+  ARCHIVED: "bg-gray-100 text-gray-500",
+};
 
-const tabs = [
-  { label: "All Products", count: 134 },
-  { label: "Active", count: 98 },
-  { label: "Draft", count: 12 },
-  { label: "Sold Out", count: 24 },
-];
+interface AdminProductsPageProps {
+  searchParams: Promise<{
+    status?: string;
+    category?: string;
+    search?: string;
+    page?: string;
+    action?: string;
+  }>;
+}
 
-export default function AdminProductsPage() {
+export default async function AdminProductsPage({
+  searchParams,
+}: AdminProductsPageProps) {
+  const params = await searchParams;
+  const page = parseInt(params.page ?? "1", 10);
+  const status = params.status;
+  const search = params.search;
+  const category = params.category;
+  const showNewForm = params.action === "new";
+
+  const [{ products, total, totalPages }, categories, countAll, countPublished, countDraft, countSoldOut] =
+    await Promise.all([
+      getAdminProducts({ status, category, search }, page),
+      getCategories(),
+      getAdminProducts({}).then((r) => r.total),
+      getAdminProducts({ status: "PUBLISHED" }).then((r) => r.total),
+      getAdminProducts({ status: "DRAFT" }).then((r) => r.total),
+      getAdminProducts({ status: "SOLD_OUT" }).then((r) => r.total),
+    ]);
+
+  const tabs = [
+    { label: "All Products", count: countAll, href: "/admin/products" },
+    { label: "Active", count: countPublished, href: "/admin/products?status=PUBLISHED" },
+    { label: "Draft", count: countDraft, href: "/admin/products?status=DRAFT" },
+    { label: "Sold Out", count: countSoldOut, href: "/admin/products?status=SOLD_OUT" },
+  ];
+
+  const activeTab = status
+    ? tabs.findIndex((t) => t.href.includes(`status=${status}`))
+    : 0;
+
+  const categoriesForForm = categories.map((c) => ({
+    id: c.id,
+    name: c.name,
+  }));
+
   return (
-    <>
+    <ProductsClient
+      categories={categoriesForForm}
+      showNewForm={showNewForm}
+    >
       <div className="flex justify-between items-center mb-5">
         <h1 className="font-display text-3xl md:text-4xl font-light italic">
           Products
         </h1>
-        <Button size="sm">
-          <Plus size={14} className="mr-1.5" />
-          Add Product
-        </Button>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto mb-4">
         {tabs.map((tab, i) => (
-          <button
+          <Link
             key={tab.label}
-            className={`px-4 py-2 text-sm whitespace-nowrap rounded-t-lg cursor-pointer transition-colors ${
-              i === 0
+            href={tab.href}
+            className={`px-4 py-2 text-sm whitespace-nowrap rounded-t-lg transition-colors ${
+              i === activeTab
                 ? "bg-white text-charcoal border border-border border-b-white -mb-px z-10"
                 : "text-charcoal-soft hover:text-charcoal"
             }`}
           >
             {tab.label}{" "}
             <span className="text-xs text-charcoal-soft">({tab.count})</span>
-          </button>
+          </Link>
         ))}
       </div>
 
-      {/* Search bar */}
-      <div className="bg-white border border-border rounded-lg p-3 flex items-center gap-3 mb-4">
-        <div className="flex-1 flex items-center gap-2 border border-border rounded px-3 py-2">
-          <Search size={14} className="text-charcoal-soft" />
-          <input
-            type="text"
-            placeholder="Search products by name, category..."
-            className="flex-1 text-sm outline-none bg-transparent"
-          />
-        </div>
-        <button className="flex items-center gap-1.5 px-3 py-2 border border-border rounded text-sm text-charcoal-soft hover:text-charcoal cursor-pointer transition-colors">
-          <Filter size={14} />
-          Filters
-        </button>
-      </div>
-
       {/* Products table */}
-      <div className="bg-white border border-border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-cream-dark">
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                <input type="checkbox" className="accent-copper" />
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Product
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Category
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Size
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Condition
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Price
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Stock
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Status
-              </th>
-              <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                Views
-              </th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id} className="border-t border-border hover:bg-cream/50">
-                <td className="px-4 py-3">
-                  <input type="checkbox" className="accent-copper" />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-12 bg-gradient-to-br from-cream-dark to-gold/30 rounded flex-shrink-0" />
-                    <span className="font-medium">{product.name}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-charcoal-soft">{product.category}</td>
-                <td className="px-4 py-3">{product.size}</td>
-                <td className="px-4 py-3 text-charcoal-soft">{product.condition}</td>
-                <td className="px-4 py-3 font-medium">{product.price}</td>
-                <td className="px-4 py-3">
-                  <span className={product.stock === 0 ? "text-danger" : ""}>
-                    {product.stock}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize ${statusStyles[product.status]}`}>
-                    {product.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-charcoal-soft">{product.views}</td>
-                <td className="px-4 py-3">
-                  <button className="text-copper text-sm hover:text-copper-dark cursor-pointer">
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-cream-dark">
-          <span className="text-xs text-charcoal-soft">
-            Showing 1–8 of 134 products
-          </span>
-          <div className="flex gap-1">
-            <button className="px-3 py-1.5 text-xs border border-border rounded bg-white cursor-pointer hover:bg-cream-dark">
-              Previous
-            </button>
-            <button className="px-3 py-1.5 text-xs border border-copper rounded bg-copper text-white">
-              1
-            </button>
-            <button className="px-3 py-1.5 text-xs border border-border rounded bg-white cursor-pointer hover:bg-cream-dark">
-              2
-            </button>
-            <button className="px-3 py-1.5 text-xs border border-border rounded bg-white cursor-pointer hover:bg-cream-dark">
-              Next
-            </button>
+      {products.length > 0 ? (
+        <div className="bg-white border border-border rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-cream-dark">
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Product
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Category
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Size
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Condition
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Price
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Stock
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                    Sold
+                  </th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr
+                    key={product.id}
+                    className="border-t border-border hover:bg-cream/50"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {product.images[0]?.url ? (
+                          <img
+                            src={product.images[0].url}
+                            alt={product.name}
+                            className="w-10 h-12 object-cover rounded flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-12 bg-gradient-to-br from-cream-dark to-gold/30 rounded flex-shrink-0" />
+                        )}
+                        <span className="font-medium">{product.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-charcoal-soft">
+                      {product.category.name}
+                    </td>
+                    <td className="px-4 py-3">{product.size ?? "—"}</td>
+                    <td className="px-4 py-3 text-charcoal-soft">
+                      {conditionLabel[product.condition] ?? product.condition}
+                    </td>
+                    <td className="px-4 py-3 font-medium">
+                      {formatPrice(product.sellingPrice)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={product.stock === 0 ? "text-danger" : ""}
+                      >
+                        {product.stock}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                          statusStyles[product.status] ?? "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {product.status === "PUBLISHED"
+                          ? "Active"
+                          : product.status === "SOLD_OUT"
+                            ? "Sold Out"
+                            : product.status.toLowerCase()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-charcoal-soft">
+                      {product._count.orderItems}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/products?edit=${product.id}`}
+                        className="text-copper text-sm hover:text-copper-dark"
+                      >
+                        Edit
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-cream-dark">
+              <span className="text-xs text-charcoal-soft">
+                Showing {(page - 1) * 20 + 1}–
+                {Math.min(page * 20, total)} of {total} products
+              </span>
+              <div className="flex gap-1">
+                {page > 1 && (
+                  <Link
+                    href={`/admin/products?${new URLSearchParams({
+                      ...(status ? { status } : {}),
+                      ...(search ? { search } : {}),
+                      page: String(page - 1),
+                    }).toString()}`}
+                    className="px-3 py-1.5 text-xs border border-border rounded bg-white hover:bg-cream-dark"
+                  >
+                    Previous
+                  </Link>
+                )}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (p) => (
+                    <Link
+                      key={p}
+                      href={`/admin/products?${new URLSearchParams({
+                        ...(status ? { status } : {}),
+                        ...(search ? { search } : {}),
+                        page: String(p),
+                      }).toString()}`}
+                      className={`px-3 py-1.5 text-xs border rounded ${
+                        p === page
+                          ? "border-copper bg-copper text-white"
+                          : "border-border bg-white hover:bg-cream-dark"
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  )
+                )}
+                {page < totalPages && (
+                  <Link
+                    href={`/admin/products?${new URLSearchParams({
+                      ...(status ? { status } : {}),
+                      ...(search ? { search } : {}),
+                      page: String(page + 1),
+                    }).toString()}`}
+                    className="px-3 py-1.5 text-xs border border-border rounded bg-white hover:bg-cream-dark"
+                  >
+                    Next
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    </>
+      ) : (
+        <div className="bg-white border border-border rounded-lg p-12 text-center">
+          <p className="text-charcoal-soft mb-4">
+            {search
+              ? `No products found for "${search}"`
+              : "No products in this category yet."}
+          </p>
+          <Link href="/admin/products?action=new">
+            <button className="text-sm text-copper hover:underline cursor-pointer">
+              + Add your first product
+            </button>
+          </Link>
+        </div>
+      )}
+    </ProductsClient>
   );
 }

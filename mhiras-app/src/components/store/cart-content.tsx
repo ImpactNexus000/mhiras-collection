@@ -3,18 +3,27 @@
 import Link from "next/link";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
-import { Minus, Plus, X, ShoppingBag } from "lucide-react";
+import { Minus, Plus, X, ShoppingBag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const DELIVERY_FEE = 1500;
 
 export function CartContent() {
-  const { items, itemCount, subtotal, removeItem, updateQuantity } = useCart();
+  const { items, itemCount, subtotal, loading, removeItem, updateQuantity } = useCart();
   const [promoCode, setPromoCode] = useState("");
   const [discount] = useState(0);
 
   const total = subtotal + DELIVERY_FEE - discount;
+
+  if (loading) {
+    return (
+      <div className="text-center py-20 px-4">
+        <Loader2 size={32} className="mx-auto text-copper animate-spin mb-4" />
+        <p className="text-sm text-charcoal-soft">Loading your cart...</p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -50,12 +59,20 @@ export function CartContent() {
         <div className="p-5 md:p-6 border-r border-border">
           {items.map((item) => (
             <div
-              key={item.productId}
+              key={item.cartItemId}
               className="grid grid-cols-[80px_1fr_auto] gap-4 py-5 border-b border-border last:border-b-0"
             >
               {/* Thumbnail */}
               <Link href={`/shop/${item.slug}`}>
-                <div className="w-20 h-24 bg-gradient-to-br from-cream-dark to-gold/30 rounded" />
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-20 h-24 object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-20 h-24 bg-gradient-to-br from-cream-dark to-gold/30 rounded" />
+                )}
               </Link>
 
               {/* Details */}
@@ -72,7 +89,7 @@ export function CartContent() {
                 {/* Quantity controls */}
                 <div className="flex items-center gap-3 mt-3">
                   <button
-                    onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
                     className="w-8 h-8 border border-border flex items-center justify-center cursor-pointer hover:bg-cream-dark transition-colors"
                   >
                     <Minus size={14} />
@@ -81,7 +98,7 @@ export function CartContent() {
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                     disabled={item.quantity >= item.maxStock}
                     className="w-8 h-8 border border-border flex items-center justify-center cursor-pointer hover:bg-cream-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
@@ -106,7 +123,7 @@ export function CartContent() {
                   </div>
                 )}
                 <button
-                  onClick={() => removeItem(item.productId)}
+                  onClick={() => removeItem(item.cartItemId)}
                   className="text-xs text-charcoal-soft hover:text-danger mt-3 cursor-pointer flex items-center gap-1 ml-auto"
                 >
                   <X size={12} /> Remove

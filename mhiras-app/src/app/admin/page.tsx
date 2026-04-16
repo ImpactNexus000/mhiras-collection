@@ -1,30 +1,100 @@
+import Link from "next/link";
+import { auth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { formatPrice, formatDate } from "@/lib/utils";
+import {
+  getDashboardStats,
+  getWeeklyRevenue,
+  getRecentOrders,
+} from "@/lib/queries/admin";
 
-const kpis = [
-  { label: "Revenue (Month)", value: "₦384,500", change: "↑ 23% vs last month", up: true },
-  { label: "Orders (Month)", value: "47", change: "↑ 12 more than last", up: true },
-  { label: "Active Listings", value: "134", change: "↓ 8 sold today", up: false },
-  { label: "Pending Orders", value: "9", change: "3 need action", up: null },
-];
+const statusStyles: Record<string, string> = {
+  PENDING: "pill pill-pending",
+  CONFIRMED: "pill pill-confirmed",
+  PROCESSING: "pill pill-processing",
+  SHIPPED: "pill pill-shipped",
+  DELIVERED: "pill pill-delivered",
+  CANCELLED: "pill pill-cancelled",
+  REFUNDED: "pill pill-refunded",
+};
 
-const recentOrders = [
-  { id: "#MH-0847", customer: "Amara Okonkwo", items: 2, amount: "₦24,000", status: "processing", date: "Today 2:14 PM" },
-  { id: "#MH-0846", customer: "Fatima Bello", items: 1, amount: "₦8,500", status: "delivered", date: "Today 11:20 AM" },
-  { id: "#MH-0845", customer: "Chioma Eze", items: 3, amount: "₦31,000", status: "pending", date: "Yesterday" },
-  { id: "#MH-0844", customer: "Kemi Adeyemi", items: 1, amount: "₦14,000", status: "cancelled", date: "Yesterday" },
-];
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
 
-const barHeights = [55, 72, 40, 90, 65, 85, 60];
-const barLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+function formatRelativeDate(date: Date) {
+  const now = new Date();
+  const diff = now.getTime() - new Date(date).getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-export default function AdminDashboard() {
+  if (days === 0) {
+    return `Today ${new Date(date).toLocaleTimeString("en-NG", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })}`;
+  }
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days} days ago`;
+  return formatDate(date);
+}
+
+export default async function AdminDashboard() {
+  const session = await auth();
+  const [stats, weeklyRevenue, recentOrders] = await Promise.all([
+    getDashboardStats(),
+    getWeeklyRevenue(),
+    getRecentOrders(5),
+  ]);
+
+  const maxRevenue = Math.max(...weeklyRevenue.map((d) => d.revenue), 1);
+
+  const kpis = [
+    {
+      label: "Revenue (Month)",
+      value: formatPrice(stats.revenueThisMonth),
+      change:
+        stats.revenueChange >= 0
+          ? `↑ ${stats.revenueChange}% vs last month`
+          : `↓ ${Math.abs(stats.revenueChange)}% vs last month`,
+      up: stats.revenueChange >= 0,
+    },
+    {
+      label: "Orders (Month)",
+      value: String(stats.monthlyOrders),
+      change:
+        stats.orderChange >= 0
+          ? `↑ ${stats.orderChange} more than last`
+          : `↓ ${Math.abs(stats.orderChange)} less than last`,
+      up: stats.orderChange >= 0,
+    },
+    {
+      label: "Active Listings",
+      value: String(stats.activeListings),
+      change: `${stats.lowStockProducts} low stock`,
+      up: stats.lowStockProducts === 0,
+    },
+    {
+      label: "Pending Orders",
+      value: String(stats.pendingOrders),
+      change:
+        stats.pendingOrders > 0
+          ? `${stats.pendingOrders} need action`
+          : "All caught up",
+      up: stats.pendingOrders === 0 ? true : null,
+    },
+  ];
+
   return (
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="font-display text-3xl md:text-4xl font-light italic">
-            Good afternoon, Mhiras
+            {getGreeting()}, {session?.user?.firstName ?? "Mhiras"}
           </h1>
           <p className="text-sm text-charcoal-soft">
             {new Date().toLocaleDateString("en-NG", {
@@ -35,11 +105,13 @@ export default function AdminDashboard() {
             })}
           </p>
         </div>
-        <Button size="sm">+ Add New Item</Button>
+        <Link href="/admin/products?action=new">
+          <Button size="sm">+ Add New Item</Button>
+        </Link>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         {kpis.map((kpi) => (
           <div
             key={kpi.label}
@@ -54,8 +126,8 @@ export default function AdminDashboard() {
                 kpi.up === true
                   ? "text-success"
                   : kpi.up === false
-                  ? "text-danger"
-                  : "text-warning"
+                    ? "text-danger"
+                    : "text-warning"
               }`}
             >
               {kpi.change}
@@ -70,77 +142,150 @@ export default function AdminDashboard() {
           Revenue — Last 7 Days
         </h3>
         <div className="flex items-end gap-2 h-28">
-          {barHeights.map((h, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          {weeklyRevenue.map((day, i) => {
+            const height =
+              maxRevenue > 0
+                ? Math.max((day.revenue / maxRevenue) * 100, 4)
+                : 4;
+            return (
               <div
-                className="w-full bg-copper-light rounded-t hover:bg-copper transition-colors cursor-pointer"
-                style={{ height: `${h}%` }}
-              />
-              <span className="text-[9px] text-charcoal-soft">
-                {barLabels[i]}
-              </span>
-            </div>
-          ))}
+                key={i}
+                className="flex-1 flex flex-col items-center gap-1"
+              >
+                <div
+                  className="w-full bg-copper-light rounded-t hover:bg-copper transition-colors cursor-pointer"
+                  style={{ height: `${height}%` }}
+                  title={formatPrice(day.revenue)}
+                />
+                <span className="text-[9px] text-charcoal-soft">
+                  {day.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Recent Orders */}
       <div className="flex justify-between items-center mb-2.5">
         <h3 className="text-sm font-medium">Recent Orders</h3>
-        <span className="text-sm text-copper cursor-pointer">
-          View all &rarr;
-        </span>
+        <Link
+          href="/admin/orders"
+          className="text-sm text-copper hover:underline"
+        >
+          View all →
+        </Link>
       </div>
-      <table className="w-full bg-white border border-border rounded-lg overflow-hidden text-sm">
-        <thead>
-          <tr className="bg-cream-dark">
-            <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-              Order ID
-            </th>
-            <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-              Customer
-            </th>
-            <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-              Items
-            </th>
-            <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-              Amount
-            </th>
-            <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-              Status
-            </th>
-            <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-              Date
-            </th>
-            <th className="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {recentOrders.map((order) => (
-            <tr key={order.id} className="border-t border-border">
-              <td className="px-4 py-3 font-medium">{order.id}</td>
-              <td className="px-4 py-3">{order.customer}</td>
-              <td className="px-4 py-3">
-                {order.items} item{order.items > 1 ? "s" : ""}
-              </td>
-              <td className="px-4 py-3">{order.amount}</td>
-              <td className="px-4 py-3">
-                <span className={`pill pill-${order.status}`}>
-                  {order.status}
-                </span>
-              </td>
-              <td className="px-4 py-3 text-charcoal-soft">
-                {order.date}
-              </td>
-              <td className="px-4 py-3 text-copper text-sm cursor-pointer">
-                {order.status === "delivered" || order.status === "cancelled"
-                  ? "View"
-                  : "Manage"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+      {recentOrders.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full bg-white border border-border rounded-lg overflow-hidden text-sm">
+            <thead>
+              <tr className="bg-cream-dark">
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                  Order ID
+                </th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                  Customer
+                </th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                  Items
+                </th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                  Amount
+                </th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                  Status
+                </th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
+                  Date
+                </th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentOrders.map((order) => (
+                <tr key={order.id} className="border-t border-border">
+                  <td className="px-4 py-3 font-medium">
+                    #{order.orderNumber}
+                  </td>
+                  <td className="px-4 py-3">
+                    {order.user.firstName} {order.user.lastName}
+                  </td>
+                  <td className="px-4 py-3">
+                    {order.items.length} item
+                    {order.items.length !== 1 ? "s" : ""}
+                  </td>
+                  <td className="px-4 py-3">{formatPrice(order.total)}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={
+                        statusStyles[order.status] ?? "pill"
+                      }
+                    >
+                      {order.status.toLowerCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-charcoal-soft">
+                    {formatRelativeDate(order.createdAt)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/admin/orders/${order.id}`}
+                      className="text-copper text-sm hover:underline"
+                    >
+                      {order.status === "DELIVERED" ||
+                      order.status === "CANCELLED"
+                        ? "View"
+                        : "Manage"}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="bg-white border border-border rounded-lg p-8 text-center">
+          <p className="text-sm text-charcoal-soft">
+            No orders yet. They&apos;ll show up here once customers start placing
+            orders.
+          </p>
+        </div>
+      )}
+
+      {/* Quick stats footer */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-5">
+        <Link
+          href="/admin/customers"
+          className="bg-white border border-border rounded-lg p-4 hover:border-copper transition-colors"
+        >
+          <div className="text-xs uppercase tracking-wider text-charcoal-soft mb-1">
+            Total Customers
+          </div>
+          <div className="text-2xl font-medium">{stats.totalCustomers}</div>
+        </Link>
+        <Link
+          href="/admin/inventory?filter=low"
+          className="bg-white border border-border rounded-lg p-4 hover:border-copper transition-colors"
+        >
+          <div className="text-xs uppercase tracking-wider text-charcoal-soft mb-1">
+            Low Stock Items
+          </div>
+          <div className="text-2xl font-medium text-warning">
+            {stats.lowStockProducts}
+          </div>
+        </Link>
+        <Link
+          href="/admin/products"
+          className="bg-white border border-border rounded-lg p-4 hover:border-copper transition-colors"
+        >
+          <div className="text-xs uppercase tracking-wider text-charcoal-soft mb-1">
+            Active Listings
+          </div>
+          <div className="text-2xl font-medium">{stats.activeListings}</div>
+        </Link>
+      </div>
     </>
   );
 }
