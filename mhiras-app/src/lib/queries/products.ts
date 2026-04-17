@@ -88,13 +88,6 @@ export async function getProductBySlug(slug: string) {
     include: {
       category: { select: { name: true, slug: true } },
       images: { orderBy: { sortOrder: "asc" } },
-      reviews: {
-        include: {
-          user: { select: { firstName: true, lastName: true } },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-      },
     },
   });
 

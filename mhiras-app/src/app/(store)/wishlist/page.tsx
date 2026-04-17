@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ProductCard } from "@/components/store/product-card";
 import { Button } from "@/components/ui/button";
 import { getWishlist } from "@/app/actions/wishlist";
+import { getRatingSummariesForProducts } from "@/lib/queries/reviews";
 import { Heart } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -17,6 +18,9 @@ const conditionLabel: Record<string, string> = {
 
 export default async function WishlistPage() {
   const wishlistItems = await getWishlist();
+  const ratingMap = await getRatingSummariesForProducts(
+    wishlistItems.map((item) => item.product.id)
+  );
 
   return (
     <>
@@ -56,6 +60,8 @@ export default async function WishlistPage() {
                 stock={item.product.stock}
                 isSoldOut={item.product.stock === 0}
                 isWishlisted={true}
+                ratingAverage={ratingMap.get(item.product.id)?.average}
+                ratingCount={ratingMap.get(item.product.id)?.count}
               />
             ))}
           </div>

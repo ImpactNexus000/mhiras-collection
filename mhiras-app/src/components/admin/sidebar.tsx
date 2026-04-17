@@ -10,6 +10,7 @@ import {
   CreditCard,
   Boxes,
   Megaphone,
+  Truck,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/admin/payments", icon: CreditCard, label: "Payments" },
   { href: "/admin/inventory", icon: Boxes, label: "Inventory" },
   { href: "/admin/promotions", icon: Megaphone, label: "Promotions" },
+  { href: "/admin/delivery", icon: Truck, label: "Delivery" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
 ];
 

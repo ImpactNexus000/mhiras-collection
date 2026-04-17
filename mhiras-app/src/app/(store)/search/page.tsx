@@ -5,6 +5,7 @@ import { ProductCard } from "@/components/store/product-card";
 import { SearchBar } from "@/components/store/search-bar";
 import { getProducts } from "@/lib/queries/products";
 import { getWishlistSet } from "@/lib/queries/wishlist";
+import { getRatingSummariesForProducts } from "@/lib/queries/reviews";
 
 export const metadata: Metadata = {
   title: "Search",
@@ -39,6 +40,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       : Promise.resolve({ products: [], total: 0 }),
     query ? getWishlistSet() : Promise.resolve(new Set<string>()),
   ]);
+
+  const ratingMap = await getRatingSummariesForProducts(
+    products.map((p) => p.id)
+  );
 
   return (
     <>
@@ -115,6 +120,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     stock={product.stock}
                     isSoldOut={product.stock === 0}
                     isWishlisted={wishlistSet.has(product.id)}
+                    ratingAverage={ratingMap.get(product.id)?.average}
+                    ratingCount={ratingMap.get(product.id)?.count}
                   />
                 ))}
               </div>

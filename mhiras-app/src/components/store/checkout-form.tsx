@@ -12,8 +12,7 @@ import {
   validatePromoCode,
   type ValidatePromoResult,
 } from "@/app/actions/promo-codes";
-
-const DELIVERY_FEE = 1500;
+import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
 
 type PaymentMethod = "card" | "bank_transfer" | "pay_on_delivery";
 
@@ -30,6 +29,10 @@ const states = [
   "Edo",
 ];
 
+interface CheckoutFormProps {
+  deliveryZones: DeliveryZoneLike[];
+}
+
 interface FieldErrors {
   firstName?: string;
   lastName?: string;
@@ -39,21 +42,25 @@ interface FieldErrors {
   state?: string;
 }
 
-export function CheckoutForm() {
+export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
   const router = useRouter();
   const { items, itemCount, subtotal, refreshCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedState, setSelectedState] = useState("");
 
   const [promoInput, setPromoInput] = useState("");
   const [promoResult, setPromoResult] = useState<ValidatePromoResult | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
+  const deliveryMatch = matchZoneForState(selectedState, deliveryZones);
+  const baseDeliveryFee = deliveryMatch?.fee ?? 0;
+
   const appliedPromo = promoResult?.valid ? promoResult : null;
   const discount = appliedPromo?.discount ?? 0;
-  const effectiveDeliveryFee = appliedPromo?.freeDelivery ? 0 : DELIVERY_FEE;
+  const effectiveDeliveryFee = appliedPromo?.freeDelivery ? 0 : baseDeliveryFee;
   const total = subtotal + effectiveDeliveryFee - discount;
 
   const paymentMethods: {
@@ -295,7 +302,12 @@ export function CheckoutForm() {
                 <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
                   State
                 </label>
-                <select className="input-base" name="state">
+                <select
+                  className="input-base"
+                  name="state"
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                >
                   <option value="">Select state</option>
                   {states.map((s) => (
                     <option key={s}>{s}</option>
@@ -475,17 +487,30 @@ export function CheckoutForm() {
                 </div>
               )}
               <div className="flex justify-between py-2 border-b border-border">
-                <span>Delivery</span>
+                <div>
+                  <span>Delivery</span>
+                  {deliveryMatch && (
+                    <div className="text-xs text-charcoal-soft">
+                      {deliveryMatch.name} · {deliveryMatch.estimateDays}
+                    </div>
+                  )}
+                </div>
                 <span>
-                  {appliedPromo?.freeDelivery ? (
+                  {!selectedState ? (
+                    <span className="text-charcoal-soft text-xs">
+                      Select state
+                    </span>
+                  ) : !deliveryMatch ? (
+                    <span className="text-charcoal-soft text-xs">—</span>
+                  ) : appliedPromo?.freeDelivery ? (
                     <>
                       <span className="line-through text-charcoal-soft mr-2">
-                        {formatPrice(DELIVERY_FEE)}
+                        {formatPrice(baseDeliveryFee)}
                       </span>
                       <span className="text-success">Free</span>
                     </>
                   ) : (
-                    formatPrice(DELIVERY_FEE)
+                    formatPrice(baseDeliveryFee)
                   )}
                 </span>
               </div>
@@ -501,9 +526,15 @@ export function CheckoutForm() {
               size="lg"
               type="submit"
               className="mt-4"
-              disabled={loading}
+              disabled={loading || !deliveryMatch}
             >
-              {loading ? "Placing Order..." : `Pay ${formatPrice(total)} →`}
+              {loading
+                ? "Placing Order..."
+                : !selectedState
+                  ? "Select state to continue"
+                  : !deliveryMatch
+                    ? "We don't deliver here yet"
+                    : `Pay ${formatPrice(total)} →`}
             </Button>
           </div>
         </div>

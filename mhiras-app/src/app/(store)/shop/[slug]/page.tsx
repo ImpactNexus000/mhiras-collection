@@ -4,9 +4,18 @@ import Link from "next/link";
 import { ProductCard } from "@/components/store/product-card";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
+import { StarRating } from "@/components/store/star-rating";
+import { ReviewList } from "@/components/store/review-list";
 import { formatPrice } from "@/lib/utils";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries/products";
 import { getWishlistSet } from "@/lib/queries/wishlist";
+import {
+  getProductReviews,
+  getProductRatingSummary,
+  getReviewEligibility,
+  getRatingSummariesForProducts,
+} from "@/lib/queries/reviews";
+import { auth } from "@/lib/auth";
 import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
 import { getOptimizedUrl } from "@/lib/cloudinary";
 
@@ -43,10 +52,25 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const [relatedProducts, wishlistSet] = await Promise.all([
+  const [
+    relatedProducts,
+    wishlistSet,
+    reviews,
+    ratingSummary,
+    eligibility,
+    session,
+  ] = await Promise.all([
     getRelatedProducts(product.categoryId, product.id),
     getWishlistSet(),
+    getProductReviews(product.id),
+    getProductRatingSummary(product.id),
+    getReviewEligibility(product.id),
+    auth(),
   ]);
+
+  const relatedRatingMap = await getRatingSummariesForProducts(
+    relatedProducts.map((p) => p.id)
+  );
 
   const discount =
     product.originalPrice && product.originalPrice > product.sellingPrice
@@ -121,9 +145,22 @@ export default async function ProductDetailPage({
           <div className="text-xs uppercase tracking-widest text-charcoal-soft mb-1.5">
             Mhiras Collection
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-light leading-tight mb-3">
+          <h1 className="font-display text-3xl md:text-4xl font-light leading-tight mb-2">
             {product.name}
           </h1>
+
+          {/* Rating summary */}
+          {ratingSummary.count > 0 && (
+            <a
+              href="#reviews"
+              className="inline-flex items-center gap-2 mb-3 text-sm text-charcoal-soft hover:text-copper"
+            >
+              <StarRating value={ratingSummary.average} size={14} />
+              <span>
+                {ratingSummary.average.toFixed(1)} ({ratingSummary.count})
+              </span>
+            </a>
+          )}
 
           {/* Price */}
           <div className="flex items-baseline gap-3 mb-4">
@@ -197,37 +234,22 @@ export default async function ProductDetailPage({
             </div>
           )}
 
-          {/* Reviews */}
-          {product.reviews.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-xs uppercase tracking-wider text-charcoal-mid font-medium mb-3">
-                Reviews ({product.reviews.length})
-              </h3>
-              <div className="space-y-3">
-                {product.reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="p-4 bg-cream-dark rounded text-sm"
-                  >
-                    <div className="flex justify-between mb-1">
-                      <span className="font-medium">
-                        {review.user.firstName} {review.user.lastName[0]}.
-                      </span>
-                      <span className="text-xs text-copper">
-                        {"★".repeat(review.rating)}
-                        {"☆".repeat(5 - review.rating)}
-                      </span>
-                    </div>
-                    {review.comment && (
-                      <p className="text-charcoal-soft">{review.comment}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Reviews */}
+      <section
+        id="reviews"
+        className="max-w-4xl mx-auto px-4 md:px-6 py-10 scroll-mt-4"
+      >
+        <ReviewList
+          productId={product.id}
+          reviews={reviews}
+          summary={ratingSummary}
+          eligibility={eligibility}
+          currentUserId={session?.user?.id}
+        />
+      </section>
 
       {/* Related products */}
       {relatedProducts.length > 0 && (
@@ -259,6 +281,8 @@ export default async function ProductDetailPage({
                 stock={p.stock}
                 isSoldOut={p.stock === 0}
                 isWishlisted={wishlistSet.has(p.id)}
+                ratingAverage={relatedRatingMap.get(p.id)?.average}
+                ratingCount={relatedRatingMap.get(p.id)?.count}
               />
             ))}
           </div>

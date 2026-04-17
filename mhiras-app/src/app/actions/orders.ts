@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { generateOrderNumber } from "@/lib/queries/orders";
 import { PaymentMethod } from "@/generated/prisma/client";
 import { validatePromoCode } from "@/app/actions/promo-codes";
+import { getDeliveryFeeByState } from "@/lib/queries/delivery";
 
 interface CartItem {
   productId: string;
@@ -86,8 +87,12 @@ export async function placeOrder(formData: FormData) {
     return sum + product.sellingPrice * item.quantity;
   }, 0);
 
-  // TODO: Calculate delivery fee based on delivery zone
-  let deliveryFee = 1500;
+  // Look up delivery fee from the zone covering the selected state
+  const deliveryZone = await getDeliveryFeeByState(state);
+  if (!deliveryZone) {
+    return { error: "We don't deliver to that state yet." };
+  }
+  let deliveryFee = deliveryZone.fee;
 
   // Re-validate promo code server-side (never trust the client)
   let discount = 0;

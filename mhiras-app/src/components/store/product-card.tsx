@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
+import { StarRating } from "@/components/store/star-rating";
 import { getOptimizedUrl } from "@/lib/cloudinary";
 
 export interface ProductCardProps {
@@ -20,6 +21,8 @@ export interface ProductCardProps {
   isSoldOut?: boolean;
   isWishlisted?: boolean;
   showAddToCart?: boolean;
+  ratingAverage?: number;
+  ratingCount?: number;
   className?: string;
 }
 
@@ -37,6 +40,8 @@ export function ProductCard({
   isSoldOut = false,
   isWishlisted,
   showAddToCart = true,
+  ratingAverage,
+  ratingCount,
   className,
 }: ProductCardProps) {
   const discount =
@@ -97,6 +102,12 @@ export function ProductCard({
             {size && ` · ${size}`}
           </div>
           <div className="text-base font-medium mt-1 truncate">{name}</div>
+          {ratingCount && ratingCount > 0 && ratingAverage !== undefined ? (
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-charcoal-soft">
+              <StarRating value={ratingAverage} size={12} />
+              <span>({ratingCount})</span>
+            </div>
+          ) : null}
           <div className="mt-1.5 flex items-baseline gap-2">
             <span
               className={cn(

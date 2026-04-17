@@ -334,7 +334,43 @@ async function main() {
     }
   }
 
-  console.log("Seeded: 8 categories, 18 products, 3 collections, 6 delivery zones");
+  // Promo codes
+  const promos = [
+    {
+      code: "WELCOME10",
+      discountType: "PERCENTAGE" as const,
+      discountValue: 10,
+      minOrder: null,
+      maxUses: null,
+      isActive: true,
+    },
+    {
+      code: "SAVE2K",
+      discountType: "FIXED_AMOUNT" as const,
+      discountValue: 2000,
+      minOrder: 10000,
+      maxUses: null,
+      isActive: true,
+    },
+    {
+      code: "FREESHIP",
+      discountType: "FREE_DELIVERY" as const,
+      discountValue: 0,
+      minOrder: null,
+      maxUses: null,
+      isActive: true,
+    },
+  ];
+
+  for (const promo of promos) {
+    await db.promoCode.upsert({
+      where: { code: promo.code },
+      update: {},
+      create: promo,
+    });
+  }
+
+  console.log("Seeded: 8 categories, 18 products, 3 collections, 6 delivery zones, 3 promo codes");
 }
 
 main()

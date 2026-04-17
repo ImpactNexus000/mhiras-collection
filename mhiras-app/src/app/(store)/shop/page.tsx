@@ -4,6 +4,7 @@ import { ShopFilters } from "@/components/store/shop-filters";
 import { ProductCard } from "@/components/store/product-card";
 import { getProducts, getCategories } from "@/lib/queries/products";
 import { getWishlistSet } from "@/lib/queries/wishlist";
+import { getRatingSummariesForProducts } from "@/lib/queries/reviews";
 import { Condition } from "@/generated/prisma/client";
 
 export const metadata: Metadata = {
@@ -62,6 +63,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       getCategories(),
       getWishlistSet(),
     ]);
+
+  const ratingMap = await getRatingSummariesForProducts(
+    products.map((p) => p.id)
+  );
 
   const activeLabel = params.category
     ? categories.find((c) => c.slug === params.category)?.name ?? "Shop All"
@@ -130,6 +135,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                       stock={product.stock}
                       isSoldOut={product.stock === 0}
                       isWishlisted={wishlistSet.has(product.id)}
+                      ratingAverage={ratingMap.get(product.id)?.average}
+                      ratingCount={ratingMap.get(product.id)?.count}
                       className="rounded-none border-0"
                     />
                   ))}

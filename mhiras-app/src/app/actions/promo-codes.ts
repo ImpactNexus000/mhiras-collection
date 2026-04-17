@@ -2,7 +2,151 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 import { DiscountType } from "@/generated/prisma/client";
+
+async function requireAdmin() {
+  const session = await auth();
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+  return session;
+}
+
+function parseDateTime(value: FormDataEntryValue | null): Date | null {
+  if (!value || typeof value !== "string" || !value.trim()) return null;
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function parseOptionalInt(value: FormDataEntryValue | null): number | null {
+  if (!value || typeof value !== "string" || !value.trim()) return null;
+  const n = parseInt(value, 10);
+  return isNaN(n) ? null : n;
+}
+
+interface PromoFormData {
+  code: string;
+  discountType: DiscountType;
+  discountValue: number;
+  minOrder: number | null;
+  maxUses: number | null;
+  startsAt: Date | null;
+  expiresAt: Date | null;
+  isActive: boolean;
+  appliesTo: string | null;
+}
+
+function parsePromoForm(formData: FormData): PromoFormData | { error: string } {
+  const code = (formData.get("code") as string)?.trim().toUpperCase();
+  const discountType = formData.get("discountType") as DiscountType;
+  const discountValueRaw = formData.get("discountValue") as string;
+  const discountValue =
+    discountType === "FREE_DELIVERY" ? 0 : parseInt(discountValueRaw, 10);
+
+  if (!code) return { error: "Code is required." };
+  if (!discountType) return { error: "Discount type is required." };
+  if (discountType !== "FREE_DELIVERY" && (isNaN(discountValue) || discountValue <= 0)) {
+    return { error: "Discount value must be greater than 0." };
+  }
+  if (discountType === "PERCENTAGE" && discountValue > 100) {
+    return { error: "Percentage discount cannot exceed 100." };
+  }
+
+  return {
+    code,
+    discountType,
+    discountValue,
+    minOrder: parseOptionalInt(formData.get("minOrder")),
+    maxUses: parseOptionalInt(formData.get("maxUses")),
+    startsAt: parseDateTime(formData.get("startsAt")),
+    expiresAt: parseDateTime(formData.get("expiresAt")),
+    isActive: formData.get("isActive") === "on",
+    appliesTo: ((formData.get("appliesTo") as string) || "").trim() || null,
+  };
+}
+
+export async function createPromoCode(formData: FormData) {
+  await requireAdmin();
+
+  const parsed = parsePromoForm(formData);
+  if ("error" in parsed) return parsed;
+
+  const existing = await db.promoCode.findUnique({
+    where: { code: parsed.code },
+  });
+  if (existing) {
+    return { error: `Code "${parsed.code}" already exists.` };
+  }
+
+  await db.promoCode.create({ data: parsed });
+
+  revalidatePath("/admin/promotions");
+  return { success: true };
+}
+
+export async function updatePromoCode(promoId: string, formData: FormData) {
+  await requireAdmin();
+
+  const parsed = parsePromoForm(formData);
+  if ("error" in parsed) return parsed;
+
+  // If code changed, make sure the new code isn't already taken
+  const existing = await db.promoCode.findUnique({
+    where: { code: parsed.code },
+  });
+  if (existing && existing.id !== promoId) {
+    return { error: `Code "${parsed.code}" is already in use.` };
+  }
+
+  await db.promoCode.update({
+    where: { id: promoId },
+    data: parsed,
+  });
+
+  revalidatePath("/admin/promotions");
+  return { success: true };
+}
+
+export async function togglePromoCode(promoId: string) {
+  await requireAdmin();
+
+  const promo = await db.promoCode.findUnique({ where: { id: promoId } });
+  if (!promo) return { error: "Promo code not found." };
+
+  await db.promoCode.update({
+    where: { id: promoId },
+    data: { isActive: !promo.isActive },
+  });
+
+  revalidatePath("/admin/promotions");
+  return { success: true, isActive: !promo.isActive };
+}
+
+export async function deletePromoCode(promoId: string) {
+  await requireAdmin();
+
+  // Check if the promo has been used on any order — we can't hard-delete those
+  const orderCount = await db.order.count({ where: { promoCodeId: promoId } });
+  if (orderCount > 0) {
+    // Soft-delete by deactivating
+    await db.promoCode.update({
+      where: { id: promoId },
+      data: { isActive: false },
+    });
+    revalidatePath("/admin/promotions");
+    return {
+      success: true,
+      softDeleted: true,
+      message: `Deactivated — used on ${orderCount} order${orderCount === 1 ? "" : "s"}, can't be hard-deleted.`,
+    };
+  }
+
+  await db.promoCode.delete({ where: { id: promoId } });
+
+  revalidatePath("/admin/promotions");
+  return { success: true };
+}
 
 export interface ValidatePromoSuccess {
   valid: true;
