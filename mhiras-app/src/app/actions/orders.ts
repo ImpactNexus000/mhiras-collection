@@ -2,7 +2,6 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { generateOrderNumber } from "@/lib/queries/orders";
 import { PaymentMethod } from "@/generated/prisma/client";
 
@@ -146,5 +145,18 @@ export async function placeOrder(formData: FormData) {
     return newOrder;
   });
 
-  redirect(`/order/${order.orderNumber}`);
+  // Clear the user's cart after successful order
+  const cart = await db.cart.findUnique({
+    where: { userId },
+  });
+  if (cart) {
+    await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+  }
+
+  return {
+    success: true,
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    paymentMethod: paymentMethodKey,
+  };
 }

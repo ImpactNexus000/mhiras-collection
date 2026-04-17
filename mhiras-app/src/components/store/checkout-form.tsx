@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
@@ -35,7 +36,8 @@ interface FieldErrors {
 }
 
 export function CheckoutForm() {
-  const { items, itemCount, subtotal } = useCart();
+  const router = useRouter();
+  const { items, itemCount, subtotal, refreshCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
@@ -103,14 +105,48 @@ export function CheckoutForm() {
 
     try {
       const result = await placeOrder(formData);
+
       if (result?.error) {
         setServerError(result.error);
         setLoading(false);
+        return;
       }
-      // If successful, placeOrder redirects — no need to handle here
+
+      // Refresh cart context (cart was cleared server-side)
+      await refreshCart();
+
+      // For card payments, redirect to Paystack
+      if (result.paymentMethod === "card" && result.orderId) {
+        const paystackRes = await fetch("/api/paystack/initialize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: result.orderId }),
+        });
+
+        const paystackData = await paystackRes.json();
+
+        if (paystackData.authorization_url) {
+          window.location.href = paystackData.authorization_url;
+          return;
+        }
+
+        // If Paystack init fails, still redirect to order page
+        setServerError(
+          paystackData.error ||
+            "Payment initialization failed. You can retry from your order page."
+        );
+        setLoading(false);
+        // Redirect to order page after a short delay so user sees the error
+        setTimeout(() => {
+          router.push(`/order/${result.orderNumber}`);
+        }, 3000);
+        return;
+      }
+
+      // For bank transfer and pay on delivery, go straight to order page
+      router.push(`/order/${result.orderNumber}`);
     } catch {
-      // redirect() throws a NEXT_REDIRECT error — that's expected
-      // Only show error for actual failures
+      setServerError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
