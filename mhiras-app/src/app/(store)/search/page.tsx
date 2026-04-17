@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ProductCard } from "@/components/store/product-card";
 import { SearchBar } from "@/components/store/search-bar";
 import { getProducts } from "@/lib/queries/products";
+import { getWishlistSet } from "@/lib/queries/wishlist";
 
 export const metadata: Metadata = {
   title: "Search",
@@ -32,9 +33,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
 
-  const { products, total } = query
-    ? await getProducts({ search: query }, 1, 20)
-    : { products: [], total: 0 };
+  const [{ products, total }, wishlistSet] = await Promise.all([
+    query
+      ? getProducts({ search: query }, 1, 20)
+      : Promise.resolve({ products: [], total: 0 }),
+    query ? getWishlistSet() : Promise.resolve(new Set<string>()),
+  ]);
 
   return (
     <>
@@ -110,6 +114,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     image={product.images[0]?.url ?? null}
                     stock={product.stock}
                     isSoldOut={product.stock === 0}
+                    isWishlisted={wishlistSet.has(product.id)}
                   />
                 ))}
               </div>

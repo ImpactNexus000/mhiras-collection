@@ -6,6 +6,7 @@ import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
 import { formatPrice } from "@/lib/utils";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries/products";
+import { getWishlistSet } from "@/lib/queries/wishlist";
 import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
 import { getOptimizedUrl } from "@/lib/cloudinary";
 
@@ -42,10 +43,10 @@ export default async function ProductDetailPage({
 
   if (!product) notFound();
 
-  const relatedProducts = await getRelatedProducts(
-    product.categoryId,
-    product.id
-  );
+  const [relatedProducts, wishlistSet] = await Promise.all([
+    getRelatedProducts(product.categoryId, product.id),
+    getWishlistSet(),
+  ]);
 
   const discount =
     product.originalPrice && product.originalPrice > product.sellingPrice
@@ -178,7 +179,10 @@ export default async function ProductDetailPage({
           {/* CTA buttons */}
           <div className="flex flex-col gap-3">
             <AddToCartButton productId={product.id} stock={product.stock} />
-            <WishlistButton productId={product.id} />
+            <WishlistButton
+              productId={product.id}
+              initialWishlisted={wishlistSet.has(product.id)}
+            />
           </div>
 
           {/* Description */}
@@ -254,6 +258,7 @@ export default async function ProductDetailPage({
                 image={p.images[0]?.url ?? null}
                 stock={p.stock}
                 isSoldOut={p.stock === 0}
+                isWishlisted={wishlistSet.has(p.id)}
               />
             ))}
           </div>

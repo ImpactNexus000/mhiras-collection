@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { generateOrderNumber } from "@/lib/queries/orders";
 import { PaymentMethod } from "@/generated/prisma/client";
+import { validatePromoCode } from "@/app/actions/promo-codes";
 
 interface CartItem {
   productId: string;
@@ -37,6 +38,7 @@ export async function placeOrder(formData: FormData) {
   const lga = formData.get("lga") as string;
   const paymentMethodKey = formData.get("paymentMethod") as string;
   const itemsJson = formData.get("items") as string;
+  const promoCodeInput = (formData.get("promoCode") as string | null)?.trim();
 
   // Validation
   if (!firstName || !lastName || !phone || !address || !state) {
@@ -85,8 +87,24 @@ export async function placeOrder(formData: FormData) {
   }, 0);
 
   // TODO: Calculate delivery fee based on delivery zone
-  const deliveryFee = 1500;
-  const total = subtotal + deliveryFee;
+  let deliveryFee = 1500;
+
+  // Re-validate promo code server-side (never trust the client)
+  let discount = 0;
+  let promoCodeId: string | null = null;
+  if (promoCodeInput) {
+    const promoResult = await validatePromoCode(promoCodeInput);
+    if (!promoResult.valid) {
+      return { error: promoResult.error };
+    }
+    discount = promoResult.discount;
+    promoCodeId = promoResult.promoId;
+    if (promoResult.freeDelivery) {
+      deliveryFee = 0;
+    }
+  }
+
+  const total = subtotal + deliveryFee - discount;
 
   const orderNumber = await generateOrderNumber();
   const paymentMethod = paymentMethodMap[paymentMethodKey];
@@ -116,7 +134,9 @@ export async function placeOrder(formData: FormData) {
         paymentMethod,
         subtotal,
         deliveryFee,
+        discount,
         total,
+        promoCodeId,
         items: {
           create: cartItems.map((item) => ({
             productId: item.productId,
@@ -139,6 +159,14 @@ export async function placeOrder(formData: FormData) {
       await tx.product.update({
         where: { id: item.productId },
         data: { stock: { decrement: item.quantity } },
+      });
+    }
+
+    // Record promo usage
+    if (promoCodeId) {
+      await tx.promoCode.update({
+        where: { id: promoCodeId },
+        data: { usedCount: { increment: 1 } },
       });
     }
 

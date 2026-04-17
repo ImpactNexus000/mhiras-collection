@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ShopFilters } from "@/components/store/shop-filters";
 import { ProductCard } from "@/components/store/product-card";
 import { getProducts, getCategories } from "@/lib/queries/products";
+import { getWishlistSet } from "@/lib/queries/wishlist";
 import { Condition } from "@/generated/prisma/client";
 
 export const metadata: Metadata = {
@@ -43,8 +44,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     "price-desc": { field: "sellingPrice", direction: "desc" },
   };
 
-  const [{ products, total, page, totalPages }, categories] = await Promise.all(
-    [
+  const [{ products, total, page, totalPages }, categories, wishlistSet] =
+    await Promise.all([
       getProducts(
         {
           category: params.category,
@@ -59,8 +60,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         sortMap[params.sort ?? "newest"] ?? sortMap.newest
       ),
       getCategories(),
-    ]
-  );
+      getWishlistSet(),
+    ]);
 
   const activeLabel = params.category
     ? categories.find((c) => c.slug === params.category)?.name ?? "Shop All"
@@ -128,6 +129,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                       image={product.images[0]?.url ?? null}
                       stock={product.stock}
                       isSoldOut={product.stock === 0}
+                      isWishlisted={wishlistSet.has(product.id)}
                       className="rounded-none border-0"
                     />
                   ))}

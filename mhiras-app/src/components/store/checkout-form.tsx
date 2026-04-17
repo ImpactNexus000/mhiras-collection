@@ -6,8 +6,12 @@ import Link from "next/link";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Lock, CreditCard, Building2, Truck } from "lucide-react";
+import { Lock, CreditCard, Building2, Truck, Tag, X, Loader2 } from "lucide-react";
 import { placeOrder } from "@/app/actions/orders";
+import {
+  validatePromoCode,
+  type ValidatePromoResult,
+} from "@/app/actions/promo-codes";
 
 const DELIVERY_FEE = 1500;
 
@@ -42,7 +46,15 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
-  const total = subtotal + DELIVERY_FEE;
+
+  const [promoInput, setPromoInput] = useState("");
+  const [promoResult, setPromoResult] = useState<ValidatePromoResult | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const appliedPromo = promoResult?.valid ? promoResult : null;
+  const discount = appliedPromo?.discount ?? 0;
+  const effectiveDeliveryFee = appliedPromo?.freeDelivery ? 0 : DELIVERY_FEE;
+  const total = subtotal + effectiveDeliveryFee - discount;
 
   const paymentMethods: {
     value: PaymentMethod;
@@ -71,6 +83,20 @@ export function CheckoutForm() {
       errs.state = "Please select a state";
 
     return errs;
+  }
+
+  async function handleApplyPromo() {
+    const code = promoInput.trim();
+    if (!code || promoLoading) return;
+    setPromoLoading(true);
+    const result = await validatePromoCode(code);
+    setPromoResult(result);
+    setPromoLoading(false);
+  }
+
+  function handleRemovePromo() {
+    setPromoInput("");
+    setPromoResult(null);
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -102,6 +128,10 @@ export function CheckoutForm() {
         }))
       )
     );
+
+    if (appliedPromo) {
+      formData.set("promoCode", appliedPromo.code);
+    }
 
     try {
       const result = await placeOrder(formData);
@@ -371,14 +401,93 @@ export function CheckoutForm() {
               ))}
             </div>
 
+            {/* Promo code */}
+            <div className="mb-4 pb-4 border-b border-border">
+              {appliedPromo ? (
+                <div className="flex items-center justify-between bg-success/10 border border-success/30 px-3 py-2 rounded">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Tag size={14} className="text-success" />
+                    <div>
+                      <div className="font-medium text-success">
+                        {appliedPromo.code}
+                      </div>
+                      <div className="text-xs text-charcoal-soft">
+                        {appliedPromo.message}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemovePromo}
+                    className="text-charcoal-soft hover:text-danger cursor-pointer"
+                    title="Remove promo"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value)}
+                      placeholder="Promo code"
+                      className="input-base flex-1 uppercase"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyPromo();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyPromo}
+                      disabled={!promoInput.trim() || promoLoading}
+                      className="px-4 text-xs uppercase tracking-wider border border-charcoal text-charcoal hover:bg-charcoal hover:text-cream transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    >
+                      {promoLoading ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        "Apply"
+                      )}
+                    </button>
+                  </div>
+                  {promoResult && !promoResult.valid && (
+                    <p className="text-xs text-danger mt-2">
+                      {promoResult.error}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+
             <div className="space-y-1 text-sm">
               <div className="flex justify-between py-2 border-b border-border">
                 <span>Subtotal ({itemCount} items)</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between py-2 border-b border-border text-success">
+                  <span>Discount</span>
+                  <span>−{formatPrice(discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between py-2 border-b border-border">
                 <span>Delivery</span>
-                <span>{formatPrice(DELIVERY_FEE)}</span>
+                <span>
+                  {appliedPromo?.freeDelivery ? (
+                    <>
+                      <span className="line-through text-charcoal-soft mr-2">
+                        {formatPrice(DELIVERY_FEE)}
+                      </span>
+                      <span className="text-success">Free</span>
+                    </>
+                  ) : (
+                    formatPrice(DELIVERY_FEE)
+                  )}
+                </span>
               </div>
               <div className="flex justify-between py-3 text-lg font-medium">
                 <span>Total</span>
