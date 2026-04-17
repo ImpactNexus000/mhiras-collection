@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAdminProducts } from "@/lib/queries/admin";
+import { getAdminProducts, getProductStatusCounts } from "@/lib/queries/admin";
 import { getCategories } from "@/lib/queries/products";
 import { formatPrice } from "@/lib/utils";
 import { ProductsClient } from "@/components/admin/products-client";
@@ -37,21 +37,20 @@ export default async function AdminProductsPage({
   const category = params.category;
   const showNewForm = params.action === "new";
 
-  const [{ products, total, totalPages }, categories, countAll, countPublished, countDraft, countSoldOut] =
-    await Promise.all([
-      getAdminProducts({ status, category, search }, page),
-      getCategories(),
-      getAdminProducts({}).then((r) => r.total),
-      getAdminProducts({ status: "PUBLISHED" }).then((r) => r.total),
-      getAdminProducts({ status: "DRAFT" }).then((r) => r.total),
-      getAdminProducts({ status: "SOLD_OUT" }).then((r) => r.total),
-    ]);
+  const { products, total, totalPages } = await getAdminProducts(
+    { status, category, search },
+    page
+  );
+  const [categories, counts] = await Promise.all([
+    getCategories(),
+    getProductStatusCounts(),
+  ]);
 
   const tabs = [
-    { label: "All Products", count: countAll, href: "/admin/products" },
-    { label: "Active", count: countPublished, href: "/admin/products?status=PUBLISHED" },
-    { label: "Draft", count: countDraft, href: "/admin/products?status=DRAFT" },
-    { label: "Sold Out", count: countSoldOut, href: "/admin/products?status=SOLD_OUT" },
+    { label: "All Products", count: counts.all, href: "/admin/products" },
+    { label: "Active", count: counts.published, href: "/admin/products?status=PUBLISHED" },
+    { label: "Draft", count: counts.draft, href: "/admin/products?status=DRAFT" },
+    { label: "Sold Out", count: counts.soldOut, href: "/admin/products?status=SOLD_OUT" },
   ];
 
   const activeTab = status

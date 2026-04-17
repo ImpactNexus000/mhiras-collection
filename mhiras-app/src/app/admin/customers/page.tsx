@@ -17,10 +17,11 @@ export default async function AdminCustomersPage({
   const page = parseInt(params.page ?? "1", 10);
   const search = params.search;
 
-  const [{ customers, total, totalPages }, stats] = await Promise.all([
-    getAdminCustomers({ search }, page),
-    getCustomerStats(),
-  ]);
+  const { customers, total, totalPages } = await getAdminCustomers(
+    { search },
+    page
+  );
+  const stats = await getCustomerStats();
 
   const statCards = [
     {

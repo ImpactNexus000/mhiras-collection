@@ -11,59 +11,43 @@ export async function getDashboardStats() {
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-  const [
-    monthlyRevenue,
-    lastMonthRevenue,
-    monthlyOrders,
-    lastMonthOrders,
-    activeListings,
-    pendingOrders,
-    totalCustomers,
-    lowStockProducts,
-  ] = await Promise.all([
-    // Revenue this month (paid orders only)
-    db.order.aggregate({
-      where: {
-        createdAt: { gte: startOfMonth },
-        paymentStatus: PaymentStatus.PAID,
-      },
-      _sum: { total: true },
-    }),
-    // Revenue last month
-    db.order.aggregate({
-      where: {
-        createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
-        paymentStatus: PaymentStatus.PAID,
-      },
-      _sum: { total: true },
-    }),
-    // Orders this month
-    db.order.count({
-      where: { createdAt: { gte: startOfMonth } },
-    }),
-    // Orders last month
-    db.order.count({
-      where: {
-        createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
-      },
-    }),
-    // Active product listings
-    db.product.count({
-      where: { status: "PUBLISHED" },
-    }),
-    // Pending orders
-    db.order.count({
-      where: { status: OrderStatus.PENDING },
-    }),
-    // Total customers
-    db.user.count({
-      where: { role: "CUSTOMER" },
-    }),
-    // Low stock (3 or fewer)
-    db.product.count({
-      where: { status: "PUBLISHED", stock: { lte: 3 } },
-    }),
-  ]);
+  // Batch 1: revenue and order counts
+  const [monthlyRevenue, lastMonthRevenue, monthlyOrders, lastMonthOrders] =
+    await Promise.all([
+      db.order.aggregate({
+        where: {
+          createdAt: { gte: startOfMonth },
+          paymentStatus: PaymentStatus.PAID,
+        },
+        _sum: { total: true },
+      }),
+      db.order.aggregate({
+        where: {
+          createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+          paymentStatus: PaymentStatus.PAID,
+        },
+        _sum: { total: true },
+      }),
+      db.order.count({
+        where: { createdAt: { gte: startOfMonth } },
+      }),
+      db.order.count({
+        where: {
+          createdAt: { gte: startOfLastMonth, lte: endOfLastMonth },
+        },
+      }),
+    ]);
+
+  // Batch 2: product and user counts
+  const [activeListings, pendingOrders, totalCustomers, lowStockProducts] =
+    await Promise.all([
+      db.product.count({ where: { status: "PUBLISHED" } }),
+      db.order.count({ where: { status: OrderStatus.PENDING } }),
+      db.user.count({ where: { role: "CUSTOMER" } }),
+      db.product.count({
+        where: { status: "PUBLISHED", stock: { lte: 3 } },
+      }),
+    ]);
 
   const revenueThisMonth = monthlyRevenue._sum.total ?? 0;
   const revenueLastMonth = lastMonthRevenue._sum.total ?? 0;
@@ -135,6 +119,23 @@ export async function getRecentOrders(limit = 5) {
   });
 }
 
+/**
+ * Get order counts by status for tab badges.
+ */
+export async function getOrderStatusCounts() {
+  const [all, pending, processing, shipped, delivered, cancelled] =
+    await Promise.all([
+      db.order.count(),
+      db.order.count({ where: { status: "PENDING" } }),
+      db.order.count({ where: { status: "PROCESSING" } }),
+      db.order.count({ where: { status: "SHIPPED" } }),
+      db.order.count({ where: { status: "DELIVERED" } }),
+      db.order.count({ where: { status: "CANCELLED" } }),
+    ]);
+
+  return { all, pending, processing, shipped, delivered, cancelled };
+}
+
 // ============================================
 // ADMIN ORDERS
 // ============================================
@@ -198,6 +199,20 @@ export async function getAdminOrders(
     page,
     totalPages: Math.ceil(total / pageSize),
   };
+}
+
+/**
+ * Get product counts by status for tab badges.
+ */
+export async function getProductStatusCounts() {
+  const [all, published, draft, soldOut] = await Promise.all([
+    db.product.count(),
+    db.product.count({ where: { status: "PUBLISHED" } }),
+    db.product.count({ where: { status: "DRAFT" } }),
+    db.product.count({ where: { status: "SOLD_OUT" } }),
+  ]);
+
+  return { all, published, draft, soldOut };
 }
 
 // ============================================
@@ -329,36 +344,30 @@ export async function getCustomerStats() {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [totalCustomers, newThisMonth, repeatBuyers, avgOrderValue] =
-    await Promise.all([
-      db.user.count({ where: { role: "CUSTOMER" } }),
-      db.user.count({
-        where: { role: "CUSTOMER", createdAt: { gte: startOfMonth } },
-      }),
-      // Customers with more than 1 order
-      db.user.count({
-        where: {
-          role: "CUSTOMER",
-          orders: { some: { id: { not: undefined } } },
-        },
-      }).then(async (withOrders) => {
-        const withMultiple = await db.order.groupBy({
-          by: ["userId"],
-          having: { userId: { _count: { gt: 1 } } },
-        });
-        return withMultiple.length;
-      }),
-      // Average order value
-      db.order.aggregate({
-        where: { paymentStatus: PaymentStatus.PAID },
-        _avg: { total: true },
-      }),
-    ]);
+  // Batch 1: simple counts
+  const [totalCustomers, newThisMonth] = await Promise.all([
+    db.user.count({ where: { role: "CUSTOMER" } }),
+    db.user.count({
+      where: { role: "CUSTOMER", createdAt: { gte: startOfMonth } },
+    }),
+  ]);
+
+  // Batch 2: heavier queries
+  const [repeatBuyerGroups, avgOrderValue] = await Promise.all([
+    db.order.groupBy({
+      by: ["userId"],
+      having: { userId: { _count: { gt: 1 } } },
+    }),
+    db.order.aggregate({
+      where: { paymentStatus: PaymentStatus.PAID },
+      _avg: { total: true },
+    }),
+  ]);
 
   return {
     totalCustomers,
     newThisMonth,
-    repeatBuyers,
+    repeatBuyers: repeatBuyerGroups.length,
     avgOrderValue: Math.round(avgOrderValue._avg.total ?? 0),
   };
 }

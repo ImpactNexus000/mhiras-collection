@@ -44,8 +44,8 @@ function formatRelativeDate(date: Date) {
 
 export default async function AdminDashboard() {
   const session = await auth();
-  const [stats, weeklyRevenue, recentOrders] = await Promise.all([
-    getDashboardStats(),
+  const stats = await getDashboardStats();
+  const [weeklyRevenue, recentOrders] = await Promise.all([
     getWeeklyRevenue(),
     getRecentOrders(5),
   ]);

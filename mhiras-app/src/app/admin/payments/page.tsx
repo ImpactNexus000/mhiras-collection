@@ -37,10 +37,8 @@ export default async function AdminPaymentsPage({
   const page = parseInt(params.page ?? "1", 10);
   const status = params.status as PaymentStatus | undefined;
 
-  const [summary, { orders, total, totalPages }] = await Promise.all([
-    getPaymentsSummary(),
-    getPaymentOrders(status, page),
-  ]);
+  const { orders, total, totalPages } = await getPaymentOrders(status, page);
+  const summary = await getPaymentsSummary();
 
   const totalRevenue = summary.paid.amount;
   const totalTransactions =

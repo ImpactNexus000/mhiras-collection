@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAdminOrders } from "@/lib/queries/admin";
+import { getAdminOrders, getOrderStatusCounts } from "@/lib/queries/admin";
 import { OrderStatus } from "@/generated/prisma/client";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { OrdersSearch } from "@/components/admin/orders-search";
@@ -36,26 +36,18 @@ export default async function AdminOrdersPage({
   const status = params.status as OrderStatus | undefined;
   const search = params.search;
 
-  const [data, countAll, countPending, countProcessing, countShipped, countDelivered, countCancelled] =
-    await Promise.all([
-      getAdminOrders({ status, search }, page),
-      getAdminOrders({}).then((r) => r.total),
-      getAdminOrders({ status: "PENDING" as OrderStatus }).then((r) => r.total),
-      getAdminOrders({ status: "PROCESSING" as OrderStatus }).then((r) => r.total),
-      getAdminOrders({ status: "SHIPPED" as OrderStatus }).then((r) => r.total),
-      getAdminOrders({ status: "DELIVERED" as OrderStatus }).then((r) => r.total),
-      getAdminOrders({ status: "CANCELLED" as OrderStatus }).then((r) => r.total),
-    ]);
+  const data = await getAdminOrders({ status, search }, page);
+  const counts = await getOrderStatusCounts();
 
   const { orders, total, totalPages } = data;
 
   const tabs = [
-    { label: "All Orders", count: countAll, href: "/admin/orders" },
-    { label: "Pending", count: countPending, href: "/admin/orders?status=PENDING" },
-    { label: "Processing", count: countProcessing, href: "/admin/orders?status=PROCESSING" },
-    { label: "Shipped", count: countShipped, href: "/admin/orders?status=SHIPPED" },
-    { label: "Delivered", count: countDelivered, href: "/admin/orders?status=DELIVERED" },
-    { label: "Cancelled", count: countCancelled, href: "/admin/orders?status=CANCELLED" },
+    { label: "All Orders", count: counts.all, href: "/admin/orders" },
+    { label: "Pending", count: counts.pending, href: "/admin/orders?status=PENDING" },
+    { label: "Processing", count: counts.processing, href: "/admin/orders?status=PROCESSING" },
+    { label: "Shipped", count: counts.shipped, href: "/admin/orders?status=SHIPPED" },
+    { label: "Delivered", count: counts.delivered, href: "/admin/orders?status=DELIVERED" },
+    { label: "Cancelled", count: counts.cancelled, href: "/admin/orders?status=CANCELLED" },
   ];
 
   const activeTab = status
