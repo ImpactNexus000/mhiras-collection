@@ -3,6 +3,7 @@ import { getInventorySummary, getInventoryProducts } from "@/lib/queries/admin";
 import { formatPrice } from "@/lib/utils";
 import { AlertTriangle, Package, TrendingDown, CheckCircle } from "lucide-react";
 import { StockUpdateCell } from "@/components/admin/stock-update-cell";
+import { getOptimizedUrl } from "@/lib/cloudinary";
 
 const stockStatusStyles: Record<string, string> = {
   ok: "bg-green-100 text-green-700",
@@ -172,9 +173,10 @@ export default async function AdminInventoryPage({
                         <div className="flex items-center gap-3">
                           {product.images[0]?.url ? (
                             <img
-                              src={product.images[0].url}
+                              src={getOptimizedUrl(product.images[0].url, { width: 80, height: 96 })}
                               alt={product.name}
                               className="w-10 h-12 object-cover rounded flex-shrink-0"
+                              loading="lazy"
                             />
                           ) : (
                             <div className="w-10 h-12 bg-gradient-to-br from-cream-dark to-gold/30 rounded flex-shrink-0" />

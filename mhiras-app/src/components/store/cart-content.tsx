@@ -6,6 +6,7 @@ import { formatPrice } from "@/lib/utils";
 import { Minus, Plus, X, ShoppingBag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { getOptimizedUrl } from "@/lib/cloudinary";
 
 const DELIVERY_FEE = 1500;
 
@@ -66,9 +67,10 @@ export function CartContent() {
               <Link href={`/shop/${item.slug}`}>
                 {item.image ? (
                   <img
-                    src={item.image}
+                    src={getOptimizedUrl(item.image, { width: 160, height: 192 })}
                     alt={item.name}
                     className="w-20 h-24 object-cover rounded"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-20 h-24 bg-gradient-to-br from-cream-dark to-gold/30 rounded" />

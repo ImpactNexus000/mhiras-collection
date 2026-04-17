@@ -5,10 +5,19 @@ import { useRouter } from "next/navigation";
 import { createProduct, updateProduct } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { ImageUpload, UploadedImage } from "@/components/admin/image-upload";
 
 interface Category {
   id: string;
   name: string;
+}
+
+interface ProductImage {
+  id: string;
+  url: string;
+  alt: string | null;
+  sortOrder: number;
+  isPrimary: boolean;
 }
 
 interface ProductData {
@@ -23,6 +32,7 @@ interface ProductData {
   stock: number;
   status: string;
   featured: boolean;
+  images?: ProductImage[];
 }
 
 interface ProductFormProps {
@@ -37,12 +47,24 @@ export function ProductForm({ categories, product, onClose }: ProductFormProps) 
   const [loading, setLoading] = useState(false);
   const isEditing = !!product;
 
+  // Initialize images from existing product data
+  const [images, setImages] = useState<UploadedImage[]>(
+    product?.images?.map((img) => ({
+      url: img.url,
+      publicId: img.id, // Use DB id as publicId for existing images
+      isPrimary: img.isPrimary,
+    })) ?? []
+  );
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+
+    // Attach images as JSON
+    formData.set("images", JSON.stringify(images));
 
     const result = isEditing
       ? await updateProduct(product!.id, formData)
@@ -95,6 +117,14 @@ export function ProductForm({ categories, product, onClose }: ProductFormProps) 
               className="w-full border border-border px-3 py-2.5 text-sm rounded outline-none focus:border-copper"
               placeholder="e.g. Vintage Wrap Dress"
             />
+          </div>
+
+          {/* Images */}
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-charcoal-soft mb-1.5">
+              Product Images
+            </label>
+            <ImageUpload images={images} onChange={setImages} />
           </div>
 
           {/* Category + Condition */}

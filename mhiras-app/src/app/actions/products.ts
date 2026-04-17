@@ -5,6 +5,12 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { Condition, ProductStatus } from "@/generated/prisma/client";
 
+interface ImageInput {
+  url: string;
+  publicId: string;
+  isPrimary: boolean;
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -18,6 +24,16 @@ async function requireAdmin() {
     throw new Error("Unauthorized");
   }
   return session;
+}
+
+function parseImages(formData: FormData): ImageInput[] {
+  const raw = formData.get("images") as string;
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
 }
 
 export async function createProduct(formData: FormData) {
@@ -34,6 +50,7 @@ export async function createProduct(formData: FormData) {
   const stock = parseInt(formData.get("stock") as string, 10) || 1;
   const status = (formData.get("status") as string) as ProductStatus;
   const featured = formData.get("featured") === "on";
+  const images = parseImages(formData);
 
   if (!name || !categoryId || !sellingPrice) {
     return { error: "Name, category, and selling price are required." };
@@ -59,6 +76,13 @@ export async function createProduct(formData: FormData) {
       stock,
       status: status || "DRAFT",
       featured,
+      images: {
+        create: images.map((img, i) => ({
+          url: img.url,
+          isPrimary: img.isPrimary,
+          sortOrder: i,
+        })),
+      },
     },
   });
 
@@ -81,6 +105,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   const stock = parseInt(formData.get("stock") as string, 10);
   const status = (formData.get("status") as string) as ProductStatus;
   const featured = formData.get("featured") === "on";
+  const images = parseImages(formData);
 
   if (!name || !categoryId || !sellingPrice) {
     return { error: "Name, category, and selling price are required." };
@@ -103,21 +128,38 @@ export async function updateProduct(productId: string, formData: FormData) {
     }
   }
 
-  await db.product.update({
-    where: { id: productId },
-    data: {
-      name,
-      slug,
-      description,
-      categoryId,
-      size,
-      condition: condition || "GOOD",
-      sellingPrice,
-      originalPrice,
-      stock: isNaN(stock) ? product.stock : stock,
-      status: status || product.status,
-      featured,
-    },
+  await db.$transaction(async (tx) => {
+    // Update product fields
+    await tx.product.update({
+      where: { id: productId },
+      data: {
+        name,
+        slug,
+        description,
+        categoryId,
+        size,
+        condition: condition || "GOOD",
+        sellingPrice,
+        originalPrice,
+        stock: isNaN(stock) ? product.stock : stock,
+        status: status || product.status,
+        featured,
+      },
+    });
+
+    // Replace images: delete existing, insert new
+    await tx.productImage.deleteMany({ where: { productId } });
+
+    if (images.length > 0) {
+      await tx.productImage.createMany({
+        data: images.map((img, i) => ({
+          productId,
+          url: img.url,
+          isPrimary: img.isPrimary,
+          sortOrder: i,
+        })),
+      });
+    }
   });
 
   revalidatePath("/admin/products");
@@ -145,6 +187,7 @@ export async function deleteProduct(productId: string) {
       data: { status: "ARCHIVED" },
     });
   } else {
+    // ProductImage cascade deletes with the product
     await db.product.delete({ where: { id: productId } });
   }
 

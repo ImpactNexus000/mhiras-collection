@@ -7,6 +7,7 @@ import { WishlistButton } from "@/components/store/wishlist-button";
 import { formatPrice } from "@/lib/utils";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries/products";
 import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
+import { getOptimizedUrl } from "@/lib/cloudinary";
 
 const conditionLabel: Record<string, string> = {
   LIKE_NEW: "Like New",
@@ -86,7 +87,7 @@ export default async function ProductDetailPage({
         <div className="bg-cream-dark flex items-center justify-center min-h-[340px] md:min-h-[480px] relative">
           {primaryImage ? (
             <img
-              src={primaryImage.url}
+              src={getOptimizedUrl(primaryImage.url, { width: 600, height: 700, crop: "limit" })}
               alt={primaryImage.alt ?? product.name}
               className="max-h-[440px] object-contain"
             />
@@ -104,7 +105,7 @@ export default async function ProductDetailPage({
                   } cursor-pointer overflow-hidden`}
                 >
                   <img
-                    src={img.url}
+                    src={getOptimizedUrl(img.url, { width: 80, height: 100 })}
                     alt={img.alt ?? ""}
                     className="w-full h-full object-cover"
                   />

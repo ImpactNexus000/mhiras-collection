@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProductForm } from "@/components/admin/product-form";
-import { deleteProduct } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
 import { Search, Plus } from "lucide-react";
 
@@ -12,20 +11,48 @@ interface Category {
   name: string;
 }
 
+interface ProductImage {
+  id: string;
+  url: string;
+  alt: string | null;
+  sortOrder: number;
+  isPrimary: boolean;
+}
+
+interface EditProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  categoryId: string;
+  size: string | null;
+  condition: string;
+  sellingPrice: number;
+  originalPrice: number | null;
+  stock: number;
+  status: string;
+  featured: boolean;
+  images?: ProductImage[];
+}
+
 interface ProductsClientProps {
   categories: Category[];
   showNewForm?: boolean;
+  editProduct?: EditProduct | null;
   children: React.ReactNode;
 }
 
 export function ProductsClient({
   categories,
   showNewForm = false,
+  editProduct = null,
   children,
 }: ProductsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showForm, setShowForm] = useState(showNewForm);
+  const [showForm, setShowForm] = useState(showNewForm || !!editProduct);
+  const [productToEdit, setProductToEdit] = useState<EditProduct | undefined>(
+    editProduct ?? undefined
+  );
   const [searchValue, setSearchValue] = useState(
     searchParams.get("search") ?? ""
   );
@@ -47,11 +74,18 @@ export function ProductsClient({
 
   const handleCloseForm = useCallback(() => {
     setShowForm(false);
-    // Remove action param from URL
+    setProductToEdit(undefined);
+    // Remove action/edit params from URL
     const params = new URLSearchParams(searchParams.toString());
     params.delete("action");
+    params.delete("edit");
     router.replace(`/admin/products?${params.toString()}`);
   }, [searchParams, router]);
+
+  const handleNewProduct = useCallback(() => {
+    setProductToEdit(undefined);
+    setShowForm(true);
+  }, []);
 
   return (
     <>
@@ -60,7 +94,7 @@ export function ProductsClient({
         <h1 className="font-display text-3xl md:text-4xl font-light italic">
           Products
         </h1>
-        <Button size="sm" onClick={() => setShowForm(true)}>
+        <Button size="sm" onClick={handleNewProduct}>
           <Plus size={14} className="mr-1.5" />
           Add Product
         </Button>
@@ -91,7 +125,11 @@ export function ProductsClient({
 
       {/* Product form modal */}
       {showForm && (
-        <ProductForm categories={categories} onClose={handleCloseForm} />
+        <ProductForm
+          categories={categories}
+          product={productToEdit}
+          onClose={handleCloseForm}
+        />
       )}
     </>
   );

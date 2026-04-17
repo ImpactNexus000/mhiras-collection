@@ -3,6 +3,8 @@ import { getAdminProducts, getProductStatusCounts } from "@/lib/queries/admin";
 import { getCategories } from "@/lib/queries/products";
 import { formatPrice } from "@/lib/utils";
 import { ProductsClient } from "@/components/admin/products-client";
+import { db } from "@/lib/db";
+import { getOptimizedUrl } from "@/lib/cloudinary";
 
 const conditionLabel: Record<string, string> = {
   LIKE_NEW: "Like New",
@@ -24,6 +26,7 @@ interface AdminProductsPageProps {
     search?: string;
     page?: string;
     action?: string;
+    edit?: string;
   }>;
 }
 
@@ -62,10 +65,44 @@ export default async function AdminProductsPage({
     name: c.name,
   }));
 
+  // Fetch product for editing if edit param is present
+  let editProduct = null;
+  if (params.edit) {
+    const product = await db.product.findUnique({
+      where: { id: params.edit },
+      include: {
+        images: { orderBy: { sortOrder: "asc" } },
+      },
+    });
+    if (product) {
+      editProduct = {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        categoryId: product.categoryId,
+        size: product.size,
+        condition: product.condition,
+        sellingPrice: product.sellingPrice,
+        originalPrice: product.originalPrice,
+        stock: product.stock,
+        status: product.status,
+        featured: product.featured,
+        images: product.images.map((img) => ({
+          id: img.id,
+          url: img.url,
+          alt: img.alt,
+          sortOrder: img.sortOrder,
+          isPrimary: img.isPrimary,
+        })),
+      };
+    }
+  }
+
   return (
     <ProductsClient
       categories={categoriesForForm}
       showNewForm={showNewForm}
+      editProduct={editProduct}
     >
       <div className="flex justify-between items-center mb-5">
         <h1 className="font-display text-3xl md:text-4xl font-light italic">
@@ -135,9 +172,10 @@ export default async function AdminProductsPage({
                       <div className="flex items-center gap-3">
                         {product.images[0]?.url ? (
                           <img
-                            src={product.images[0].url}
+                            src={getOptimizedUrl(product.images[0].url, { width: 80, height: 96 })}
                             alt={product.name}
                             className="w-10 h-12 object-cover rounded flex-shrink-0"
+                            loading="lazy"
                           />
                         ) : (
                           <div className="w-10 h-12 bg-gradient-to-br from-cream-dark to-gold/30 rounded flex-shrink-0" />

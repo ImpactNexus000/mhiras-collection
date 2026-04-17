@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
+import { getOptimizedUrl } from "@/lib/cloudinary";
 
 export interface ProductCardProps {
   productId?: string;
@@ -56,9 +57,10 @@ export function ProductCard({
         <div className="h-48 md:h-60 bg-gradient-to-br from-cream-dark to-gold/30 flex items-center justify-center relative">
           {image ? (
             <img
-              src={image}
+              src={getOptimizedUrl(image, { width: 400, height: 500 })}
               alt={name}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           ) : (
             <div className="w-[70px] h-[100px] bg-gradient-to-br from-gold to-copper-dark/40 opacity-50" />
