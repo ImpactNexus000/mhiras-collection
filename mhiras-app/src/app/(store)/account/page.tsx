@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 const menuItems = [
   { label: "Order History", href: "/account/orders", icon: Package },
   { label: "Saved Items", href: "/wishlist", icon: Heart },
+  { label: "My Reviews", href: "/account/reviews", icon: Star },
   { label: "Delivery Addresses", href: "/account/addresses", icon: MapPin },
   { label: "Payment Methods", href: "/account/payments", icon: CreditCard },
   { label: "Notifications", href: "/account/notifications", icon: Bell },
@@ -39,9 +40,19 @@ export default async function AccountPage() {
   ]);
 
   const stats = [
-    { label: "Orders", value: orderCount, icon: Package },
-    { label: "Wishlist", value: wishlistCount, icon: Heart },
-    { label: "Reviews", value: reviewCount, icon: Star },
+    {
+      label: "Orders",
+      value: orderCount,
+      icon: Package,
+      href: "/account/orders",
+    },
+    { label: "Wishlist", value: wishlistCount, icon: Heart, href: "/wishlist" },
+    {
+      label: "Reviews",
+      value: reviewCount,
+      icon: Star,
+      href: "/account/reviews",
+    },
   ];
 
   const user = session.user;
@@ -64,16 +75,17 @@ export default async function AccountPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {stats.map((s) => (
-          <div
+          <Link
             key={s.label}
-            className="bg-cream-dark rounded-lg p-4 text-center"
+            href={s.href}
+            className="bg-cream-dark rounded-lg p-4 text-center hover:bg-cream transition-colors"
           >
             <s.icon size={20} className="mx-auto text-copper mb-2" />
             <div className="text-2xl font-medium">{s.value}</div>
             <div className="text-xs text-charcoal-soft uppercase tracking-wider">
               {s.label}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
