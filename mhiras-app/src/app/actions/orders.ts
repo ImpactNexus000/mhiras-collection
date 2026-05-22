@@ -6,6 +6,7 @@ import { generateOrderNumber } from "@/lib/queries/orders";
 import { PaymentMethod } from "@/generated/prisma/client";
 import { validatePromoCode } from "@/app/actions/promo-codes";
 import { getDeliveryFeeByState } from "@/lib/queries/delivery";
+import { getStoreSettings } from "@/lib/queries/settings";
 
 interface CartItem {
   productId: string;
@@ -33,7 +34,6 @@ export async function placeOrder(formData: FormData) {
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const phone = formData.get("phone") as string;
-  const email = formData.get("email") as string;
   const address = formData.get("address") as string;
   const state = formData.get("state") as string;
   const lga = formData.get("lga") as string;
@@ -41,13 +41,24 @@ export async function placeOrder(formData: FormData) {
   const itemsJson = formData.get("items") as string;
   const promoCodeInput = (formData.get("promoCode") as string | null)?.trim();
 
+  // Stockpile orders: paid now, no delivery address or fee — items are held
+  // until the customer requests delivery later.
+  const isStockpile = formData.get("fulfillmentType") === "stockpile";
+
   // Validation
-  if (!firstName || !lastName || !phone || !address || !state) {
+  if (
+    !isStockpile &&
+    (!firstName || !lastName || !phone || !address || !state)
+  ) {
     return { error: "Please fill in all delivery details." };
   }
 
   if (!paymentMethodKey || !paymentMethodMap[paymentMethodKey]) {
     return { error: "Please select a valid payment method." };
+  }
+
+  if (isStockpile && paymentMethodKey !== "card") {
+    return { error: "Stockpile orders must be paid online by card." };
   }
 
   let cartItems: CartItem[];
@@ -87,12 +98,16 @@ export async function placeOrder(formData: FormData) {
     return sum + product.sellingPrice * item.quantity;
   }, 0);
 
-  // Look up delivery fee from the zone covering the selected state
-  const deliveryZone = await getDeliveryFeeByState(state);
-  if (!deliveryZone) {
-    return { error: "We don't deliver to that state yet." };
+  // Delivery fee — zero for stockpile orders (charged later when the
+  // customer requests delivery from their stockpile).
+  let deliveryFee = 0;
+  if (!isStockpile) {
+    const deliveryZone = await getDeliveryFeeByState(state);
+    if (!deliveryZone) {
+      return { error: "We don't deliver to that state yet." };
+    }
+    deliveryFee = deliveryZone.fee;
   }
-  let deliveryFee = deliveryZone.fee;
 
   // Re-validate promo code server-side (never trust the client)
   let discount = 0;
@@ -104,7 +119,7 @@ export async function placeOrder(formData: FormData) {
     }
     discount = promoResult.discount;
     promoCodeId = promoResult.promoId;
-    if (promoResult.freeDelivery) {
+    if (promoResult.freeDelivery && !isStockpile) {
       deliveryFee = 0;
     }
   }
@@ -114,28 +129,44 @@ export async function placeOrder(formData: FormData) {
   const orderNumber = await generateOrderNumber();
   const paymentMethod = paymentMethodMap[paymentMethodKey];
 
-  // Create address, order, items, and decrement stock in a transaction
+  // Freeze the stockpile deadline at order time so a later settings change
+  // can't shorten an existing customer's window.
+  let stockpileExpiresAt: Date | null = null;
+  if (isStockpile) {
+    const settings = await getStoreSettings();
+    stockpileExpiresAt = new Date(
+      Date.now() + settings.stockpileExpiryDays * 24 * 60 * 60 * 1000
+    );
+  }
+
+  // Create address (immediate only), order, items, and decrement stock
   const order = await db.$transaction(async (tx) => {
-    // Create or find address
-    const deliveryAddress = await tx.address.create({
-      data: {
-        userId,
-        firstName,
-        lastName,
-        phone,
-        address,
-        city: lga || state,
-        state,
-        lga: lga || null,
-      },
-    });
+    let addressId: string | null = null;
+
+    if (!isStockpile) {
+      const deliveryAddress = await tx.address.create({
+        data: {
+          userId,
+          firstName,
+          lastName,
+          phone,
+          address,
+          city: lga || state,
+          state,
+          lga: lga || null,
+        },
+      });
+      addressId = deliveryAddress.id;
+    }
 
     // Create order
     const newOrder = await tx.order.create({
       data: {
         orderNumber,
         userId,
-        addressId: deliveryAddress.id,
+        addressId,
+        fulfillmentType: isStockpile ? "STOCKPILE" : "IMMEDIATE",
+        stockpileExpiresAt,
         paymentMethod,
         subtotal,
         deliveryFee,
@@ -153,7 +184,9 @@ export async function placeOrder(formData: FormData) {
         timeline: {
           create: {
             status: "Order Placed",
-            note: `Order #${orderNumber} placed via ${paymentMethodKey.replace("_", " ")}`,
+            note: isStockpile
+              ? `Stockpile order #${orderNumber} placed — items held until delivery is requested`
+              : `Order #${orderNumber} placed via ${paymentMethodKey.replace("_", " ")}`,
           },
         },
       },
@@ -191,5 +224,6 @@ export async function placeOrder(formData: FormData) {
     orderId: order.id,
     orderNumber: order.orderNumber,
     paymentMethod: paymentMethodKey,
+    fulfillmentType: isStockpile ? "stockpile" : "immediate",
   };
 }

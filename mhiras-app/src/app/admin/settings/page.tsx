@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
+import { getStoreSettings } from "@/lib/queries/settings";
+import { StockpileSettings } from "@/components/admin/stockpile-settings";
 
 const deliveryZones = [
   { zone: "Lagos Island", fee: "₦1,500", time: "1-2 days" },
@@ -10,7 +12,9 @@ const deliveryZones = [
   { zone: "North", fee: "₦5,000", time: "5-7 days" },
 ];
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  const settings = await getStoreSettings();
+
   return (
     <>
       <div className="flex justify-between items-center mb-5">
@@ -68,6 +72,9 @@ export default function AdminSettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Stockpile */}
+        <StockpileSettings stockpileExpiryDays={settings.stockpileExpiryDays} />
 
         {/* Payment Settings */}
         <div className="bg-white border border-border rounded-lg p-5">

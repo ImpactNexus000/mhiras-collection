@@ -6,7 +6,16 @@ import Link from "next/link";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Lock, CreditCard, Building2, Truck, Tag, X, Loader2 } from "lucide-react";
+import {
+  Lock,
+  CreditCard,
+  Building2,
+  Truck,
+  Package,
+  Tag,
+  X,
+  Loader2,
+} from "lucide-react";
 import { placeOrder } from "@/app/actions/orders";
 import {
   validatePromoCode,
@@ -15,6 +24,7 @@ import {
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
 
 type PaymentMethod = "card" | "bank_transfer" | "pay_on_delivery";
+type Fulfillment = "immediate" | "stockpile";
 
 const states = [
   "Lagos",
@@ -31,6 +41,7 @@ const states = [
 
 interface CheckoutFormProps {
   deliveryZones: DeliveryZoneLike[];
+  stockpileExpiryDays: number;
 }
 
 interface FieldErrors {
@@ -42,9 +53,13 @@ interface FieldErrors {
   state?: string;
 }
 
-export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
+export function CheckoutForm({
+  deliveryZones,
+  stockpileExpiryDays,
+}: CheckoutFormProps) {
   const router = useRouter();
   const { items, itemCount, subtotal, refreshCart } = useCart();
+  const [fulfillment, setFulfillment] = useState<Fulfillment>("immediate");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
@@ -55,12 +70,19 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
   const [promoResult, setPromoResult] = useState<ValidatePromoResult | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
+  const isStockpile = fulfillment === "stockpile";
+
   const deliveryMatch = matchZoneForState(selectedState, deliveryZones);
   const baseDeliveryFee = deliveryMatch?.fee ?? 0;
 
   const appliedPromo = promoResult?.valid ? promoResult : null;
   const discount = appliedPromo?.discount ?? 0;
-  const effectiveDeliveryFee = appliedPromo?.freeDelivery ? 0 : baseDeliveryFee;
+  // Stockpile orders are not charged delivery at checkout.
+  const effectiveDeliveryFee = isStockpile
+    ? 0
+    : appliedPromo?.freeDelivery
+      ? 0
+      : baseDeliveryFee;
   const total = subtotal + effectiveDeliveryFee - discount;
 
   const paymentMethods: {
@@ -73,7 +95,22 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
     { value: "pay_on_delivery", label: "Pay on Delivery", icon: Truck },
   ];
 
+  // Stockpile orders must be prepaid online by card.
+  const visibleMethods = isStockpile
+    ? paymentMethods.filter((pm) => pm.value === "card")
+    : paymentMethods;
+
+  function selectFulfillment(next: Fulfillment) {
+    setFulfillment(next);
+    setErrors({});
+    setServerError("");
+    if (next === "stockpile") setPaymentMethod("card");
+  }
+
   function validate(formData: FormData): FieldErrors {
+    // Stockpile orders collect no delivery details at checkout.
+    if (isStockpile) return {};
+
     const errs: FieldErrors = {};
 
     if (!(formData.get("firstName") as string)?.trim())
@@ -121,7 +158,8 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
     setErrors({});
     setLoading(true);
 
-    // Attach payment method and cart items to the form data
+    // Attach fulfillment, payment method and cart items to the form data
+    formData.set("fulfillmentType", fulfillment);
     formData.set("paymentMethod", paymentMethod);
     formData.set(
       "items",
@@ -215,7 +253,9 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
           Mhiras Collection
         </Link>
         <div className="flex items-center gap-2 text-sm text-charcoal-soft">
-          <span className="text-cream">Delivery</span>
+          <span className="text-cream">
+            {isStockpile ? "Stockpile" : "Delivery"}
+          </span>
           <span>›</span>
           <span>Payment</span>
           <span>›</span>
@@ -236,94 +276,173 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
               </div>
             )}
 
-            {/* Delivery */}
-            <div className="text-xs uppercase tracking-widest text-copper font-medium mb-4">
-              Step 1 of 2 — Delivery Details
+            {/* Fulfillment choice */}
+            <div className="text-xs uppercase tracking-widest text-copper font-medium mb-3">
+              How would you like this order?
             </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  First Name
-                </label>
-                <input className="input-base" name="firstName" />
-                {errors.firstName && (
-                  <p className="text-xs text-red-600 mt-1">
-                    {errors.firstName}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  Last Name
-                </label>
-                <input className="input-base" name="lastName" />
-                {errors.lastName && (
-                  <p className="text-xs text-red-600 mt-1">
-                    {errors.lastName}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  Phone Number
-                </label>
-                <input className="input-base" name="phone" type="tel" />
-                {errors.phone && (
-                  <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
-                )}
-              </div>
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  Email
-                </label>
-                <input className="input-base" name="email" type="email" />
-                {errors.email && (
-                  <p className="text-xs text-red-600 mt-1">{errors.email}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                Delivery Address
-              </label>
-              <input className="input-base" name="address" />
-              {errors.address && (
-                <p className="text-xs text-red-600 mt-1">{errors.address}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  State
-                </label>
-                <select
-                  className="input-base"
-                  name="state"
-                  value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {(
+                [
+                  {
+                    value: "immediate" as const,
+                    icon: Truck,
+                    title: "Deliver Now",
+                    desc: "Ship this order to your address",
+                  },
+                  {
+                    value: "stockpile" as const,
+                    icon: Package,
+                    title: "Add to Stockpile",
+                    desc: "Pay now, request delivery later",
+                  },
+                ]
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => selectFulfillment(opt.value)}
+                  className={`flex items-start gap-2.5 p-3 border text-left cursor-pointer transition-colors ${
+                    fulfillment === opt.value
+                      ? "border-copper bg-copper-light"
+                      : "border-border bg-white hover:border-charcoal-soft"
+                  }`}
                 >
-                  <option value="">Select state</option>
-                  {states.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-                {errors.state && (
-                  <p className="text-xs text-red-600 mt-1">{errors.state}</p>
-                )}
-              </div>
-              <div>
-                <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
-                  LGA
-                </label>
-                <input className="input-base" name="lga" />
-              </div>
+                  <opt.icon
+                    size={18}
+                    className={
+                      fulfillment === opt.value
+                        ? "text-copper mt-0.5"
+                        : "text-charcoal-soft mt-0.5"
+                    }
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-charcoal">
+                      {opt.title}
+                    </span>
+                    <span className="block text-xs text-charcoal-soft mt-0.5">
+                      {opt.desc}
+                    </span>
+                  </span>
+                </button>
+              ))}
             </div>
+
+            {isStockpile ? (
+              /* Stockpile explainer — no delivery details collected here */
+              <div className="bg-cream-dark border border-border p-4 mb-6 text-sm text-charcoal-soft leading-relaxed">
+                <strong className="text-charcoal">
+                  These items go into your stockpile.
+                </strong>{" "}
+                You&apos;re paying for them now, but they&apos;ll be held for
+                you — no delivery address needed yet. Keep shopping and add
+                more anytime. When you&apos;re ready, request delivery from
+                your stockpile (under your account) and pay the delivery fee
+                then. Items are held for{" "}
+                <strong className="text-charcoal">
+                  {stockpileExpiryDays} days
+                </strong>
+                .
+              </div>
+            ) : (
+              <>
+                {/* Delivery */}
+                <div className="text-xs uppercase tracking-widest text-copper font-medium mb-4">
+                  Step 1 of 2 — Delivery Details
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                      First Name
+                    </label>
+                    <input className="input-base" name="firstName" />
+                    {errors.firstName && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.firstName}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                      Last Name
+                    </label>
+                    <input className="input-base" name="lastName" />
+                    {errors.lastName && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.lastName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                      Phone Number
+                    </label>
+                    <input className="input-base" name="phone" type="tel" />
+                    {errors.phone && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                      Email
+                    </label>
+                    <input className="input-base" name="email" type="email" />
+                    {errors.email && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                    Delivery Address
+                  </label>
+                  <input className="input-base" name="address" />
+                  {errors.address && (
+                    <p className="text-xs text-red-600 mt-1">
+                      {errors.address}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                      State
+                    </label>
+                    <select
+                      className="input-base"
+                      name="state"
+                      value={selectedState}
+                      onChange={(e) => setSelectedState(e.target.value)}
+                    >
+                      <option value="">Select state</option>
+                      {states.map((s) => (
+                        <option key={s}>{s}</option>
+                      ))}
+                    </select>
+                    {errors.state && (
+                      <p className="text-xs text-red-600 mt-1">
+                        {errors.state}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                      LGA
+                    </label>
+                    <input className="input-base" name="lga" />
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="h-px bg-border my-6" />
 
@@ -333,7 +452,7 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
             </div>
 
             <div className="flex flex-wrap gap-2 mb-4">
-              {paymentMethods.map((pm) => (
+              {visibleMethods.map((pm) => (
                 <button
                   key={pm.value}
                   type="button"
@@ -353,8 +472,9 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
             {paymentMethod === "card" && (
               <div className="bg-cream-dark p-4 border border-border">
                 <p className="text-sm text-charcoal-soft leading-relaxed">
-                  You&apos;ll be redirected to Paystack to securely complete
-                  your card payment after placing the order.
+                  {isStockpile
+                    ? "Stockpile orders are prepaid online by card. You'll be redirected to Paystack to securely complete payment after placing the order."
+                    : "You'll be redirected to Paystack to securely complete your card payment after placing the order."}
                 </p>
               </div>
             )}
@@ -486,34 +606,45 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
                   <span>−{formatPrice(discount)}</span>
                 </div>
               )}
-              <div className="flex justify-between py-2 border-b border-border">
-                <div>
+              {isStockpile ? (
+                <div className="flex justify-between py-2 border-b border-border">
                   <span>Delivery</span>
-                  {deliveryMatch && (
-                    <div className="text-xs text-charcoal-soft">
-                      {deliveryMatch.name} · {deliveryMatch.estimateDays}
-                    </div>
-                  )}
+                  <span className="text-charcoal-soft text-xs text-right">
+                    Charged when you
+                    <br />
+                    request delivery
+                  </span>
                 </div>
-                <span>
-                  {!selectedState ? (
-                    <span className="text-charcoal-soft text-xs">
-                      Select state
-                    </span>
-                  ) : !deliveryMatch ? (
-                    <span className="text-charcoal-soft text-xs">—</span>
-                  ) : appliedPromo?.freeDelivery ? (
-                    <>
-                      <span className="line-through text-charcoal-soft mr-2">
-                        {formatPrice(baseDeliveryFee)}
+              ) : (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <div>
+                    <span>Delivery</span>
+                    {deliveryMatch && (
+                      <div className="text-xs text-charcoal-soft">
+                        {deliveryMatch.name} · {deliveryMatch.estimateDays}
+                      </div>
+                    )}
+                  </div>
+                  <span>
+                    {!selectedState ? (
+                      <span className="text-charcoal-soft text-xs">
+                        Select state
                       </span>
-                      <span className="text-success">Free</span>
-                    </>
-                  ) : (
-                    formatPrice(baseDeliveryFee)
-                  )}
-                </span>
-              </div>
+                    ) : !deliveryMatch ? (
+                      <span className="text-charcoal-soft text-xs">—</span>
+                    ) : appliedPromo?.freeDelivery ? (
+                      <>
+                        <span className="line-through text-charcoal-soft mr-2">
+                          {formatPrice(baseDeliveryFee)}
+                        </span>
+                        <span className="text-success">Free</span>
+                      </>
+                    ) : (
+                      formatPrice(baseDeliveryFee)
+                    )}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between py-3 text-lg font-medium">
                 <span>Total</span>
                 <span className="text-copper">{formatPrice(total)}</span>
@@ -526,15 +657,17 @@ export function CheckoutForm({ deliveryZones }: CheckoutFormProps) {
               size="lg"
               type="submit"
               className="mt-4"
-              disabled={loading || !deliveryMatch}
+              disabled={loading || (!isStockpile && !deliveryMatch)}
             >
               {loading
                 ? "Placing Order..."
-                : !selectedState
-                  ? "Select state to continue"
-                  : !deliveryMatch
-                    ? "We don't deliver here yet"
-                    : `Pay ${formatPrice(total)} →`}
+                : isStockpile
+                  ? `Pay ${formatPrice(total)} & Stockpile →`
+                  : !selectedState
+                    ? "Select state to continue"
+                    : !deliveryMatch
+                      ? "We don't deliver here yet"
+                      : `Pay ${formatPrice(total)} →`}
             </Button>
           </div>
         </div>

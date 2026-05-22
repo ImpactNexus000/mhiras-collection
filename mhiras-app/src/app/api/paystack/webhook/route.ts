@@ -20,7 +20,26 @@ export async function POST(req: NextRequest) {
   const event = JSON.parse(body);
 
   if (event.event === "charge.success") {
-    const { reference, amount, channel, paid_at, metadata } = event.data;
+    const { reference, amount, channel, metadata } = event.data;
+
+    // Stockpile delivery-request payment (delivery fee)
+    const deliveryRequestId = metadata?.deliveryRequestId as string | undefined;
+    if (deliveryRequestId) {
+      const request = await db.deliveryRequest.findUnique({
+        where: { id: deliveryRequestId },
+      });
+      if (request && request.paymentStatus !== "PAID") {
+        await db.deliveryRequest.update({
+          where: { id: request.id },
+          data: {
+            paymentStatus: "PAID",
+            status: "PAID",
+            paymentRef: reference,
+          },
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
 
     const orderId = metadata?.orderId as string | undefined;
 
@@ -51,19 +70,31 @@ export async function POST(req: NextRequest) {
 
     // Update order: mark as paid and confirmed
     await db.$transaction(async (tx) => {
+      // A paid stockpile order becomes STOCKPILED (held); a normal order
+      // becomes CONFIRMED.
+      const paidStatus =
+        order.status === "PENDING"
+          ? order.fulfillmentType === "STOCKPILE"
+            ? "STOCKPILED"
+            : "CONFIRMED"
+          : order.status;
+
       await tx.order.update({
         where: { id: order.id },
         data: {
           paymentStatus: "PAID",
           paymentRef: reference,
-          status: order.status === "PENDING" ? "CONFIRMED" : order.status,
+          status: paidStatus,
         },
       });
 
       await tx.orderEvent.create({
         data: {
           orderId: order.id,
-          status: "Payment confirmed",
+          status:
+            paidStatus === "STOCKPILED"
+              ? "Payment confirmed — added to stockpile"
+              : "Payment confirmed",
           note: `Paid via ${channel} — ref: ${reference}`,
         },
       });
@@ -72,6 +103,22 @@ export async function POST(req: NextRequest) {
 
   if (event.event === "charge.failed") {
     const { reference, metadata } = event.data;
+
+    const failedDeliveryRequestId = metadata?.deliveryRequestId as
+      | string
+      | undefined;
+    if (failedDeliveryRequestId) {
+      const request = await db.deliveryRequest.findUnique({
+        where: { id: failedDeliveryRequestId },
+      });
+      if (request && request.paymentStatus !== "PAID") {
+        await db.deliveryRequest.update({
+          where: { id: request.id },
+          data: { paymentStatus: "FAILED" },
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
 
     const orderId = metadata?.orderId as string | undefined;
     const order = orderId

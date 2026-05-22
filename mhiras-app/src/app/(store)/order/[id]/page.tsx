@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Check, Clock, XCircle, AlertTriangle } from "lucide-react";
+import { Check, Clock, XCircle, AlertTriangle, Package } from "lucide-react";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { getOrderByNumber } from "@/lib/queries/orders";
 import { verifyTransaction } from "@/lib/paystack";
@@ -89,7 +89,12 @@ async function verifyPaymentCallback(
             data: {
               paymentStatus: "PAID",
               paymentRef: reference,
-              status: order.status === "PENDING" ? "CONFIRMED" : order.status,
+              status:
+                order.status === "PENDING"
+                  ? order.fulfillmentType === "STOCKPILE"
+                    ? "STOCKPILED"
+                    : "CONFIRMED"
+                  : order.status,
             },
           });
           await tx.orderEvent.create({
@@ -142,6 +147,7 @@ export default async function OrderConfirmationPage({
   const isCancelled =
     order.status === "CANCELLED" || order.status === "REFUNDED";
   const isPaid = order.paymentStatus === "PAID";
+  const isStockpile = order.fulfillmentType === "STOCKPILE";
   const isCardPending =
     order.paymentMethod === "CARD" &&
     order.paymentStatus === "PENDING" &&
@@ -178,6 +184,11 @@ export default async function OrderConfirmationPage({
     bannerTitle = "Awaiting Payment";
     bannerMessage =
       "Please complete your bank transfer. Your order will be confirmed once payment is verified.";
+  } else if (isStockpile && isPaid) {
+    bannerIcon = <Package size={28} className="text-white" />;
+    bannerTitle = "Added to Your Stockpile";
+    bannerMessage =
+      "These items are paid for and held in your stockpile. Request delivery anytime from your account.";
   }
 
   return (
@@ -252,8 +263,48 @@ export default async function OrderConfirmationPage({
 
       {/* Tracking + Order details */}
       <div className="max-w-5xl mx-auto grid md:grid-cols-[1fr_340px] gap-6 p-5 md:p-8">
-        {/* Tracking timeline */}
+        {/* Tracking timeline (delivery orders) — or stockpile panel */}
         <div>
+          {isStockpile ? (
+            <>
+              <h2 className="text-base font-medium mb-5">Your Stockpile</h2>
+              <div className="bg-cream-dark border border-border rounded-lg p-5 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-copper/15 flex items-center justify-center flex-shrink-0">
+                    <Package size={18} className="text-copper" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-charcoal mb-1">
+                      {isPaid
+                        ? "These items are in your stockpile."
+                        : "Awaiting payment to add these items to your stockpile."}
+                    </p>
+                    <p className="text-charcoal-soft leading-relaxed">
+                      They&apos;re being held for you — no delivery yet. When
+                      you&apos;re ready, request delivery from your account and
+                      pay the delivery fee then.
+                    </p>
+                    {order.stockpileExpiresAt && (
+                      <p className="text-charcoal-soft mt-2">
+                        Request delivery by{" "}
+                        <strong className="text-charcoal">
+                          {formatDate(order.stockpileExpiresAt)}
+                        </strong>
+                        .
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  href="/account/stockpile"
+                  className="inline-block mt-4 text-sm uppercase tracking-wider text-copper underline"
+                >
+                  View My Stockpile →
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
           <h2 className="text-base font-medium mb-5">Delivery Progress</h2>
           <div className="space-y-0">
             {timeline.map((step, i) => (
@@ -299,7 +350,9 @@ export default async function OrderConfirmationPage({
                 </div>
               </div>
             ))}
-          </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Order summary sidebar */}

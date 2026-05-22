@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import {
   Package,
+  Boxes,
   Heart,
   Star,
   MapPin,
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 
 const menuItems = [
   { label: "Order History", href: "/account/orders", icon: Package },
+  { label: "My Stockpile", href: "/account/stockpile", icon: Boxes },
   { label: "Saved Items", href: "/wishlist", icon: Heart },
   { label: "My Reviews", href: "/account/reviews", icon: Star },
   { label: "Delivery Addresses", href: "/account/addresses", icon: MapPin },
