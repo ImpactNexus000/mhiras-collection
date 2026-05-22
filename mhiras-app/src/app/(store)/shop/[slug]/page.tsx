@@ -117,14 +117,14 @@ export default async function ProductDetailPage({
       </div>
 
       {/* Product detail grid */}
-      <div className="grid md:grid-cols-2">
+      <div className="grid md:grid-cols-[1.25fr_1fr]">
         {/* Gallery */}
-        <div className="bg-cream-dark flex items-center justify-center min-h-[340px] md:min-h-[480px] relative">
+        <div className="bg-cream-dark flex items-center justify-center h-[420px] md:h-[560px] relative">
           {primaryImage ? (
             <img
-              src={getOptimizedUrl(primaryImage.url, { width: 600, height: 700, crop: "limit" })}
+              src={getOptimizedUrl(primaryImage.url, { width: 800, height: 900, crop: "limit" })}
               alt={primaryImage.alt ?? product.name}
-              className="max-h-[440px] object-contain"
+              className="w-full h-full object-contain p-3"
             />
           ) : (
             <div className="w-40 h-56 bg-gradient-to-br from-gold to-copper-dark/50 opacity-60 rounded" />

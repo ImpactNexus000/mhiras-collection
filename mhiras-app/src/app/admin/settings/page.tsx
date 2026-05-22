@@ -211,7 +211,7 @@ export default async function AdminSettingsPage() {
             </label>
             <input
               className="input-base"
-              defaultValue="New arrivals every week — Free delivery on orders over ₦15,000"
+              defaultValue="New arrivals every week — Free delivery on retail orders over ₦100,000"
             />
           </div>
           <label className="flex items-center gap-2 text-sm text-charcoal-soft mt-3 cursor-pointer">

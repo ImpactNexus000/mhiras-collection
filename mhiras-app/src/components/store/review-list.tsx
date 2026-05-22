@@ -87,7 +87,9 @@ export function ReviewList({
         </p>
       )}
 
-      {/* Submission form / eligibility message */}
+      {/* Submission form / eligibility message.
+          Once a buyer has reviewed, no edit box is shown — their review
+          simply appears in the list below (tagged "You"). */}
       {!eligibility.signedIn ? (
         <div className="p-4 bg-cream-dark rounded text-sm text-charcoal-soft">
           <Link href="/auth/signin" className="text-copper underline">
@@ -95,16 +97,13 @@ export function ReviewList({
           </Link>{" "}
           to leave a review.
         </div>
-      ) : eligibility.hasPurchased ? (
-        <ReviewForm
-          productId={productId}
-          existingReview={eligibility.existingReview}
-        />
-      ) : (
+      ) : !eligibility.hasPurchased ? (
         <div className="p-4 bg-cream-dark rounded text-sm text-charcoal-soft">
           Reviews are open to buyers — you can post one once your order is marked delivered.
         </div>
-      )}
+      ) : !eligibility.existingReview ? (
+        <ReviewForm productId={productId} existingReview={null} />
+      ) : null}
 
       {/* Review list */}
       {reviews.length > 0 && (

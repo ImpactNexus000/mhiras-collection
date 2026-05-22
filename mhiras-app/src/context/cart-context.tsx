@@ -6,7 +6,6 @@ import {
   useState,
   useEffect,
   useCallback,
-  useTransition,
 } from "react";
 import {
   getCart,
@@ -48,7 +47,6 @@ const CartContext = createContext<CartContextType | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
 
   const mapCartToItems = (cart: Awaited<ReturnType<typeof getCart>>): CartItem[] => {
     if (!cart) return [];
@@ -105,12 +103,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const removeItemFn = useCallback(
     async (cartItemId: string) => {
-      startTransition(async () => {
-        // Optimistic update
-        setItems((prev) => prev.filter((i) => i.cartItemId !== cartItemId));
-        await removeFromCart(cartItemId);
-        await refreshCart();
-      });
+      // Optimistic update — UI changes instantly, server syncs in background
+      setItems((prev) => prev.filter((i) => i.cartItemId !== cartItemId));
+      await removeFromCart(cartItemId);
+      await refreshCart();
     },
     [refreshCart]
   );
@@ -121,25 +117,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         await removeItemFn(cartItemId);
         return;
       }
-      startTransition(async () => {
-        // Optimistic update
-        setItems((prev) =>
-          prev.map((i) =>
-            i.cartItemId === cartItemId ? { ...i, quantity } : i
-          )
-        );
-        await updateCartItemQuantity(cartItemId, quantity);
-        await refreshCart();
-      });
+      // Optimistic update — UI changes instantly, no reload
+      setItems((prev) =>
+        prev.map((i) => (i.cartItemId === cartItemId ? { ...i, quantity } : i))
+      );
+      await updateCartItemQuantity(cartItemId, quantity);
+      await refreshCart();
     },
     [refreshCart, removeItemFn]
   );
 
   const clearCartFn = useCallback(async () => {
-    startTransition(async () => {
-      setItems([]);
-      await clearCartAction();
-    });
+    setItems([]);
+    await clearCartAction();
   }, []);
 
   return (
@@ -148,7 +138,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         items,
         itemCount,
         subtotal,
-        loading: loading || isPending,
+        loading,
         addItem: addItemFn,
         removeItem: removeItemFn,
         updateQuantity: updateQuantityFn,

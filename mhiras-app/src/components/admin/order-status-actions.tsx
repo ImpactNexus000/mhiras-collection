@@ -31,7 +31,16 @@ export function OrderStatusActions({
     currentStatus !== "DELIVERED" &&
     currentStatus !== "REFUNDED";
 
-  async function handleStatusUpdate(newStatus: OrderStatus) {
+  async function handleStatusUpdate(
+    newStatus: OrderStatus,
+    actionLabel: string
+  ) {
+    const message =
+      newStatus === "CANCELLED"
+        ? "Cancel this order? Any reserved stock will be returned to inventory. This can't be undone easily."
+        : `Are you sure you want to "${actionLabel}" for this order?`;
+    if (!window.confirm(message)) return;
+
     setLoading(true);
     const result = await updateOrderStatus(orderId, newStatus);
     if (!result.error) {
@@ -45,7 +54,9 @@ export function OrderStatusActions({
       {nextAction && (
         <Button
           size="sm"
-          onClick={() => handleStatusUpdate(nextAction.status)}
+          onClick={() =>
+            handleStatusUpdate(nextAction.status, nextAction.label)
+          }
           disabled={loading}
         >
           {loading ? "Updating..." : nextAction.label}
@@ -55,7 +66,7 @@ export function OrderStatusActions({
         <Button
           size="sm"
           variant="outline"
-          onClick={() => handleStatusUpdate("CANCELLED")}
+          onClick={() => handleStatusUpdate("CANCELLED", "Cancel Order")}
           disabled={loading}
           className="text-danger border-danger hover:bg-danger/5"
         >

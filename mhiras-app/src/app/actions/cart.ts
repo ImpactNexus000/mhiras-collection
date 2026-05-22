@@ -2,7 +2,6 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
 
 export async function getCart() {
   const session = await auth();
@@ -97,7 +96,6 @@ export async function addToCart(
     });
   }
 
-  revalidatePath("/cart");
   return { success: true };
 }
 
@@ -133,7 +131,6 @@ export async function updateCartItemQuantity(
     data: { quantity },
   });
 
-  revalidatePath("/cart");
   return { success: true };
 }
 
@@ -157,7 +154,6 @@ export async function removeFromCart(cartItemId: string) {
     where: { id: cartItemId },
   });
 
-  revalidatePath("/cart");
   return { success: true };
 }
 
@@ -179,6 +175,5 @@ export async function clearCart() {
     where: { cartId: cart.id },
   });
 
-  revalidatePath("/cart");
   return { success: true };
 }

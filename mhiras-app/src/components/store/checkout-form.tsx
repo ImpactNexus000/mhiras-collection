@@ -23,7 +23,7 @@ import {
 } from "@/app/actions/promo-codes";
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
 
-type PaymentMethod = "card" | "bank_transfer" | "pay_on_delivery";
+type PaymentMethod = "card" | "bank_transfer";
 type Fulfillment = "immediate" | "stockpile";
 
 const states = [
@@ -64,6 +64,7 @@ export function CheckoutForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [selectedState, setSelectedState] = useState("");
 
   const [promoInput, setPromoInput] = useState("");
@@ -92,7 +93,6 @@ export function CheckoutForm({
   }[] = [
     { value: "card", label: "Card Payment", icon: CreditCard },
     { value: "bank_transfer", label: "Bank Transfer", icon: Building2 },
-    { value: "pay_on_delivery", label: "Pay on Delivery", icon: Truck },
   ];
 
   // Stockpile orders must be prepaid online by card.
@@ -187,6 +187,10 @@ export function CheckoutForm({
         return;
       }
 
+      // Order placed — cart is cleared server-side. Show the redirect screen
+      // so the customer never sees an "empty cart" flash while we hand off.
+      setRedirecting(true);
+
       // Refresh cart context (cart was cleared server-side)
       await refreshCart();
 
@@ -224,6 +228,23 @@ export function CheckoutForm({
       setServerError("Something went wrong. Please try again.");
       setLoading(false);
     }
+  }
+
+  // Handing off to Paystack — shown instead of the cart so there's no
+  // confusing "empty cart" flash after the order is placed.
+  if (redirecting) {
+    return (
+      <div className="text-center py-24 px-4">
+        <Loader2 size={36} className="mx-auto text-copper animate-spin mb-5" />
+        <h1 className="font-display text-3xl italic mb-2">
+          Taking you to secure payment
+        </h1>
+        <p className="text-sm text-charcoal-soft max-w-md mx-auto leading-relaxed">
+          Please stay on this page — we&apos;re redirecting you to Paystack to
+          complete your payment. Don&apos;t close or refresh this window.
+        </p>
+      </div>
+    );
   }
 
   if (items.length === 0) {
@@ -489,15 +510,6 @@ export function CheckoutForm({
                 <div className="mt-3 p-3 bg-white border border-border text-sm">
                   <strong>GTBank</strong> · 0123456789 · Mhiras Collection
                 </div>
-              </div>
-            )}
-
-            {paymentMethod === "pay_on_delivery" && (
-              <div className="bg-cream-dark p-4 border border-border">
-                <p className="text-sm text-charcoal-soft leading-relaxed">
-                  Pay with cash or card when your order is delivered. Available
-                  for Lagos deliveries only.
-                </p>
               </div>
             )}
 

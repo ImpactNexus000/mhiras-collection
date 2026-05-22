@@ -46,18 +46,20 @@ export function CartContent() {
   return (
     <>
       {/* Header nav */}
-      <div className="bg-charcoal px-6 h-12 flex items-center justify-between text-sm">
-        <span className="text-charcoal-soft">
-          Your Cart ({itemCount} item{itemCount !== 1 ? "s" : ""})
-        </span>
-        <Link href="/shop" className="text-charcoal-soft hover:text-cream transition-colors">
-          Continue Shopping
-        </Link>
+      <div className="bg-charcoal">
+        <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-between text-sm">
+          <span className="text-charcoal-soft">
+            Your Cart ({itemCount} item{itemCount !== 1 ? "s" : ""})
+          </span>
+          <Link href="/shop" className="text-charcoal-soft hover:text-cream transition-colors">
+            Continue Shopping
+          </Link>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-[1fr_340px]">
+      <div className="max-w-5xl mx-auto grid md:grid-cols-[1fr_320px]">
         {/* Cart items */}
-        <div className="p-5 md:p-6 border-r border-border">
+        <div className="p-5 md:p-6 md:border-r border-border">
           {items.map((item) => (
             <div
               key={item.cartItemId}

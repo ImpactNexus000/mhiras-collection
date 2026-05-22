@@ -32,7 +32,7 @@ export default async function HomePage() {
     <>
       {/* Hero */}
       <section className="bg-charcoal grid md:grid-cols-2 min-h-[320px]">
-        <div className="p-8 md:p-10 flex flex-col justify-center">
+        <div className="p-8 md:py-10 md:pr-10 md:pl-20 flex flex-col justify-center">
           <span className="text-xs md:text-sm tracking-widest uppercase text-copper mb-3">
             New Arrivals — Spring Edit
           </span>
@@ -60,15 +60,18 @@ export default async function HomePage() {
           </div>
         </div>
         <div className="hidden md:flex bg-gradient-to-br from-charcoal-mid to-charcoal items-center justify-center relative overflow-hidden">
-          <span className="absolute font-display text-[180px] font-light text-charcoal italic opacity-60 select-none">
+          <span className="absolute font-display text-[180px] font-light text-charcoal italic opacity-50 select-none">
             M
           </span>
-          <div className="w-40 h-56 bg-gradient-to-br from-charcoal-mid to-charcoal border border-charcoal-mid flex flex-col items-center justify-center gap-2 z-10">
-            <div className="w-10 h-0.5 bg-gold" />
-            <span className="text-[9px] tracking-widest uppercase text-gold">
-              Featured Piece
-            </span>
-          </div>
+          <video
+            src="/herovid.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-hidden="true"
+            className="relative z-10 h-[470px] w-3/4 object-cover"
+          />
         </div>
       </section>
 
@@ -98,7 +101,7 @@ export default async function HomePage() {
         <section className="max-w-6xl mx-auto px-4 md:px-6 py-8">
           <div className="flex justify-between items-baseline mb-4">
             <h2 className="font-display text-3xl md:text-4xl font-light italic">
-              Just Dropped
+              New Arrivals
             </h2>
             <Link
               href="/shop"

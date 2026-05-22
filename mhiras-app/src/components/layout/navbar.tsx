@@ -11,11 +11,11 @@ export async function Navbar() {
     <header>
       {/* Announcement Bar */}
       <div className="bg-copper text-white text-center text-sm tracking-wider py-2.5 px-4">
-        New arrivals every week — Free delivery on orders over &#8358;15,000
+        New arrivals every week — Free delivery on retail orders over &#8358;100,000
       </div>
 
       {/* Desktop Nav */}
-      <nav className="bg-charcoal text-cream hidden md:flex items-center justify-between px-6 h-16">
+      <nav className="bg-charcoal text-cream hidden md:flex items-center justify-between pl-20 pr-6 h-16">
         <Link
           href="/"
           className="font-display text-2xl font-light tracking-widest uppercase text-cream"
