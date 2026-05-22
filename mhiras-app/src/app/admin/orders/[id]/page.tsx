@@ -346,23 +346,30 @@ export default async function AdminOrderDetailPage({
           {/* Delivery address */}
           <div className="bg-white border border-border rounded-lg p-5">
             <h3 className="text-sm font-medium mb-3">Delivery Address</h3>
-            <div className="text-sm text-charcoal-soft space-y-1">
-              <div className="font-medium text-charcoal">
-                {order.address.firstName} {order.address.lastName}
-              </div>
-              <div className="flex items-start gap-2">
-                <MapPin size={14} className="mt-0.5 flex-shrink-0" />
-                <div>
-                  {order.address.address}
-                  <br />
-                  {order.address.city}, {order.address.state}
+            {order.address ? (
+              <div className="text-sm text-charcoal-soft space-y-1">
+                <div className="font-medium text-charcoal">
+                  {order.address.firstName} {order.address.lastName}
+                </div>
+                <div className="flex items-start gap-2">
+                  <MapPin size={14} className="mt-0.5 flex-shrink-0" />
+                  <div>
+                    {order.address.address}
+                    <br />
+                    {order.address.city}, {order.address.state}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone size={14} />
+                  {order.address.phone}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone size={14} />
-                {order.address.phone}
+            ) : (
+              <div className="text-sm text-charcoal-soft">
+                Stockpile order — no delivery address. Address is captured when
+                the customer requests delivery.
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

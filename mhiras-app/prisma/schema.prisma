@@ -33,13 +33,14 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  accounts  Account[]
-  sessions  Session[]
-  addresses Address[]
-  orders    Order[]
-  cart      Cart?
-  wishlist  WishlistItem[]
-  reviews   Review[]
+  accounts         Account[]
+  sessions         Session[]
+  addresses        Address[]
+  orders           Order[]
+  deliveryRequests DeliveryRequest[]
+  cart             Cart?
+  wishlist         WishlistItem[]
+  reviews          Review[]
 
   @@map("users")
 }
@@ -102,8 +103,9 @@ model Address {
   isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders Order[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders           Order[]
+  deliveryRequests DeliveryRequest[]
 
   @@map("addresses")
 }
@@ -280,6 +282,7 @@ enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
+  STOCKPILED // paid, items held in the customer's stockpile awaiting a delivery request
   CANCELLED
   REFUNDED
 }
@@ -297,28 +300,45 @@ enum PaymentStatus {
   REFUNDED
 }
 
+// IMMEDIATE = ship right away; STOCKPILE = hold paid items until a delivery request
+enum FulfillmentType {
+  IMMEDIATE
+  STOCKPILE
+}
+
+enum DeliveryRequestStatus {
+  PENDING_PAYMENT // customer selected stockpiled items, delivery fee not yet paid
+  PAID            // delivery fee paid, awaiting fulfilment
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 model Order {
-  id              String        @id @default(cuid())
-  orderNumber     String        @unique // e.g. MH-2024-0847
-  userId          String
-  addressId       String
-  status          OrderStatus   @default(PENDING)
-  paymentMethod   PaymentMethod
-  paymentStatus   PaymentStatus @default(PENDING)
-  paymentRef      String?       // Paystack/Flutterwave reference
-  subtotal        Int
-  deliveryFee     Int
-  discount        Int           @default(0)
-  total           Int
-  promoCodeId     String?
-  trackingNumber  String?
-  notes           String?       @db.Text
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                 String          @id @default(cuid())
+  orderNumber        String          @unique // e.g. MH-2024-0847
+  userId             String
+  addressId          String?         // null for stockpile orders (no delivery address at checkout)
+  status             OrderStatus     @default(PENDING)
+  fulfillmentType    FulfillmentType @default(IMMEDIATE)
+  stockpileExpiresAt DateTime?       // set on stockpile orders: deadline to request delivery
+  paymentMethod      PaymentMethod
+  paymentStatus      PaymentStatus   @default(PENDING)
+  paymentRef         String?         // Paystack/Flutterwave reference
+  subtotal           Int
+  deliveryFee        Int
+  discount           Int             @default(0)
+  total              Int
+  promoCodeId        String?
+  trackingNumber     String?
+  notes              String?         @db.Text
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   // Relations
   user      User        @relation(fields: [userId], references: [id])
-  address   Address     @relation(fields: [addressId], references: [id])
+  address   Address?    @relation(fields: [addressId], references: [id])
   promoCode PromoCode?  @relation(fields: [promoCodeId], references: [id])
   items     OrderItem[]
   timeline  OrderEvent[]
@@ -330,17 +350,44 @@ model Order {
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Int    // price at time of purchase
-  size      String?
+  id                String @id @default(cuid())
+  orderId           String
+  productId         String
+  quantity          Int
+  price             Int     // price at time of purchase
+  size              String?
+  deliveryRequestId String? // null = still in stockpile; set = assigned to a delivery request
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product          @relation(fields: [productId], references: [id])
+  deliveryRequest DeliveryRequest? @relation(fields: [deliveryRequestId], references: [id], onDelete: SetNull)
 
+  @@index([deliveryRequestId])
   @@map("order_items")
+}
+
+// A consolidated delivery of items pulled from a customer's stockpile.
+model DeliveryRequest {
+  id             String                @id @default(cuid())
+  requestNumber  String                @unique // e.g. DR-2026-0001
+  userId         String
+  addressId      String
+  deliveryFee    Int
+  status         DeliveryRequestStatus @default(PENDING_PAYMENT)
+  paymentStatus  PaymentStatus         @default(PENDING)
+  paymentRef     String?
+  trackingNumber String?
+  notes          String?               @db.Text
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  user    User        @relation(fields: [userId], references: [id])
+  address Address     @relation(fields: [addressId], references: [id])
+  items   OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("delivery_requests")
 }
 
 model OrderEvent {
@@ -417,4 +464,17 @@ model Review {
 
   @@unique([userId, productId])
   @@map("reviews")
+}
+
+// ============================================
+// STORE SETTINGS
+// ============================================
+
+// Singleton row (id = "singleton") holding admin-configurable store settings.
+model StoreSettings {
+  id                  String   @id @default("singleton")
+  stockpileExpiryDays Int      @default(30) // days a customer has to request delivery
+  updatedAt           DateTime @updatedAt
+
+  @@map("store_settings")
 }

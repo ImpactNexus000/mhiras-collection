@@ -308,14 +308,23 @@ export default async function OrderConfirmationPage({
           <div className="bg-cream-dark p-4 rounded text-sm">
             {/* Address */}
             <div className="pb-3 mb-3 border-b border-border">
-              <strong>
-                {order.address.firstName} {order.address.lastName}
-              </strong>
-              <br />
-              {order.address.address}, {order.address.city},{" "}
-              {order.address.state}
-              <br />
-              {order.address.phone}
+              {order.address ? (
+                <>
+                  <strong>
+                    {order.address.firstName} {order.address.lastName}
+                  </strong>
+                  <br />
+                  {order.address.address}, {order.address.city},{" "}
+                  {order.address.state}
+                  <br />
+                  {order.address.phone}
+                </>
+              ) : (
+                <span className="text-charcoal-soft">
+                  Stockpiled — no delivery address yet. Request delivery from
+                  your stockpile when you&apos;re ready.
+                </span>
+              )}
             </div>
 
             {/* Items */}

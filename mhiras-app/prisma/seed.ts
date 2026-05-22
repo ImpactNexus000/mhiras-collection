@@ -155,16 +155,8 @@ async function main() {
     },
   ];
 
-  // Retail placeholder products — kept minimal so the storefront renders for
-  // review. Real products + images replace these in Step A3.
-  const retailPlaceholders = [
-    { categorySlug: "sexy-dresses", price: 9000 },
-    { categorySlug: "sun-dresses", price: 9000 },
-    { categorySlug: "jean-gowns", price: 8500 },
-    { categorySlug: "fashionable-dresses", price: 10000 },
-    { categorySlug: "tops", price: 9000 },
-  ];
-
+  // Retail products are loaded from real photos via prisma/import-products.ts
+  // (Step A3) — the seed only creates the bale catalogue.
   const products: {
     name: string;
     slug: string;
@@ -195,26 +187,6 @@ async function main() {
       status: "PUBLISHED",
       featured: bale.featured,
     });
-  }
-
-  for (const p of retailPlaceholders) {
-    const category = categoryData.find((c) => c.slug === p.categorySlug)!;
-    for (let i = 1; i <= 2; i++) {
-      products.push({
-        name: `${category.name.replace(/s$/, "")} ${i}`,
-        slug: `${p.categorySlug}-${i}`,
-        description: `${category.name.replace(/s$/, "")} — pre-loved piece in great condition. Placeholder product; real listings and photos arrive in Step A3.`,
-        categoryId: catMap[p.categorySlug],
-        size: null,
-        condition: "GOOD",
-        sellingPrice: p.price,
-        originalPrice: null,
-        stock: 5,
-        weight: null,
-        status: "PUBLISHED",
-        featured: i === 1 && p.categorySlug === "fashionable-dresses",
-      });
-    }
   }
 
   for (const product of products) {
@@ -313,6 +285,13 @@ async function main() {
       create: promo,
     });
   }
+
+  // Store settings — singleton row holding admin-configurable values.
+  await db.storeSettings.upsert({
+    where: { id: "singleton" },
+    update: {},
+    create: { id: "singleton", stockpileExpiryDays: 30 },
+  });
 
   console.log(
     `Seeded: ${categoryData.length} categories, ${products.length} products, 3 collections, ${zones.length} delivery zones, ${promos.length} promo codes`
