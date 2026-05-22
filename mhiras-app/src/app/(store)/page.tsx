@@ -6,6 +6,7 @@ import { getWishlistSet } from "@/lib/queries/wishlist";
 import { getRatingSummariesForProducts } from "@/lib/queries/reviews";
 import { CategoryKind } from "@/generated/prisma/client";
 import { ArrowRight } from "lucide-react";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 const conditionLabel: Record<string, string> = {
   LIKE_NEW: "Like New",
@@ -28,8 +29,41 @@ export default async function HomePage() {
     justDropped.map((p) => p.id)
   );
 
+  // Brand structured data — helps Google show the org and a search box.
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+      description:
+        "Curated pre-loved thrift fashion, delivered nationwide across Nigeria.",
+      logo: `${SITE_URL}/logo-nav.png`,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ];
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       {/* Hero */}
       <section className="bg-charcoal grid md:grid-cols-2 min-h-[320px]">
         <div className="p-8 md:py-10 md:pr-10 md:pl-20 flex flex-col justify-center">

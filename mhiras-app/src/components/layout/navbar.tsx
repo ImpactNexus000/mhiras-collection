@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Search, Heart } from "lucide-react";
 import { CartBadge } from "./cart-badge";
 import { auth } from "@/lib/auth";
@@ -16,11 +17,15 @@ export async function Navbar() {
 
       {/* Desktop Nav */}
       <nav className="bg-charcoal text-cream hidden md:flex items-center justify-between pl-20 pr-6 h-16">
-        <Link
-          href="/"
-          className="font-display text-2xl font-light tracking-widest uppercase text-cream"
-        >
-          Mhiras Collection
+        <Link href="/" aria-label="Mhiras Collection — home">
+          <Image
+            src="/logo-nav.png"
+            alt="Mhiras Collection"
+            width={843}
+            height={273}
+            priority
+            className="h-12 w-auto"
+          />
         </Link>
 
         <div className="flex gap-6 text-sm uppercase tracking-wider text-charcoal-soft">
@@ -74,11 +79,15 @@ export async function Navbar() {
 
       {/* Mobile Nav */}
       <nav className="bg-charcoal text-cream flex md:hidden items-center justify-between px-4 h-14">
-        <Link
-          href="/"
-          className="font-display text-xl font-light tracking-widest uppercase text-cream"
-        >
-          Mhiras
+        <Link href="/" aria-label="Mhiras Collection — home">
+          <Image
+            src="/logo-nav.png"
+            alt="Mhiras Collection"
+            width={843}
+            height={273}
+            priority
+            className="h-9 w-auto"
+          />
         </Link>
         <div className="flex items-center gap-3">
           <Link href="/search" className="text-charcoal-soft">

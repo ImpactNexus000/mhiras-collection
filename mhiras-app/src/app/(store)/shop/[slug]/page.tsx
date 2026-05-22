@@ -19,6 +19,7 @@ import { auth } from "@/lib/auth";
 import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
 import { getOptimizedUrl } from "@/lib/cloudinary";
 import { CategoryKind } from "@/generated/prisma/client";
+import { SITE_URL } from "@/lib/site";
 
 const conditionLabel: Record<string, string> = {
   LIKE_NEW: "Like New",
@@ -38,10 +39,28 @@ export async function generateMetadata({
 
   if (!product) return { title: "Product Not Found" };
 
+  const description =
+    product.description ?? `Shop ${product.name} at Mhiras Collection`;
+  const image =
+    product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url;
+
   return {
     title: product.name,
-    description:
-      product.description ?? `Shop ${product.name} at Mhiras Collection`,
+    description,
+    alternates: { canonical: `/shop/${product.slug}` },
+    openGraph: {
+      type: "website",
+      title: product.name,
+      description,
+      url: `/shop/${product.slug}`,
+      images: image ? [{ url: image }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+      images: image ? [image] : undefined,
+    },
   };
 }
 
@@ -86,8 +105,43 @@ export default async function ProductDetailPage({
   const isWholesale = product.category.kind === CategoryKind.WHOLESALE;
   const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
 
+  // Product structured data for rich search results
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description:
+      product.description ?? `${product.name} from Mhiras Collection`,
+    image: product.images.map((img) => img.url),
+    category: product.category.name,
+    offers: {
+      "@type": "Offer",
+      price: product.sellingPrice,
+      priceCurrency: "NGN",
+      availability: isSoldOut
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
+      url: `${SITE_URL}/shop/${product.slug}`,
+    },
+    ...(ratingSummary.count > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: Number(ratingSummary.average.toFixed(1)),
+            reviewCount: ratingSummary.count,
+          },
+        }
+      : {}),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       {/* Breadcrumb */}
       <div className="px-6 py-3 text-sm text-charcoal-soft border-b border-border">
         <Link href="/" className="hover:text-charcoal">

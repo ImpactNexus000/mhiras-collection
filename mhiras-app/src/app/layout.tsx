@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -16,13 +17,17 @@ const dmSans = DM_Sans({
   weight: ["300", "400", "500"],
 });
 
+const SITE_TITLE = "Mhiras Collection — Curated Thrift Fashion";
+const SITE_DESCRIPTION =
+  "Handpicked pre-loved fashion pieces, curated and elevated. Shop unique thrift finds delivered nationwide across Nigeria.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Mhiras Collection — Curated Thrift Fashion",
+    default: SITE_TITLE,
     template: "%s | Mhiras Collection",
   },
-  description:
-    "Handpicked pre-loved fashion pieces, curated and elevated. Shop unique thrift finds delivered nationwide across Nigeria.",
+  description: SITE_DESCRIPTION,
   keywords: [
     "thrift",
     "fashion",
@@ -33,8 +38,24 @@ export const metadata: Metadata = {
     "Mhiras Collection",
     "Mhira",
     "Mhira's",
-    "Thrift wears"
+    "Thrift wears",
   ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    locale: "en_NG",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
