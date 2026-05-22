@@ -18,6 +18,7 @@ import {
 import { auth } from "@/lib/auth";
 import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
 import { getOptimizedUrl } from "@/lib/cloudinary";
+import { CategoryKind } from "@/generated/prisma/client";
 
 const conditionLabel: Record<string, string> = {
   LIKE_NEW: "Like New",
@@ -82,6 +83,7 @@ export default async function ProductDetailPage({
       : null;
 
   const isSoldOut = product.stock === 0;
+  const isWholesale = product.category.kind === CategoryKind.WHOLESALE;
   const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
 
   return (
@@ -92,16 +94,24 @@ export default async function ProductDetailPage({
           Home
         </Link>
         {" / "}
-        <Link href="/shop" className="hover:text-charcoal">
-          Shop
-        </Link>
-        {" / "}
-        <Link
-          href={`/shop?category=${product.category.slug}`}
-          className="hover:text-charcoal"
-        >
-          {product.category.name}
-        </Link>
+        {isWholesale ? (
+          <Link href="/wholesale" className="hover:text-charcoal">
+            Bales
+          </Link>
+        ) : (
+          <>
+            <Link href="/shop" className="hover:text-charcoal">
+              Shop
+            </Link>
+            {" / "}
+            <Link
+              href={`/shop?category=${product.category.slug}`}
+              className="hover:text-charcoal"
+            >
+              {product.category.name}
+            </Link>
+          </>
+        )}
         {" / "}
         <span className="text-charcoal">{product.name}</span>
       </div>
@@ -181,10 +191,19 @@ export default async function ProductDetailPage({
 
           {/* Badges */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider bg-copper-light text-copper-dark px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-copper" />
-              {conditionLabel[product.condition]}
-            </span>
+            {isWholesale ? (
+              product.weight && (
+                <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider bg-copper-light text-copper-dark px-3 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-copper" />
+                  {product.weight}kg Bale
+                </span>
+              )
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs uppercase tracking-wider bg-copper-light text-copper-dark px-3 py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-copper" />
+                {conditionLabel[product.condition]}
+              </span>
+            )}
             {product.size && (
               <span className="text-xs bg-cream-dark px-3 py-1">
                 Size {product.size}
@@ -259,7 +278,11 @@ export default async function ProductDetailPage({
               You May Also Like
             </h2>
             <Link
-              href={`/shop?category=${product.category.slug}`}
+              href={
+                isWholesale
+                  ? "/wholesale"
+                  : `/shop?category=${product.category.slug}`
+              }
               className="text-sm uppercase tracking-wider text-copper underline"
             >
               View all →
@@ -276,7 +299,13 @@ export default async function ProductDetailPage({
                 size={p.size}
                 price={p.sellingPrice}
                 originalPrice={p.originalPrice}
-                badge={conditionLabel[p.condition]}
+                badge={
+                  isWholesale
+                    ? p.weight
+                      ? `${p.weight}kg`
+                      : undefined
+                    : conditionLabel[p.condition]
+                }
                 image={p.images[0]?.url ?? null}
                 stock={p.stock}
                 isSoldOut={p.stock === 0}

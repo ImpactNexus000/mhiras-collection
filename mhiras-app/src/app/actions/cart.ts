@@ -33,7 +33,11 @@ export async function getCart() {
   return cart;
 }
 
-export async function addToCart(productId: string, quantity: number = 1) {
+export async function addToCart(
+  productId: string,
+  quantity: number = 1,
+  size: string = ""
+) {
   const session = await auth();
   if (!session?.user?.id) {
     return { error: "You must be signed in to add items to your cart." };
@@ -59,12 +63,13 @@ export async function addToCart(productId: string, quantity: number = 1) {
     update: {},
   });
 
-  // Check if item already in cart
+  // Check if the same product + size is already in cart
   const existingItem = await db.cartItem.findUnique({
     where: {
-      cartId_productId: {
+      cartId_productId_size: {
         cartId: cart.id,
         productId,
+        size,
       },
     },
   });
@@ -87,6 +92,7 @@ export async function addToCart(productId: string, quantity: number = 1) {
         cartId: cart.id,
         productId,
         quantity,
+        size,
       },
     });
   }

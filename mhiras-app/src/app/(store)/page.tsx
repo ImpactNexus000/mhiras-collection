@@ -1,41 +1,33 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ProductCard } from "@/components/store/product-card";
+import { getCategories, getProducts } from "@/lib/queries/products";
+import { getWishlistSet } from "@/lib/queries/wishlist";
+import { getRatingSummariesForProducts } from "@/lib/queries/reviews";
+import { CategoryKind } from "@/generated/prisma/client";
+import { ArrowRight } from "lucide-react";
 
-const categories = [
-  { name: "Women", count: 142, slug: "women" },
-  { name: "Men", count: 89, slug: "men" },
-  { name: "Bags", count: 47, slug: "bags" },
-  { name: "Shoes", count: 63, slug: "shoes" },
-];
+const conditionLabel: Record<string, string> = {
+  LIKE_NEW: "Like New",
+  GOOD: "Good",
+  FAIR: "Fair",
+};
 
-const featuredProducts = [
-  {
-    name: "Vintage Wrap Dress",
-    category: "Dresses",
-    price: 8500,
-    originalPrice: 18000,
-    badge: "New",
-    slug: "vintage-wrap-dress",
-  },
-  {
-    name: "Silk Blouse — Cream",
-    category: "Tops",
-    price: 5200,
-    originalPrice: 12000,
-    badge: "Hot",
-    slug: "silk-blouse-cream",
-  },
-  {
-    name: "Leather Tote — Brown",
-    category: "Bags",
-    price: 14000,
-    originalPrice: 35000,
-    badge: null,
-    slug: "leather-tote-brown",
-  },
-];
+export default async function HomePage() {
+  const [categories, { products: justDropped }, wishlistSet] =
+    await Promise.all([
+      getCategories(CategoryKind.RETAIL),
+      getProducts({ kind: CategoryKind.RETAIL }, 1, 6, {
+        field: "createdAt",
+        direction: "desc",
+      }),
+      getWishlistSet(),
+    ]);
 
-export default function HomePage() {
+  const ratingMap = await getRatingSummariesForProducts(
+    justDropped.map((p) => p.id)
+  );
+
   return (
     <>
       {/* Hero */}
@@ -76,90 +68,93 @@ export default function HomePage() {
             <span className="text-[9px] tracking-widest uppercase text-gold">
               Featured Piece
             </span>
-            <span className="text-[9px] tracking-widest uppercase text-charcoal-soft">
-              &#8358;8,500
-            </span>
           </div>
         </div>
       </section>
 
       {/* Category Bar */}
-      <section className="grid grid-cols-4 bg-copper-light">
-        {categories.map((cat) => (
-          <Link
-            key={cat.slug}
-            href={`/shop?category=${cat.slug}`}
-            className="py-3 md:py-3.5 text-center border-r border-copper-light/60 last:border-r-0 hover:bg-copper/5 transition-colors"
-          >
-            <div className="text-sm font-medium uppercase tracking-wider text-charcoal-mid">
-              {cat.name}
-            </div>
-            <div className="text-xs text-charcoal-soft mt-0.5">
-              {cat.count} items
-            </div>
-          </Link>
-        ))}
-      </section>
-
-      {/* Just Dropped */}
-      <section className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-        <div className="flex justify-between items-baseline mb-4">
-          <h2 className="font-display text-3xl md:text-4xl font-light italic">
-            Just Dropped
-          </h2>
-          <Link
-            href="/shop?filter=new"
-            className="text-sm uppercase tracking-wider text-copper underline"
-          >
-            See all &rarr;
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-border">
-          {featuredProducts.map((product) => (
+      {categories.length > 0 && (
+        <section className="grid grid-cols-3 md:grid-cols-5 bg-copper-light">
+          {categories.map((cat) => (
             <Link
-              key={product.slug}
-              href={`/shop/${product.slug}`}
-              className="bg-white group"
+              key={cat.slug}
+              href={`/shop?category=${cat.slug}`}
+              className="py-3 md:py-3.5 text-center border-r border-b border-copper/15 hover:bg-copper/5 transition-colors"
             >
-              {/* Image placeholder */}
-              <div className="h-48 md:h-60 bg-gradient-to-br from-cream-dark to-gold/30 flex items-center justify-center relative">
-                <div className="w-[70px] h-[100px] bg-gradient-to-br from-gold to-copper-dark/40 opacity-60" />
-                {product.badge && (
-                  <span className="absolute top-2 left-2 bg-copper text-white text-[10px] uppercase tracking-wider px-2.5 py-1">
-                    {product.badge}
-                  </span>
-                )}
+              <div className="text-sm font-medium uppercase tracking-wider text-charcoal-mid">
+                {cat.name}
               </div>
-              <div className="p-4">
-                <div className="text-xs text-charcoal-soft uppercase tracking-wider">
-                  {product.category}
-                </div>
-                <div className="text-base font-medium mt-1">
-                  {product.name}
-                </div>
-                <div className="mt-1.5">
-                  <span className="text-lg font-medium text-copper">
-                    &#8358;{product.price.toLocaleString()}
-                  </span>
-                  {product.originalPrice && (
-                    <span className="text-xs text-charcoal-soft line-through ml-2">
-                      &#8358;{product.originalPrice.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex justify-between items-center px-4 pb-4">
-                <span className="text-xl text-charcoal-soft group-hover:text-copper transition-colors cursor-pointer">
-                  &#9825;
-                </span>
-                <span className="bg-charcoal text-cream text-xs uppercase tracking-wider px-4 py-2 cursor-pointer hover:bg-copper transition-colors">
-                  Add to Cart
-                </span>
+              <div className="text-xs text-charcoal-soft mt-0.5">
+                {cat._count.products}{" "}
+                {cat._count.products === 1 ? "item" : "items"}
               </div>
             </Link>
           ))}
-        </div>
+        </section>
+      )}
+
+      {/* Just Dropped */}
+      {justDropped.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+          <div className="flex justify-between items-baseline mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-light italic">
+              Just Dropped
+            </h2>
+            <Link
+              href="/shop"
+              className="text-sm uppercase tracking-wider text-copper underline"
+            >
+              See all &rarr;
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {justDropped.map((product) => (
+              <ProductCard
+                key={product.id}
+                productId={product.id}
+                slug={product.slug}
+                name={product.name}
+                category={product.category.name}
+                size={product.size}
+                price={product.sellingPrice}
+                originalPrice={product.originalPrice}
+                badge={conditionLabel[product.condition]}
+                image={product.images[0]?.url ?? null}
+                stock={product.stock}
+                isSoldOut={product.stock === 0}
+                isWishlisted={wishlistSet.has(product.id)}
+                ratingAverage={ratingMap.get(product.id)?.average}
+                ratingCount={ratingMap.get(product.id)?.count}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Wholesale / Bales callout */}
+      <section className="max-w-6xl mx-auto px-4 md:px-6 pb-8">
+        <Link
+          href="/wholesale"
+          className="group block bg-charcoal p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+        >
+          <div>
+            <span className="text-xs tracking-widest uppercase text-copper">
+              Wholesale
+            </span>
+            <h3 className="font-display text-3xl md:text-4xl font-light italic text-cream mt-1">
+              Buying in bulk? Shop Bales
+            </h3>
+            <p className="text-sm text-charcoal-soft mt-1.5 max-w-md leading-relaxed">
+              Premium UK ~55kg thrift bales — sorted, graded and ready to
+              resell. For boutiques and resellers.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-2 bg-copper text-white text-sm uppercase tracking-wider px-5 py-3 group-hover:bg-copper-dark transition-colors whitespace-nowrap">
+            Shop Bales
+            <ArrowRight size={16} />
+          </span>
+        </Link>
       </section>
 
       {/* Newsletter */}

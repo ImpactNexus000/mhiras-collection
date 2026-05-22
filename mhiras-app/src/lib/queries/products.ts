@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
-import { Condition, ProductStatus } from "@/generated/prisma/client";
+import { CategoryKind, Condition, ProductStatus } from "@/generated/prisma/client";
 
 export interface ProductFilters {
   category?: string;
+  kind?: CategoryKind;
   condition?: Condition[];
   minPrice?: number;
   maxPrice?: number;
@@ -25,8 +26,11 @@ export async function getProducts(
     status: filters.status ?? ProductStatus.PUBLISHED,
   };
 
-  if (filters.category) {
-    where.category = { slug: filters.category };
+  if (filters.category || filters.kind) {
+    where.category = {
+      ...(filters.category ? { slug: filters.category } : {}),
+      ...(filters.kind ? { kind: filters.kind } : {}),
+    };
   }
 
   if (filters.condition && filters.condition.length > 0) {
@@ -86,7 +90,7 @@ export async function getProductBySlug(slug: string) {
   const product = await db.product.findUnique({
     where: { slug },
     include: {
-      category: { select: { name: true, slug: true } },
+      category: { select: { name: true, slug: true, kind: true } },
       images: { orderBy: { sortOrder: "asc" } },
     },
   });
@@ -122,10 +126,12 @@ export async function getRelatedProducts(
 }
 
 /**
- * Get all categories with product counts.
+ * Get categories with product counts, optionally filtered by kind
+ * (RETAIL for the main shop, WHOLESALE for the bales section).
  */
-export async function getCategories() {
+export async function getCategories(kind?: CategoryKind) {
   return db.category.findMany({
+    where: kind ? { kind } : undefined,
     include: {
       _count: { select: { products: true } },
     },

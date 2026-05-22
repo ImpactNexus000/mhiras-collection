@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/store/product-card";
 import { getProducts, getCategories } from "@/lib/queries/products";
 import { getWishlistSet } from "@/lib/queries/wishlist";
 import { getRatingSummariesForProducts } from "@/lib/queries/reviews";
-import { Condition } from "@/generated/prisma/client";
+import { CategoryKind, Condition } from "@/generated/prisma/client";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -50,6 +50,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       getProducts(
         {
           category: params.category,
+          kind: CategoryKind.RETAIL,
           condition: conditionFilter,
           minPrice: params.minPrice ? Number(params.minPrice) : undefined,
           maxPrice: params.maxPrice ? Number(params.maxPrice) : undefined,
@@ -60,7 +61,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         12,
         sortMap[params.sort ?? "newest"] ?? sortMap.newest
       ),
-      getCategories(),
+      getCategories(CategoryKind.RETAIL),
       getWishlistSet(),
     ]);
 

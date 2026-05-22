@@ -9,21 +9,77 @@ const db = new PrismaClient({ adapter });
 async function main() {
   console.log("Seeding database...");
 
-  // Categories
+  // Categories — Mhiras Collection's real catalog structure.
+  // RETAIL = individual dresses sold by size; WHOLESALE = bulk bales.
+  const categoryData: {
+    name: string;
+    slug: string;
+    kind: "RETAIL" | "WHOLESALE";
+    sizeOptions: string | null;
+    sortOrder: number;
+    description: string | null;
+  }[] = [
+    {
+      name: "Sexy Dresses",
+      slug: "sexy-dresses",
+      kind: "RETAIL",
+      sizeOptions: "6,8,10",
+      sortOrder: 1,
+      description: null,
+    },
+    {
+      name: "Sun Dresses",
+      slug: "sun-dresses",
+      kind: "RETAIL",
+      sizeOptions: "6,8,10,12",
+      sortOrder: 2,
+      description: null,
+    },
+    {
+      name: "Jean Gowns",
+      slug: "jean-gowns",
+      kind: "RETAIL",
+      sizeOptions: "8,10,12,14",
+      sortOrder: 3,
+      description: null,
+    },
+    {
+      name: "Fashionable Dresses",
+      slug: "fashionable-dresses",
+      kind: "RETAIL",
+      sizeOptions: "8,10,12,14,16",
+      sortOrder: 4,
+      description: null,
+    },
+    {
+      name: "Tops",
+      slug: "tops",
+      kind: "RETAIL",
+      sizeOptions: "8,10,12,14,18,20",
+      sortOrder: 5,
+      description: null,
+    },
+    {
+      name: "Bales",
+      slug: "bales",
+      kind: "WHOLESALE",
+      sizeOptions: null,
+      sortOrder: 6,
+      description: "Wholesale bulk lots — UK ~55kg bales for resellers.",
+    },
+  ];
+
   const categories = await Promise.all(
-    [
-      { name: "Dresses", slug: "dresses", sortOrder: 1 },
-      { name: "Tops", slug: "tops", sortOrder: 2 },
-      { name: "Bottoms", slug: "bottoms", sortOrder: 3 },
-      { name: "Jackets & Blazers", slug: "jackets-blazers", sortOrder: 4 },
-      { name: "Bags", slug: "bags", sortOrder: 5 },
-      { name: "Shoes", slug: "shoes", sortOrder: 6 },
-      { name: "Knitwear", slug: "knitwear", sortOrder: 7 },
-      { name: "Accessories", slug: "accessories", sortOrder: 8 },
-    ].map((cat) =>
+    categoryData.map((cat) =>
       db.category.upsert({
         where: { slug: cat.slug },
-        update: {},
+        update: {
+          name: cat.name,
+          kind: cat.kind,
+          sizeOptions: cat.sizeOptions,
+          sortOrder: cat.sortOrder,
+          description: cat.description,
+        },
         create: cat,
       })
     )
@@ -31,247 +87,135 @@ async function main() {
 
   const catMap = Object.fromEntries(categories.map((c) => [c.slug, c.id]));
 
-  // Products
-  const products = [
+  // Bales — real wholesale products supplied by the client.
+  const bales = [
     {
-      name: "Vintage Wrap Dress",
-      slug: "vintage-wrap-dress",
-      description:
-        "Beautiful wrap dress in a burgundy floral print. Fully lined, midi length. Excellent pre-loved condition — no stains, no tears. A true vintage find.",
-      categoryId: catMap["dresses"],
-      size: "M",
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 8500,
-      originalPrice: 22000,
-      stock: 1,
-      status: "PUBLISHED" as const,
+      name: "Premium Boutique Standard Poly Dress Bale",
+      slug: "premium-boutique-standard-poly-dress-bale",
+      description: "Premium boutique-standard poly dress bale. UK ~55kg.",
+      sellingPrice: 730000,
+      weight: 55,
       featured: true,
     },
     {
-      name: "Midi Floral Dress",
-      slug: "midi-floral-dress",
-      description:
-        "Elegant midi dress with delicate floral patterns. Lightweight fabric perfect for Lagos weather. Slight stretch for a comfortable fit.",
-      categoryId: catMap["dresses"],
-      size: "M",
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 7000,
-      originalPrice: 22000,
-      stock: 3,
-      status: "PUBLISHED" as const,
+      name: "Ladies Mini Dress Bale",
+      slug: "ladies-mini-dress-bale",
+      description: "Ladies mini dress bale.",
+      sellingPrice: 430000,
+      weight: null,
+      featured: false,
+    },
+    {
+      name: "Ladies Party Gown Bale",
+      slug: "ladies-party-gown-bale",
+      description: "Ladies party gown bale. ~55kg.",
+      sellingPrice: 385000,
+      weight: 55,
+      featured: false,
+    },
+    {
+      name: "Premium Poly Dress Bale",
+      slug: "premium-poly-dress-bale",
+      description: "Premium poly dress bale. UK ~55kg.",
+      sellingPrice: 460000,
+      weight: 55,
+      featured: false,
+    },
+    {
+      name: "China Jean Gown Bale",
+      slug: "china-jean-gown-bale",
+      description: "China jean gown bale.",
+      sellingPrice: 410000,
+      weight: null,
+      featured: false,
+    },
+    {
+      name: "Polo Dress Bale",
+      slug: "polo-dress-bale",
+      description: "Polo dress bale. UK ~55kg.",
+      sellingPrice: 420000,
+      weight: 55,
+      featured: false,
+    },
+    {
+      name: "Poly Blouse Bale",
+      slug: "poly-blouse-bale",
+      description: "Poly blouse bale.",
+      sellingPrice: 420000,
+      weight: null,
+      featured: false,
+    },
+    {
+      name: "Budget Friendly Polo Dress Bale",
+      slug: "budget-friendly-polo-dress-bale",
+      description: "Budget-friendly polo dress bale. UK ~55kg.",
+      sellingPrice: 270000,
+      weight: 55,
       featured: true,
-    },
-    {
-      name: "Slip Midi Dress",
-      slug: "slip-midi-dress",
-      description:
-        "Minimalist satin slip dress. Adjustable straps, bias cut. Versatile piece that can be dressed up or down.",
-      categoryId: catMap["dresses"],
-      size: "XS",
-      condition: "GOOD" as const,
-      sellingPrice: 6000,
-      originalPrice: 15000,
-      stock: 2,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Floral Wrap Dress",
-      slug: "floral-wrap-dress",
-      description:
-        "Classic wrap silhouette in a bold floral print. True to size with a tie waist.",
-      categoryId: catMap["dresses"],
-      size: "M",
-      condition: "GOOD" as const,
-      sellingPrice: 10000,
-      originalPrice: null,
-      stock: 0,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Linen Button-Up",
-      slug: "linen-button-up",
-      description:
-        "Relaxed-fit linen shirt. Breathable and lightweight. Perfect for layering or wearing alone.",
-      categoryId: catMap["tops"],
-      size: "S",
-      condition: "GOOD" as const,
-      sellingPrice: 4500,
-      originalPrice: null,
-      stock: 2,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Silk Blouse — Cream",
-      slug: "silk-blouse-cream",
-      description:
-        "Luxurious silk blouse in cream. Subtle sheen, French cuffs. Dry clean recommended.",
-      categoryId: catMap["tops"],
-      size: "S",
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 5200,
-      originalPrice: 12000,
-      stock: 0,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Oxford Shirt — Navy",
-      slug: "oxford-shirt-navy",
-      description:
-        "Men's classic oxford button-down in navy. 100% cotton, excellent quality. No visible wear.",
-      categoryId: catMap["tops"],
-      size: "L",
-      condition: "GOOD" as const,
-      sellingPrice: 5500,
-      originalPrice: null,
-      stock: 3,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Satin Blouse — Black",
-      slug: "satin-blouse-black",
-      description:
-        "Elegant black satin blouse with subtle draping. Perfect for a night out or office wear.",
-      categoryId: catMap["tops"],
-      size: "M",
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 6800,
-      originalPrice: 16000,
-      stock: 1,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Structured Handbag",
-      slug: "structured-handbag",
-      description:
-        "Timeless structured handbag in tan leather. Gold hardware, interior pockets. Minor scuff on base — priced to reflect.",
-      categoryId: catMap["bags"],
-      size: null,
-      condition: "GOOD" as const,
-      sellingPrice: 11000,
-      originalPrice: 28000,
-      stock: 1,
-      status: "PUBLISHED" as const,
-      featured: true,
-    },
-    {
-      name: "Leather Tote — Brown",
-      slug: "leather-tote-brown",
-      description:
-        "Spacious leather tote in rich brown. Perfect everyday bag. Fits a 13-inch laptop comfortably.",
-      categoryId: catMap["bags"],
-      size: null,
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 14000,
-      originalPrice: 35000,
-      stock: 2,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Leather Crossbody Bag",
-      slug: "leather-crossbody-bag",
-      description:
-        "Compact crossbody in genuine leather. Adjustable strap, zip closure. Ideal for going out.",
-      categoryId: catMap["bags"],
-      size: null,
-      condition: "GOOD" as const,
-      sellingPrice: 14000,
-      originalPrice: null,
-      stock: 1,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Block Heel Mules",
-      slug: "block-heel-mules",
-      description:
-        "Tan block heel mules. Comfortable 2.5-inch heel. Leather upper, cushioned insole.",
-      categoryId: catMap["shoes"],
-      size: "40",
-      condition: "GOOD" as const,
-      sellingPrice: 9500,
-      originalPrice: 24000,
-      stock: 4,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Vintage Denim Jacket",
-      slug: "vintage-denim-jacket",
-      description:
-        "Classic oversized denim jacket. Authentic vintage wash. Two chest pockets, brass buttons.",
-      categoryId: catMap["jackets-blazers"],
-      size: "M",
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 12000,
-      originalPrice: null,
-      stock: 1,
-      status: "PUBLISHED" as const,
-      featured: true,
-    },
-    {
-      name: "Oversized Linen Blazer",
-      slug: "oversized-linen-blazer",
-      description:
-        "Relaxed fit linen blazer in oatmeal. Single button closure. Unlined — perfect for warm weather.",
-      categoryId: catMap["jackets-blazers"],
-      size: "L",
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 15000,
-      originalPrice: null,
-      stock: 1,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Wide-Leg Trousers",
-      slug: "wide-leg-trousers",
-      description:
-        "High-waisted wide-leg trousers in charcoal. Flattering drape, side zip. Pair with any top.",
-      categoryId: catMap["bottoms"],
-      size: "S",
-      condition: "LIKE_NEW" as const,
-      sellingPrice: 9000,
-      originalPrice: null,
-      stock: 2,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Pleated Maxi Skirt",
-      slug: "pleated-maxi-skirt",
-      description:
-        "Flowing pleated maxi skirt in olive green. Elastic waist, fully lined.",
-      categoryId: catMap["bottoms"],
-      size: "M",
-      condition: "GOOD" as const,
-      sellingPrice: 11500,
-      originalPrice: null,
-      stock: 0,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Cashmere Cardigan",
-      slug: "cashmere-cardigan",
-      description:
-        "Soft cashmere blend cardigan in dusty rose. Light pilling — reflected in price. Still incredibly soft.",
-      categoryId: catMap["knitwear"],
-      size: "M",
-      condition: "FAIR" as const,
-      sellingPrice: 7500,
-      originalPrice: null,
-      stock: 1,
-      status: "PUBLISHED" as const,
-    },
-    {
-      name: "Corduroy Jacket",
-      slug: "corduroy-jacket",
-      description:
-        "Warm corduroy jacket in forest green. Two front pockets, button closure. Great transitional piece.",
-      categoryId: catMap["jackets-blazers"],
-      size: "L",
-      condition: "GOOD" as const,
-      sellingPrice: 10500,
-      originalPrice: 20000,
-      stock: 2,
-      status: "PUBLISHED" as const,
     },
   ];
+
+  // Retail placeholder products — kept minimal so the storefront renders for
+  // review. Real products + images replace these in Step A3.
+  const retailPlaceholders = [
+    { categorySlug: "sexy-dresses", price: 9000 },
+    { categorySlug: "sun-dresses", price: 9000 },
+    { categorySlug: "jean-gowns", price: 8500 },
+    { categorySlug: "fashionable-dresses", price: 10000 },
+    { categorySlug: "tops", price: 9000 },
+  ];
+
+  const products: {
+    name: string;
+    slug: string;
+    description: string;
+    categoryId: string;
+    size: string | null;
+    condition: "LIKE_NEW" | "GOOD" | "FAIR";
+    sellingPrice: number;
+    originalPrice: number | null;
+    stock: number;
+    weight: number | null;
+    status: "PUBLISHED";
+    featured: boolean;
+  }[] = [];
+
+  for (const bale of bales) {
+    products.push({
+      name: bale.name,
+      slug: bale.slug,
+      description: bale.description,
+      categoryId: catMap["bales"],
+      size: null,
+      condition: "GOOD",
+      sellingPrice: bale.sellingPrice,
+      originalPrice: null,
+      stock: 3,
+      weight: bale.weight,
+      status: "PUBLISHED",
+      featured: bale.featured,
+    });
+  }
+
+  for (const p of retailPlaceholders) {
+    const category = categoryData.find((c) => c.slug === p.categorySlug)!;
+    for (let i = 1; i <= 2; i++) {
+      products.push({
+        name: `${category.name.replace(/s$/, "")} ${i}`,
+        slug: `${p.categorySlug}-${i}`,
+        description: `${category.name.replace(/s$/, "")} — pre-loved piece in great condition. Placeholder product; real listings and photos arrive in Step A3.`,
+        categoryId: catMap[p.categorySlug],
+        size: null,
+        condition: "GOOD",
+        sellingPrice: p.price,
+        originalPrice: null,
+        stock: 5,
+        weight: null,
+        status: "PUBLISHED",
+        featured: i === 1 && p.categorySlug === "fashionable-dresses",
+      });
+    }
+  }
 
   for (const product of products) {
     await db.product.upsert({
@@ -370,7 +314,9 @@ async function main() {
     });
   }
 
-  console.log("Seeded: 8 categories, 18 products, 3 collections, 6 delivery zones, 3 promo codes");
+  console.log(
+    `Seeded: ${categoryData.length} categories, ${products.length} products, 3 collections, ${zones.length} delivery zones, ${promos.length} promo codes`
+  );
 }
 
 main()

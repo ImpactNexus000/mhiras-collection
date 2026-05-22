@@ -27,6 +27,9 @@ export async function Navbar() {
           <Link href="/shop" className="hover:text-cream transition-colors">
             Shop
           </Link>
+          <Link href="/wholesale" className="hover:text-cream transition-colors">
+            Bales
+          </Link>
           <Link href="/shop?filter=new" className="hover:text-cream transition-colors">
             New In
           </Link>

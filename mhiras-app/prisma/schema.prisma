@@ -125,14 +125,22 @@ enum ProductStatus {
   ARCHIVED
 }
 
+// RETAIL = individual garments sold by size; WHOLESALE = bulk bales for resellers
+enum CategoryKind {
+  RETAIL
+  WHOLESALE
+}
+
 model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  slug        String    @unique
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
   description String?
   image       String?
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
+  kind        CategoryKind @default(RETAIL)
+  sizeOptions String?      // comma-separated sizes for retail, e.g. "6,8,10"
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
 
   products Product[]
 
@@ -236,11 +244,12 @@ model CartItem {
   cartId    String
   productId String
   quantity  Int    @default(1)
+  size      String @default("") // chosen size; "" for products with no size
 
   cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([cartId, productId])
+  @@unique([cartId, productId, size])
   @@map("cart_items")
 }
 
