@@ -103,25 +103,3 @@ export function getOptimizedUrl(
   return url.replace("/upload/", `/upload/${transforms.join(",")}/`);
 }
 
-/**
- * next/image loader that rewrites the requested URL with a Cloudinary
- * transformation so we get auto-format/quality + the width next/image needs
- * for srcset. Pass via `loader={cloudinaryLoader}` on the <Image> component.
- *
- * Non-Cloudinary URLs are returned unchanged so this can be applied
- * defensively without breaking local/asset paths.
- */
-export function cloudinaryLoader({
-  src,
-  width,
-  quality,
-}: {
-  src: string;
-  width: number;
-  quality?: number;
-}): string {
-  if (!src.includes("res.cloudinary.com")) return src;
-  const q = quality ?? "auto";
-  const transforms = `f_auto,q_${q},w_${width},c_limit`;
-  return src.replace("/upload/", `/upload/${transforms}/`);
-}

@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Package, Loader2, AlertTriangle } from "lucide-react";
 import { createDeliveryRequest } from "@/app/actions/stockpile";
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
-import { cloudinaryLoader } from "@/lib/cloudinary";
 
 export interface StockpileItemView {
   id: string;
@@ -150,7 +149,6 @@ export function StockpileManager({
               <div className="relative w-12 h-16 bg-cream-dark border border-border flex-shrink-0 rounded overflow-hidden">
                 {item.image && (
                   <Image
-                    loader={cloudinaryLoader}
                     src={item.image}
                     alt=""
                     fill

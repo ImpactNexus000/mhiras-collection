@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { updateReview, deleteReview } from "@/app/actions/reviews";
 import { StarRating, StarRatingInput } from "@/components/store/star-rating";
 import { Button } from "@/components/ui/button";
-import { cloudinaryLoader } from "@/lib/cloudinary";
 
 const MAX_COMMENT = 1000;
 
@@ -101,7 +100,6 @@ export function MyReviewRow({ review }: MyReviewRowProps) {
         >
           {image ? (
             <Image
-              loader={cloudinaryLoader}
               src={image}
               alt=""
               fill

@@ -18,7 +18,6 @@ import {
 } from "@/lib/queries/reviews";
 import { auth } from "@/lib/auth";
 import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
-import { cloudinaryLoader } from "@/lib/cloudinary";
 import { CategoryKind } from "@/generated/prisma/client";
 import { SITE_URL } from "@/lib/site";
 
@@ -177,7 +176,6 @@ export default async function ProductDetailPage({
         <div className="bg-cream-dark flex items-center justify-center h-[420px] md:h-[560px] relative">
           {primaryImage ? (
             <Image
-              loader={cloudinaryLoader}
               src={primaryImage.url}
               alt={primaryImage.alt ?? product.name}
               fill
@@ -205,7 +203,6 @@ export default async function ProductDetailPage({
                   } overflow-hidden`}
                 >
                   <Image
-                    loader={cloudinaryLoader}
                     src={img.url}
                     alt=""
                     fill

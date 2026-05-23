@@ -7,7 +7,6 @@ import { formatPrice } from "@/lib/utils";
 import { Minus, Plus, X, ShoppingBag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { cloudinaryLoader } from "@/lib/cloudinary";
 
 const DELIVERY_FEE = 1500;
 
@@ -74,7 +73,6 @@ export function CartContent() {
               >
                 {item.image ? (
                   <Image
-                    loader={cloudinaryLoader}
                     src={item.image}
                     alt=""
                     fill

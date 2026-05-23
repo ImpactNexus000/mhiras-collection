@@ -5,7 +5,6 @@ import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
 import { StarRating } from "@/components/store/star-rating";
-import { cloudinaryLoader } from "@/lib/cloudinary";
 
 export interface ProductCardProps {
   productId?: string;
@@ -63,7 +62,6 @@ export function ProductCard({
         <div className="h-48 md:h-60 bg-gradient-to-br from-cream-dark to-gold/30 flex items-center justify-center relative">
           {image ? (
             <Image
-              loader={cloudinaryLoader}
               src={image}
               alt={name}
               fill
