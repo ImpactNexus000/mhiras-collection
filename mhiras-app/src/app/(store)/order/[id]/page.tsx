@@ -106,6 +106,34 @@ async function verifyPaymentCallback(
             },
           });
         });
+
+        // Save the tokenized card so the customer can reuse it later.
+        // This is the dev-path mirror of what the webhook does in prod —
+        // running both is safe because save is idempotent on
+        // authorizationCode.
+        const auth = result.data.authorization;
+        if (auth && auth.reusable) {
+          const existing = await db.savedCard.findUnique({
+            where: { authorizationCode: auth.authorization_code },
+          });
+          if (!existing) {
+            const count = await db.savedCard.count({
+              where: { userId: order.userId },
+            });
+            await db.savedCard.create({
+              data: {
+                userId: order.userId,
+                authorizationCode: auth.authorization_code,
+                last4: auth.last4,
+                expMonth: auth.exp_month,
+                expYear: auth.exp_year,
+                cardType: auth.card_type,
+                bank: auth.bank ?? null,
+                isDefault: count === 0,
+              },
+            });
+          }
+        }
       }
       return "success";
     }

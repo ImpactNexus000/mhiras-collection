@@ -46,8 +46,31 @@ model User {
   reviews             Review[]
   adminOtps           AdminOtp[]
   passwordResetTokens PasswordResetToken[]
+  savedCards          SavedCard[]
 
   @@map("users")
+}
+
+// Tokenized payment authorizations Paystack returns after a successful
+// charge. Storing the authorization_code lets the customer re-pay future
+// orders without re-entering card details. We never store the PAN or CVV —
+// just the issuer-issued token + display-safe last4 / exp / brand.
+model SavedCard {
+  id                String   @id @default(cuid())
+  userId            String
+  authorizationCode String   @unique
+  last4             String
+  expMonth          String
+  expYear           String
+  cardType          String   // "visa" | "mastercard" | "verve" | ...
+  bank              String?
+  isDefault         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("saved_cards")
 }
 
 // Single-use password reset tokens. The plain token only ever leaves the

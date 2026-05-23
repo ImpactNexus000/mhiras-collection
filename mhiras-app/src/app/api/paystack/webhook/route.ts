@@ -2,6 +2,39 @@ import { NextRequest, NextResponse, after } from "next/server";
 import crypto from "crypto";
 import { db } from "@/lib/db";
 import { sendAdminNewOrder, sendPaymentConfirmed } from "@/lib/email";
+import type { PaystackAuthorization } from "@/lib/paystack";
+
+/**
+ * Save the tokenized card from a successful charge so the customer can
+ * reuse it. Idempotent on authorizationCode (Paystack returns the same
+ * token for repeat charges with the same card).
+ */
+async function maybeSaveAuthorization(
+  userId: string,
+  authorization: PaystackAuthorization | undefined
+) {
+  if (!authorization || !authorization.reusable) return;
+  const existing = await db.savedCard.findUnique({
+    where: { authorizationCode: authorization.authorization_code },
+  });
+  if (existing) return;
+
+  // First card on the account becomes the default.
+  const count = await db.savedCard.count({ where: { userId } });
+
+  await db.savedCard.create({
+    data: {
+      userId,
+      authorizationCode: authorization.authorization_code,
+      last4: authorization.last4,
+      expMonth: authorization.exp_month,
+      expYear: authorization.exp_year,
+      cardType: authorization.card_type,
+      bank: authorization.bank ?? null,
+      isDefault: count === 0,
+    },
+  });
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -21,7 +54,14 @@ export async function POST(req: NextRequest) {
   const event = JSON.parse(body);
 
   if (event.event === "charge.success") {
-    const { reference, amount, channel, metadata } = event.data;
+    const { reference, amount, channel, metadata, authorization } =
+      event.data as {
+        reference: string;
+        amount: number;
+        channel: string;
+        metadata: Record<string, unknown> | undefined;
+        authorization?: PaystackAuthorization;
+      };
 
     // Stockpile delivery-request payment (delivery fee)
     const deliveryRequestId = metadata?.deliveryRequestId as string | undefined;
@@ -100,6 +140,9 @@ export async function POST(req: NextRequest) {
         },
       });
     });
+
+    // Save the tokenized card so the customer can reuse it later.
+    await maybeSaveAuthorization(order.userId, authorization);
 
     // Customer payment-confirmed email — canonical fire point. The order
     // page's verifyPaymentCallback updates the DB silently to keep this

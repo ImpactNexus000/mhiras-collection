@@ -53,6 +53,15 @@ export interface SavedAddress {
   isDefault: boolean;
 }
 
+export interface SavedCardSummary {
+  id: string;
+  cardType: string;
+  last4: string;
+  expMonth: string;
+  expYear: string;
+  isDefault: boolean;
+}
+
 interface CheckoutFormProps {
   deliveryZones: DeliveryZoneLike[];
   stockpileExpiryDays: number;
@@ -60,6 +69,7 @@ interface CheckoutFormProps {
   bankAccountNumber: string;
   bankAccountName: string;
   savedAddresses: SavedAddress[];
+  savedCards: SavedCardSummary[];
 }
 
 interface FieldErrors {
@@ -78,6 +88,7 @@ export function CheckoutForm({
   bankAccountNumber,
   bankAccountName,
   savedAddresses,
+  savedCards,
 }: CheckoutFormProps) {
   const router = useRouter();
   const { items, itemCount, subtotal, refreshCart } = useCart();
@@ -99,6 +110,28 @@ export function CheckoutForm({
   );
   const selectedSaved =
     savedAddresses.find((a) => a.id === selectedSavedId) ?? null;
+
+  // Filter out expired cards — Paystack will reject them and we shouldn't
+  // tempt the customer into a guaranteed failure.
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const usableCards = savedCards.filter((c) => {
+    const y = Number(c.expYear);
+    const m = Number(c.expMonth);
+    if (!y || !m) return true;
+    if (y > currentYear) return true;
+    if (y === currentYear && m >= currentMonth) return true;
+    return false;
+  });
+
+  const defaultCardId = (() => {
+    const def = usableCards.find((c) => c.isDefault) ?? usableCards[0];
+    return def?.id ?? null;
+  })();
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(
+    defaultCardId
+  );
 
   // selectedState drives the live delivery-fee preview — keep it synced with
   // the saved address when one is picked, otherwise it's driven by the state
@@ -264,8 +297,28 @@ export function CheckoutForm({
       clearAppliedPromo();
       await refreshCart();
 
-      // For card payments, redirect to Paystack
+      // For card payments, either re-charge a saved card silently or send
+      // the customer through the interactive Paystack redirect.
       if (result.paymentMethod === "card" && result.orderId) {
+        // Saved-card path — try the silent charge first. Falls back to the
+        // redirect if Paystack declines / needs OTP / network blows up.
+        if (selectedCardId) {
+          const chargeRes = await fetch("/api/paystack/charge-saved", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: result.orderId,
+              cardId: selectedCardId,
+            }),
+          });
+          const chargeData = await chargeRes.json();
+          if (chargeData.paid && chargeData.orderNumber) {
+            router.push(`/order/${chargeData.orderNumber}`);
+            return;
+          }
+          // fall through to interactive flow
+        }
+
         const paystackRes = await fetch("/api/paystack/initialize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -740,10 +793,48 @@ export function CheckoutForm({
 
             {paymentMethod === "card" && (
               <div className="bg-cream-dark p-4 border border-border">
+                {usableCards.length > 0 && (
+                  <div className="mb-3">
+                    <label
+                      htmlFor="checkout-saved-card"
+                      className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                    >
+                      Saved Card
+                    </label>
+                    <select
+                      id="checkout-saved-card"
+                      value={selectedCardId ?? ""}
+                      onChange={(e) =>
+                        setSelectedCardId(e.target.value || null)
+                      }
+                      className="input-base"
+                    >
+                      {usableCards.map((c) => {
+                        const brand =
+                          c.cardType.charAt(0).toUpperCase() +
+                          c.cardType.slice(1);
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {brand} •••• {c.last4} (exp {c.expMonth}/{c.expYear}
+                            {c.isDefault ? " · default" : ""})
+                          </option>
+                        );
+                      })}
+                      <option value="">Use a different card</option>
+                    </select>
+                    <p className="text-xs text-charcoal-soft mt-1.5 leading-snug">
+                      We&apos;ll try this card silently. If it doesn&apos;t
+                      go through we&apos;ll redirect you to Paystack as
+                      usual.
+                    </p>
+                  </div>
+                )}
                 <p className="text-sm text-charcoal-soft leading-relaxed">
-                  {isStockpile
-                    ? "Stockpile orders are prepaid online by card. You'll be redirected to Paystack to securely complete payment after placing the order."
-                    : "You'll be redirected to Paystack to securely complete your card payment after placing the order."}
+                  {selectedCardId
+                    ? "Click the pay button to charge the saved card above."
+                    : isStockpile
+                      ? "Stockpile orders are prepaid online by card. You'll be redirected to Paystack to securely complete payment after placing the order."
+                      : "You'll be redirected to Paystack to securely complete your card payment after placing the order."}
                 </p>
               </div>
             )}

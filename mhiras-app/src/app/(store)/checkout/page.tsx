@@ -14,10 +14,14 @@ export default async function CheckoutPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth/signin?from=/checkout");
 
-  const [zones, settings, savedAddresses] = await Promise.all([
+  const [zones, settings, savedAddresses, savedCards] = await Promise.all([
     getDeliveryZones(),
     getStoreSettings(),
     db.address.findMany({
+      where: { userId: session.user.id },
+      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+    }),
+    db.savedCard.findMany({
       where: { userId: session.user.id },
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     }),
@@ -40,6 +44,14 @@ export default async function CheckoutPage() {
         state: a.state,
         lga: a.lga,
         isDefault: a.isDefault,
+      }))}
+      savedCards={savedCards.map((c) => ({
+        id: c.id,
+        cardType: c.cardType,
+        last4: c.last4,
+        expMonth: c.expMonth,
+        expYear: c.expYear,
+        isDefault: c.isDefault,
       }))}
       deliveryZones={zones.map((z) => ({
         id: z.id,
