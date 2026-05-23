@@ -23,7 +23,11 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { orderId, deliveryRequestId } = body;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
+  // Paystack's callback_url needs to land the user back on the host they're
+  // actually browsing. Using NEXT_PUBLIC_APP_URL here would send a dev user
+  // to the production domain (and a prod user from a staging build to live).
+  // req.nextUrl.origin is always the right answer for this one URL.
+  const baseUrl = req.nextUrl.origin;
 
   // ── Delivery-request payment (stockpile delivery fee) ──────────────
   if (deliveryRequestId) {

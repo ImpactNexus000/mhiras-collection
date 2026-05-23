@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import crypto from "crypto";
 import { db } from "@/lib/db";
-import { sendPaymentConfirmed } from "@/lib/email";
+import { sendAdminNewOrder, sendPaymentConfirmed } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -101,12 +101,15 @@ export async function POST(req: NextRequest) {
       });
     });
 
-    // Send payment-confirmed email — canonical fire point. The order-page
-    // callback (verifyPaymentCallback) updates the DB silently to keep the
-    // race-window single-email.
+    // Customer payment-confirmed email — canonical fire point. The order
+    // page's verifyPaymentCallback updates the DB silently to keep this
+    // single-email even when both paths run during the race window.
     const customer = await db.user.findUnique({
       where: { id: order.userId },
-      select: { firstName: true, email: true },
+      select: { firstName: true, lastName: true, email: true, phone: true },
+    });
+    const itemCount = await db.orderItem.count({
+      where: { orderId: order.id },
     });
     if (customer) {
       after(() =>
@@ -118,6 +121,19 @@ export async function POST(req: NextRequest) {
           total: order.total,
           channel,
           fulfillmentType: order.fulfillmentType,
+        })
+      );
+      after(() =>
+        sendAdminNewOrder({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          customerName: `${customer.firstName} ${customer.lastName}`,
+          customerEmail: customer.email,
+          customerPhone: customer.phone ?? "",
+          itemCount,
+          total: order.total,
+          fulfillmentType: order.fulfillmentType,
+          paymentChannel: channel,
         })
       );
     }

@@ -1,4 +1,5 @@
 import { SITE_URL } from "@/lib/site";
+import { formatPrice } from "@/lib/utils";
 import { sendEmail } from "./send";
 import {
   OrderConfirmationEmail,
@@ -12,12 +13,14 @@ import {
 import { WelcomeEmail } from "./templates/welcome";
 import { VerificationCodeEmail } from "./templates/verification-code";
 import { AdminSigninCodeEmail } from "./templates/admin-signin-code";
+import { AdminNewOrderEmail } from "./templates/admin-new-order";
 import {
   AdminDeliveryRequestEmail,
   type AdminDeliveryRequestItem,
 } from "./templates/admin-delivery-request";
 
 const orderUrl = (id: string) => `${SITE_URL}/order/${id}`;
+const adminOrderUrl = (id: string) => `${SITE_URL}/admin/orders/${id}`;
 const stockpileUrl = () => `${SITE_URL}/account/stockpile`;
 const adminStockpileUrl = () => `${SITE_URL}/admin/stockpile`;
 const shopUrl = () => `${SITE_URL}/shop`;
@@ -165,6 +168,44 @@ export function sendWelcomeEmail(args: WelcomeArgs) {
     template: WelcomeEmail({
       customerName: args.customerName,
       shopUrl: shopUrl(),
+    }),
+  });
+}
+
+interface AdminNewOrderArgs {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  itemCount: number;
+  total: number;
+  fulfillmentType: "IMMEDIATE" | "STOCKPILE";
+  paymentChannel: string;
+}
+
+export function sendAdminNewOrder(args: AdminNewOrderArgs) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn("[email] ADMIN_EMAIL not set; skipping new-order notification");
+    return Promise.resolve();
+  }
+  return sendEmail({
+    to: adminEmail,
+    subject:
+      args.fulfillmentType === "STOCKPILE"
+        ? `Stockpile order paid — ${args.orderNumber}`
+        : `New paid order — ${args.orderNumber}`,
+    template: AdminNewOrderEmail({
+      orderNumber: args.orderNumber,
+      customerName: args.customerName,
+      customerEmail: args.customerEmail,
+      customerPhone: args.customerPhone,
+      itemCount: args.itemCount,
+      total: formatPrice(args.total),
+      fulfillmentType: args.fulfillmentType,
+      paymentChannel: args.paymentChannel,
+      adminUrl: adminOrderUrl(args.orderId),
     }),
   });
 }
