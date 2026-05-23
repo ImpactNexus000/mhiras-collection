@@ -40,12 +40,26 @@ const states = [
   "Edo",
 ];
 
+export interface SavedAddress {
+  id: string;
+  label: string | null;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  lga: string | null;
+  isDefault: boolean;
+}
+
 interface CheckoutFormProps {
   deliveryZones: DeliveryZoneLike[];
   stockpileExpiryDays: number;
   bankName: string;
   bankAccountNumber: string;
   bankAccountName: string;
+  savedAddresses: SavedAddress[];
 }
 
 interface FieldErrors {
@@ -63,6 +77,7 @@ export function CheckoutForm({
   bankName,
   bankAccountNumber,
   bankAccountName,
+  savedAddresses,
 }: CheckoutFormProps) {
   const router = useRouter();
   const { items, itemCount, subtotal, refreshCart } = useCart();
@@ -72,7 +87,28 @@ export function CheckoutForm({
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const [selectedState, setSelectedState] = useState("");
+
+  // Default-pick the customer's default saved address (or the first one) so
+  // checkout is one-tap for repeat buyers.
+  const defaultAddressId = (() => {
+    const def = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
+    return def?.id ?? null;
+  })();
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(
+    defaultAddressId
+  );
+  const selectedSaved =
+    savedAddresses.find((a) => a.id === selectedSavedId) ?? null;
+
+  // selectedState drives the live delivery-fee preview — keep it synced with
+  // the saved address when one is picked, otherwise it's driven by the state
+  // dropdown the customer fills in manually.
+  const [selectedState, setSelectedState] = useState(
+    selectedSaved?.state ?? ""
+  );
+  useEffect(() => {
+    if (selectedSaved) setSelectedState(selectedSaved.state);
+  }, [selectedSaved?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [promoInput, setPromoInput] = useState("");
   const [promoResult, setPromoResult] = useState<ValidatePromoResult | null>(null);
@@ -140,6 +176,8 @@ export function CheckoutForm({
   function validate(formData: FormData): FieldErrors {
     // Stockpile orders collect no delivery details at checkout.
     if (isStockpile) return {};
+    // Saved address supplies every field — no client-side validation needed.
+    if (selectedSaved) return {};
 
     const errs: FieldErrors = {};
 
@@ -416,7 +454,74 @@ export function CheckoutForm({
                   Step 1 of 2 — Delivery Details
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
+                {/* Saved-address picker (signed-in customers with addresses) */}
+                {savedAddresses.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <label
+                        htmlFor="checkout-saved-address"
+                        className="text-xs uppercase tracking-wider text-charcoal-soft"
+                      >
+                        Saved Address
+                      </label>
+                      <Link
+                        href="/account/addresses"
+                        className="text-xs text-copper hover:text-copper-dark"
+                      >
+                        Manage
+                      </Link>
+                    </div>
+                    <select
+                      id="checkout-saved-address"
+                      value={selectedSavedId ?? ""}
+                      onChange={(e) =>
+                        setSelectedSavedId(e.target.value || null)
+                      }
+                      className="input-base"
+                    >
+                      {savedAddresses.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.label ? `${a.label} — ` : ""}
+                          {a.address}, {a.city}, {a.state}
+                          {a.isDefault ? " (default)" : ""}
+                        </option>
+                      ))}
+                      <option value="">
+                        Use a different address (enter below)
+                      </option>
+                    </select>
+                  </div>
+                )}
+
+                {selectedSaved ? (
+                  <>
+                    <input
+                      type="hidden"
+                      name="savedAddressId"
+                      value={selectedSaved.id}
+                    />
+                    <div className="bg-cream-dark border border-border p-4 mb-4 text-sm">
+                      <div className="font-medium text-charcoal mb-1">
+                        {selectedSaved.firstName} {selectedSaved.lastName}
+                      </div>
+                      <div className="text-charcoal-soft leading-relaxed">
+                        {selectedSaved.address}
+                        <br />
+                        {selectedSaved.city}
+                        {selectedSaved.lga ? `, ${selectedSaved.lga}` : ""} ·{" "}
+                        {selectedSaved.state}
+                        <br />
+                        {selectedSaved.phone}
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
+                <div
+                  className={`grid grid-cols-2 gap-3 mb-3 ${
+                    selectedSaved ? "hidden" : ""
+                  }`}
+                >
                   <div>
                     <label
                       htmlFor="checkout-firstName"
@@ -465,7 +570,11 @@ export function CheckoutForm({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
+                <div
+                  className={`grid grid-cols-2 gap-3 mb-3 ${
+                    selectedSaved ? "hidden" : ""
+                  }`}
+                >
                   <div>
                     <label
                       htmlFor="checkout-phone"
@@ -516,7 +625,7 @@ export function CheckoutForm({
                   </div>
                 </div>
 
-                <div className="mb-3">
+                <div className={`mb-3 ${selectedSaved ? "hidden" : ""}`}>
                   <label
                     htmlFor="checkout-address"
                     className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
@@ -540,7 +649,11 @@ export function CheckoutForm({
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
+                <div
+                  className={`grid grid-cols-2 gap-3 mb-3 ${
+                    selectedSaved ? "hidden" : ""
+                  }`}
+                >
                   <div>
                     <label
                       htmlFor="checkout-state"

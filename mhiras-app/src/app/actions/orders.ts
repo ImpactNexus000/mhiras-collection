@@ -43,6 +43,7 @@ export async function placeOrder(formData: FormData) {
   }
 
   // Parse form fields
+  const savedAddressId = ((formData.get("savedAddressId") as string) ?? "").trim();
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const phone = formData.get("phone") as string;
@@ -57,12 +58,24 @@ export async function placeOrder(formData: FormData) {
   // until the customer requests delivery later.
   const isStockpile = formData.get("fulfillmentType") === "stockpile";
 
-  // Validation
-  if (
-    !isStockpile &&
-    (!firstName || !lastName || !phone || !address || !state)
-  ) {
-    return { error: "Please fill in all delivery details." };
+  // Resolve the delivery address. Customers with saved addresses can pick
+  // one from their account; otherwise the form's free-text fields are used.
+  let savedAddress = null;
+  if (!isStockpile && savedAddressId) {
+    savedAddress = await db.address.findUnique({
+      where: { id: savedAddressId },
+    });
+    if (!savedAddress || savedAddress.userId !== userId) {
+      return { error: "That address isn't on your account." };
+    }
+  }
+
+  // Validation — only require the typed fields when no saved address is in
+  // play.
+  if (!isStockpile && !savedAddress) {
+    if (!firstName || !lastName || !phone || !address || !state) {
+      return { error: "Please fill in all delivery details." };
+    }
   }
 
   if (!paymentMethodKey || !paymentMethodMap[paymentMethodKey]) {
@@ -114,7 +127,8 @@ export async function placeOrder(formData: FormData) {
   // customer requests delivery from their stockpile).
   let deliveryFee = 0;
   if (!isStockpile) {
-    const deliveryZone = await getDeliveryFeeByState(state);
+    const stateForFee = savedAddress?.state ?? state;
+    const deliveryZone = await getDeliveryFeeByState(stateForFee);
     if (!deliveryZone) {
       return { error: "We don't deliver to that state yet." };
     }
@@ -156,19 +170,25 @@ export async function placeOrder(formData: FormData) {
     let addressId: string | null = null;
 
     if (!isStockpile) {
-      const deliveryAddress = await tx.address.create({
-        data: {
-          userId,
-          firstName,
-          lastName,
-          phone,
-          address,
-          city: lga || state,
-          state,
-          lga: lga || null,
-        },
-      });
-      addressId = deliveryAddress.id;
+      if (savedAddress) {
+        // Reuse the saved address as-is — preserves the customer's address
+        // book and links this order to the same row.
+        addressId = savedAddress.id;
+      } else {
+        const deliveryAddress = await tx.address.create({
+          data: {
+            userId,
+            firstName,
+            lastName,
+            phone,
+            address,
+            city: lga || state,
+            state,
+            lga: lga || null,
+          },
+        });
+        addressId = deliveryAddress.id;
+      }
     }
 
     // Create order
