@@ -38,6 +38,13 @@ export function SignInForm() {
         redirect: false,
       });
 
+      if (result?.code === "email_not_verified") {
+        router.push(
+          `/auth/verify-email?email=${encodeURIComponent(identifier)}`
+        );
+        return;
+      }
+
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
       } else {

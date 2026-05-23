@@ -10,6 +10,7 @@ import {
   type OrderStatusKind,
 } from "./templates/order-status";
 import { WelcomeEmail } from "./templates/welcome";
+import { VerificationCodeEmail } from "./templates/verification-code";
 import {
   AdminDeliveryRequestEmail,
   type AdminDeliveryRequestItem,
@@ -109,6 +110,25 @@ export function sendOrderStatusUpdate(args: OrderStatusArgs) {
       status: args.status,
       note: args.note,
       orderUrl: orderUrl(args.orderId),
+    }),
+  });
+}
+
+interface VerificationCodeArgs {
+  to: string;
+  customerName: string;
+  code: string;
+  expiresMinutes: number;
+}
+
+export function sendVerificationCode(args: VerificationCodeArgs) {
+  return sendEmail({
+    to: args.to,
+    subject: `Your Mhiras Collection verification code: ${args.code}`,
+    template: VerificationCodeEmail({
+      customerName: args.customerName,
+      code: args.code,
+      expiresMinutes: args.expiresMinutes,
     }),
   });
 }

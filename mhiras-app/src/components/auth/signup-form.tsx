@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { registerUser } from "@/app/actions/auth";
 
@@ -16,6 +17,7 @@ interface FieldErrors {
 }
 
 export function SignUpForm() {
+  const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,10 +77,15 @@ export function SignUpForm() {
       const result = await registerUser(formData);
       if (result?.error) {
         setServerError(result.error);
+        setLoading(false);
+        return;
       }
+      // Account exists but isn't verified — send the user to the code page.
+      router.push(
+        `/auth/verify-email?email=${encodeURIComponent(result.email ?? "")}`
+      );
     } catch {
       setServerError("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   }

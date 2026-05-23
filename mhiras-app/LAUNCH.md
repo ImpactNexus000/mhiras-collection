@@ -19,7 +19,7 @@ Set on Vercel (Project → Settings → Environment Variables). Anything marked
 | `CLOUDINARY_CLOUD_NAME`        | ✅       | Already configured                                                    |
 | `CLOUDINARY_API_KEY`           | ✅       | Already configured                                                    |
 | `CLOUDINARY_API_SECRET`        | ✅       | Already configured                                                    |
-| `RESEND_API_KEY`               | ✅       | From https://resend.com/api-keys                                      |
+| `BREVO_API_KEY`                | ✅       | From https://app.brevo.com/settings/keys/api                          |
 | `EMAIL_FROM`                   | ✅       | e.g. `Mhiras Collection <orders@mhirascollection.com>` — see §4       |
 | `ADMIN_EMAIL`                  | ✅       | Mhiras's inbox — receives new stockpile delivery requests             |
 | `UPSTASH_REDIS_REST_URL`       | ✅       | From https://upstash.com — see §5                                     |
@@ -47,16 +47,44 @@ Set on Vercel (Project → Settings → Environment Variables). Anything marked
   Prisma Studio): set `role = 'ADMIN'` on her User row. The signup form
   creates `CUSTOMER` accounts by default — there is no admin signup flow.
 
-## 4. Email (Resend)
+## 4. Email (Brevo)
 
-1. Add the production domain to Resend (Domains → Add Domain).
-2. Add the DNS records Resend gives you to the registrar (TXT + DKIM).
-   Wait for Resend to verify.
-3. Once verified, set `EMAIL_FROM` to an address on that domain
-   (e.g. `orders@mhirascollection.com`). The dev placeholder
-   `onboarding@resend.dev` only delivers to the Resend account owner — do
-   not ship with it.
-4. Send one test order to confirm the confirmation email lands.
+We use Brevo (free tier: 300 emails/day, multiple sender domains allowed).
+Transactional sends go through `POST /v3/smtp/email` via `fetch` — no SDK.
+
+1. Sign in at https://app.brevo.com and add the production domain
+   (Senders, Domains & dedicated IPs → Domains → Add a domain).
+2. Add the DNS records Brevo gives you to your registrar (DKIM + SPF +
+   Brevo code). Wait for the domain to show as "Authenticated".
+3. Set `EMAIL_FROM` to an address on that verified domain
+   (e.g. `orders@mhirascollection.com`). Brevo rejects sends from
+   unverified domains.
+4. Set `BREVO_API_KEY` (Account → SMTP & API → Create new API key).
+5. Sign up a fresh customer to confirm the 6-digit verification code email
+   lands. Then place a test order to confirm the order/payment emails work.
+
+What the app sends:
+- 6-digit verification code on signup + on resend (`sendVerificationCode`)
+- Welcome email after successful verification
+- Order confirmation (immediate + stockpile flows)
+- Payment confirmed
+- Order status updates (Processing / Shipped / Delivered)
+- Admin alert when a stockpile delivery request is created (sent to `ADMIN_EMAIL`)
+
+## 4a. Email verification flow
+
+New users must verify their email before they can sign in.
+
+- Signup → 6-digit code (15-min expiry) sent via Brevo → user lands on
+  `/auth/verify-email?email=…` → enter code → redirected to signin.
+- Signin from an unverified account is blocked; the form auto-routes to
+  `/auth/verify-email` so the user can finish.
+- A "Resend code" button regenerates and resends the code. All verification
+  endpoints are rate-limited (5 attempts per IP per 15 min via the auth
+  limiter).
+- Admin accounts are grandfathered by the migration
+  (`emailVerified = NOW()` for any row with `role = 'ADMIN'`). Existing
+  test customer accounts will need to re-verify or be wiped before launch.
 
 ## 5. Rate limiting (Upstash Redis)
 
@@ -85,7 +113,8 @@ npm run build  # confirm no breaking changes
 
 ## 7. Last-mile smoke test (on the real domain)
 
-- [ ] Sign up a fresh customer account, sign out, sign back in
+- [ ] Sign up a fresh customer account, enter the 6-digit code from email,
+      sign out, sign back in
 - [ ] Browse `/shop`, add an item to cart, complete a paid order (live card)
 - [ ] Confirm the order email arrives
 - [ ] Stockpile a second item, request delivery from `/account/stockpile`,

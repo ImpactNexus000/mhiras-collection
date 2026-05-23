@@ -1,10 +1,18 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { authLimiter, checkRateLimit, getClientIp } from "./rate-limit";
+
+/**
+ * Surfaced to the client via `result.code` from `signIn(..., { redirect: false })`.
+ * The signin form watches for it and routes the user to /auth/verify-email.
+ */
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = "email_not_verified";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -52,6 +60,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!isValid) {
           return null;
+        }
+
+        // Block unverified accounts so a stranger who guesses a real address
+        // can't sign in before the owner does. The custom CredentialsSignin
+        // subclass surfaces a `code` the signin form can route on.
+        if (!user.emailVerified) {
+          throw new EmailNotVerifiedError();
         }
 
         return {
