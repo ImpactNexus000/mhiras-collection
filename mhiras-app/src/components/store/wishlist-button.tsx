@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toggleWishlist, isInWishlist } from "@/app/actions/wishlist";
 import { Heart, Loader2 } from "lucide-react";
@@ -22,6 +21,7 @@ export function WishlistButton({
 }: WishlistButtonProps) {
   const { status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [wishlisted, setWishlisted] = useState(initialWishlisted ?? false);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(initialWishlisted !== undefined);
@@ -63,24 +63,32 @@ export function WishlistButton({
     setLoading(false);
   }
 
-  // Wishlist is account-only — guests get a link to sign in that returns
-  // them to the page they were browsing.
+  // Wishlist is account-only — guests get sent to sign in (returning to the
+  // page they were browsing). Implemented as a real <button> with
+  // router.push rather than a <Link>, because ProductCard already wraps the
+  // card in a Link and nested <a> tags break hydration.
   const signinHref = `/auth/signin?from=${encodeURIComponent(pathname)}`;
+  const handleGuestClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(signinHref);
+  };
 
   if (variant === "icon") {
     if (!isAuthed) {
       return (
-        <Link
-          href={signinHref}
+        <button
+          type="button"
+          onClick={handleGuestClick}
           aria-label="Sign in to save items to your wishlist"
-          className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+          className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors cursor-pointer"
         >
           <Heart
             size={16}
             aria-hidden="true"
             className="text-charcoal-soft hover:text-copper transition-colors"
           />
-        </Link>
+        </button>
       );
     }
     return (
@@ -112,17 +120,17 @@ export function WishlistButton({
 
   if (!isAuthed) {
     return (
-      <Link href={signinHref} className="block">
-        <Button
-          variant="outline"
-          fullWidth
-          size="lg"
-          className="text-charcoal border-charcoal hover:bg-cream-dark"
-        >
-          <Heart size={16} aria-hidden="true" />
-          Sign in to save
-        </Button>
-      </Link>
+      <Button
+        type="button"
+        variant="outline"
+        fullWidth
+        size="lg"
+        className="text-charcoal border-charcoal hover:bg-cream-dark"
+        onClick={handleGuestClick}
+      >
+        <Heart size={16} aria-hidden="true" />
+        Sign in to save
+      </Button>
     );
   }
 
