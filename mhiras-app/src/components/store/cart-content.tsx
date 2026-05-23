@@ -5,23 +5,82 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
-import { Minus, Plus, X, ShoppingBag, Loader2 } from "lucide-react";
+import { Minus, Plus, X, ShoppingBag, Loader2, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  validatePromoCode,
+  type ValidatePromoResult,
+} from "@/app/actions/promo-codes";
+import {
+  clearAppliedPromo,
+  readAppliedPromo,
+  writeAppliedPromo,
+  type AppliedPromo,
+} from "@/lib/promo-storage";
 
 const DELIVERY_FEE = 1500;
 
 export function CartContent() {
   const { items, itemCount, subtotal, loading, removeItem, updateQuantity } = useCart();
   const { status } = useSession();
+  const isAuthed = status === "authenticated";
   const [promoCode, setPromoCode] = useState("");
-  const [discount] = useState(0);
+  const [applied, setApplied] = useState<AppliedPromo | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
 
-  const total = subtotal + DELIVERY_FEE - discount;
-  const checkoutHref =
-    status === "authenticated"
-      ? "/checkout"
-      : "/auth/signin?from=/checkout";
+  // Hydrate any promo already applied in this session (e.g. user clicked
+  // back from checkout). Cart shows it pre-applied without re-validating
+  // until they hit Apply again or proceed to checkout.
+  useEffect(() => {
+    const existing = readAppliedPromo();
+    if (existing) setApplied(existing);
+  }, []);
+
+  // If the cart empties, a stored promo is meaningless — drop it.
+  useEffect(() => {
+    if (items.length === 0 && applied) {
+      clearAppliedPromo();
+      setApplied(null);
+    }
+  }, [items.length, applied]);
+
+  async function handleApplyPromo() {
+    const code = promoCode.trim();
+    if (!code || promoLoading) return;
+    setPromoError("");
+    setPromoLoading(true);
+    const result: ValidatePromoResult = await validatePromoCode(code);
+    setPromoLoading(false);
+    if (!result.valid) {
+      setPromoError(result.error);
+      return;
+    }
+    const next: AppliedPromo = {
+      code: result.code,
+      discount: result.discount,
+      freeDelivery: result.freeDelivery,
+      message: result.message,
+    };
+    writeAppliedPromo(next);
+    setApplied(next);
+    setPromoCode("");
+  }
+
+  function handleRemovePromo() {
+    clearAppliedPromo();
+    setApplied(null);
+    setPromoError("");
+  }
+
+  const discount = applied?.discount ?? 0;
+  const freeDelivery = applied?.freeDelivery ?? false;
+  const effectiveDelivery = freeDelivery ? 0 : DELIVERY_FEE;
+  const total = subtotal + effectiveDelivery - discount;
+  const checkoutHref = isAuthed
+    ? "/checkout"
+    : "/auth/signin?from=/checkout";
 
   if (loading) {
     return (
@@ -173,8 +232,17 @@ export function CartContent() {
               <span>{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between py-2 border-b border-border">
-              <span>Delivery — Lagos</span>
-              <span>{formatPrice(DELIVERY_FEE)}</span>
+              <span>Delivery (est.)</span>
+              {freeDelivery ? (
+                <span>
+                  <span className="line-through text-charcoal-soft mr-2">
+                    {formatPrice(DELIVERY_FEE)}
+                  </span>
+                  <span className="text-success">Free</span>
+                </span>
+              ) : (
+                <span>{formatPrice(DELIVERY_FEE)}</span>
+              )}
             </div>
             {discount > 0 && (
               <div className="flex justify-between py-2 border-b border-border text-success">
@@ -189,25 +257,78 @@ export function CartContent() {
           </div>
 
           {/* Promo code */}
-          <div className="flex mt-4">
-            <label htmlFor="cart-promo" className="sr-only">
-              Promo code
-            </label>
-            <input
-              id="cart-promo"
-              type="text"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Enter promo code"
-              autoComplete="off"
-              className="flex-1 border border-border px-3 py-2.5 text-sm bg-white outline-none focus:border-copper"
-            />
-            <button
-              type="button"
-              className="bg-charcoal text-cream px-5 py-2.5 text-xs uppercase tracking-wider font-medium cursor-pointer hover:bg-copper transition-colors"
-            >
-              Apply
-            </button>
+          <div className="mt-4">
+            {applied ? (
+              <div className="flex items-center justify-between bg-success/10 border border-success/30 px-3 py-2 rounded">
+                <div className="flex items-center gap-2 text-sm">
+                  <Tag size={14} aria-hidden="true" className="text-success" />
+                  <div>
+                    <div className="font-medium text-success">{applied.code}</div>
+                    <div className="text-xs text-charcoal-soft">
+                      {applied.message}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemovePromo}
+                  aria-label={`Remove promo code ${applied.code}`}
+                  className="text-charcoal-soft hover:text-danger cursor-pointer"
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              </div>
+            ) : isAuthed ? (
+              <>
+                <div className="flex">
+                  <label htmlFor="cart-promo" className="sr-only">
+                    Promo code
+                  </label>
+                  <input
+                    id="cart-promo"
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleApplyPromo();
+                      }
+                    }}
+                    placeholder="Enter promo code"
+                    autoComplete="off"
+                    className="flex-1 border border-border px-3 py-2.5 text-sm bg-white outline-none focus:border-copper uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={!promoCode.trim() || promoLoading}
+                    className="bg-charcoal text-cream px-5 py-2.5 text-xs uppercase tracking-wider font-medium cursor-pointer hover:bg-copper transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    {promoLoading ? (
+                      <Loader2 size={12} aria-hidden="true" className="animate-spin" />
+                    ) : (
+                      "Apply"
+                    )}
+                  </button>
+                </div>
+                {promoError && (
+                  <p role="alert" className="text-xs text-danger mt-2">
+                    {promoError}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-xs text-charcoal-soft leading-snug">
+                <Link
+                  href="/auth/signin?from=/cart"
+                  className="text-copper hover:text-copper-dark font-medium"
+                >
+                  Sign in
+                </Link>{" "}
+                to apply a promo code.
+              </p>
+            )}
           </div>
 
           <Link href={checkoutHref} className="block mt-5">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/cart-context";
@@ -22,6 +22,7 @@ import {
   type ValidatePromoResult,
 } from "@/app/actions/promo-codes";
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
+import { clearAppliedPromo, readAppliedPromo } from "@/lib/promo-storage";
 
 type PaymentMethod = "card" | "bank_transfer";
 type Fulfillment = "immediate" | "stockpile";
@@ -76,6 +77,29 @@ export function CheckoutForm({
   const [promoInput, setPromoInput] = useState("");
   const [promoResult, setPromoResult] = useState<ValidatePromoResult | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
+
+  // If the customer applied a promo in /cart, sessionStorage carries it
+  // over so they don't have to re-enter it. We re-validate server-side
+  // before adopting it (their cart may have changed since /cart).
+  useEffect(() => {
+    const stored = readAppliedPromo();
+    if (!stored) return;
+    let cancelled = false;
+    (async () => {
+      const result = await validatePromoCode(stored.code);
+      if (cancelled) return;
+      if (result.valid) {
+        setPromoResult(result);
+      } else {
+        // Stale or no longer eligible — drop it silently and let the user
+        // re-enter if they want.
+        clearAppliedPromo();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const isStockpile = fulfillment === "stockpile";
 
@@ -147,6 +171,7 @@ export function CheckoutForm({
   function handleRemovePromo() {
     setPromoInput("");
     setPromoResult(null);
+    clearAppliedPromo();
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -197,7 +222,8 @@ export function CheckoutForm({
       // so the customer never sees an "empty cart" flash while we hand off.
       setRedirecting(true);
 
-      // Refresh cart context (cart was cleared server-side)
+      // Cart was cleared server-side; promo handoff has done its job.
+      clearAppliedPromo();
       await refreshCart();
 
       // For card payments, redirect to Paystack
