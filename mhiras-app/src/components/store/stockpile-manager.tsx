@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Package, Loader2, AlertTriangle } from "lucide-react";
 import { createDeliveryRequest } from "@/app/actions/stockpile";
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
-import { getOptimizedUrl } from "@/lib/cloudinary";
+import { cloudinaryLoader } from "@/lib/cloudinary";
 
 export interface StockpileItemView {
   id: string;
@@ -146,16 +147,15 @@ export function StockpileManager({
                 checked={isSelected}
                 onChange={() => toggle(item.id)}
               />
-              <div className="w-12 h-16 bg-cream-dark border border-border flex-shrink-0 rounded overflow-hidden">
+              <div className="relative w-12 h-16 bg-cream-dark border border-border flex-shrink-0 rounded overflow-hidden">
                 {item.image && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={getOptimizedUrl(item.image, {
-                      width: 96,
-                      height: 128,
-                    })}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
+                  <Image
+                    loader={cloudinaryLoader}
+                    src={item.image}
+                    alt=""
+                    fill
+                    sizes="48px"
+                    className="object-cover"
                   />
                 )}
               </div>

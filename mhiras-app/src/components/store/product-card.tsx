@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
 import { StarRating } from "@/components/store/star-rating";
-import { getOptimizedUrl } from "@/lib/cloudinary";
+import { cloudinaryLoader } from "@/lib/cloudinary";
 
 export interface ProductCardProps {
   productId?: string;
@@ -61,14 +62,19 @@ export function ProductCard({
         {/* Image */}
         <div className="h-48 md:h-60 bg-gradient-to-br from-cream-dark to-gold/30 flex items-center justify-center relative">
           {image ? (
-            <img
-              src={getOptimizedUrl(image, { width: 400, height: 500 })}
+            <Image
+              loader={cloudinaryLoader}
+              src={image}
               alt={name}
-              className="w-full h-full object-cover"
-              loading="lazy"
+              fill
+              sizes="(min-width: 768px) 33vw, 50vw"
+              className="object-cover"
             />
           ) : (
-            <div className="w-[70px] h-[100px] bg-gradient-to-br from-gold to-copper-dark/40 opacity-50" />
+            <div
+              aria-hidden="true"
+              className="w-[70px] h-[100px] bg-gradient-to-br from-gold to-copper-dark/40 opacity-50"
+            />
           )}
           {badge && (
             <span className="absolute top-2 left-2 bg-copper text-white text-[10px] uppercase tracking-wider px-2.5 py-1">

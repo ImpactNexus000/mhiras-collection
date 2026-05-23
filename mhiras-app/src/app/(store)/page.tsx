@@ -103,6 +103,7 @@ export default async function HomePage() {
             muted
             loop
             playsInline
+            preload="metadata"
             aria-hidden="true"
             className="relative z-10 h-[470px] w-3/4 object-cover"
           />

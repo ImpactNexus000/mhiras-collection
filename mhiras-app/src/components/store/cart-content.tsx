@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { Minus, Plus, X, ShoppingBag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { getOptimizedUrl } from "@/lib/cloudinary";
+import { cloudinaryLoader } from "@/lib/cloudinary";
 
 const DELIVERY_FEE = 1500;
 
@@ -66,18 +67,24 @@ export function CartContent() {
               className="grid grid-cols-[64px_1fr_auto] md:grid-cols-[80px_1fr_auto] gap-3 md:gap-4 py-5 border-b border-border last:border-b-0"
             >
               {/* Thumbnail */}
-              <Link href={`/shop/${item.slug}`} aria-label={item.name}>
+              <Link
+                href={`/shop/${item.slug}`}
+                aria-label={item.name}
+                className="relative block w-16 md:w-20 h-20 md:h-24"
+              >
                 {item.image ? (
-                  <img
-                    src={getOptimizedUrl(item.image, { width: 160, height: 192 })}
+                  <Image
+                    loader={cloudinaryLoader}
+                    src={item.image}
                     alt=""
-                    className="w-16 md:w-20 h-20 md:h-24 object-cover rounded"
-                    loading="lazy"
+                    fill
+                    sizes="(min-width: 768px) 80px, 64px"
+                    className="object-cover rounded"
                   />
                 ) : (
                   <div
                     aria-hidden="true"
-                    className="w-16 md:w-20 h-20 md:h-24 bg-gradient-to-br from-cream-dark to-gold/30 rounded"
+                    className="w-full h-full bg-gradient-to-br from-cream-dark to-gold/30 rounded"
                   />
                 )}
               </Link>

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { updateReview, deleteReview } from "@/app/actions/reviews";
 import { StarRating, StarRatingInput } from "@/components/store/star-rating";
 import { Button } from "@/components/ui/button";
-import { getOptimizedUrl } from "@/lib/cloudinary";
+import { cloudinaryLoader } from "@/lib/cloudinary";
 
 const MAX_COMMENT = 1000;
 
@@ -95,17 +96,20 @@ export function MyReviewRow({ review }: MyReviewRowProps) {
         {/* Thumbnail */}
         <Link
           href={`/shop/${review.product.slug}`}
-          className="block flex-shrink-0"
+          aria-label={review.product.name}
+          className="block flex-shrink-0 relative w-20 h-24"
         >
           {image ? (
-            <img
-              src={getOptimizedUrl(image, { width: 100, height: 120 })}
-              alt={review.product.name}
-              className="w-20 h-24 object-cover rounded bg-cream-dark"
-              loading="lazy"
+            <Image
+              loader={cloudinaryLoader}
+              src={image}
+              alt=""
+              fill
+              sizes="80px"
+              className="object-cover rounded bg-cream-dark"
             />
           ) : (
-            <div className="w-20 h-24 bg-cream-dark rounded" />
+            <div aria-hidden="true" className="w-full h-full bg-cream-dark rounded" />
           )}
         </Link>
 

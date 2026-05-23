@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ProductCard } from "@/components/store/product-card";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
@@ -17,7 +18,7 @@ import {
 } from "@/lib/queries/reviews";
 import { auth } from "@/lib/auth";
 import { ShieldCheck, RotateCcw, Truck } from "lucide-react";
-import { getOptimizedUrl } from "@/lib/cloudinary";
+import { cloudinaryLoader } from "@/lib/cloudinary";
 import { CategoryKind } from "@/generated/prisma/client";
 import { SITE_URL } from "@/lib/site";
 
@@ -175,13 +176,20 @@ export default async function ProductDetailPage({
         {/* Gallery */}
         <div className="bg-cream-dark flex items-center justify-center h-[420px] md:h-[560px] relative">
           {primaryImage ? (
-            <img
-              src={getOptimizedUrl(primaryImage.url, { width: 800, height: 900, crop: "limit" })}
+            <Image
+              loader={cloudinaryLoader}
+              src={primaryImage.url}
               alt={primaryImage.alt ?? product.name}
-              className="w-full h-full object-contain p-3"
+              fill
+              sizes="(min-width: 768px) 55vw, 100vw"
+              priority
+              className="object-contain p-3"
             />
           ) : (
-            <div className="w-40 h-56 bg-gradient-to-br from-gold to-copper-dark/50 opacity-60 rounded" />
+            <div
+              aria-hidden="true"
+              className="w-40 h-56 bg-gradient-to-br from-gold to-copper-dark/50 opacity-60 rounded"
+            />
           )}
           {/* Thumbnails (display only — main image is fixed for now) */}
           {product.images.length > 1 && (
@@ -192,14 +200,17 @@ export default async function ProductDetailPage({
               {product.images.map((img, i) => (
                 <div
                   key={img.id}
-                  className={`w-12 h-16 bg-cream-dark border ${
+                  className={`relative w-12 h-16 bg-cream-dark border ${
                     i === 0 ? "border-copper" : "border-border"
                   } overflow-hidden`}
                 >
-                  <img
-                    src={getOptimizedUrl(img.url, { width: 80, height: 100 })}
+                  <Image
+                    loader={cloudinaryLoader}
+                    src={img.url}
                     alt=""
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="48px"
+                    className="object-cover"
                   />
                 </div>
               ))}
