@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getStoreSettings } from "@/lib/queries/settings";
+import { NewsletterForm } from "@/components/store/newsletter-form";
 
 export async function Footer() {
   const settings = await getStoreSettings();
@@ -80,24 +81,7 @@ export async function Footer() {
               <p className="text-xs uppercase tracking-wider text-cream mb-2">
                 Never miss a drop
               </p>
-              <div className="flex">
-                <label htmlFor="footer-newsletter" className="sr-only">
-                  Your WhatsApp number
-                </label>
-                <input
-                  id="footer-newsletter"
-                  type="tel"
-                  autoComplete="tel"
-                  placeholder="Your WhatsApp number"
-                  className="flex-1 bg-charcoal-mid border border-charcoal-mid px-3 py-2.5 text-sm text-cream outline-none focus:border-copper"
-                />
-                <button
-                  type="button"
-                  className="bg-copper text-white px-4 py-2.5 text-xs uppercase tracking-wider font-medium"
-                >
-                  Notify
-                </button>
-              </div>
+              <NewsletterForm source="footer" variant="dark" />
             </div>
           </div>
         </div>

@@ -494,6 +494,21 @@ model Review {
 // ============================================
 
 // Singleton row (id = "singleton") holding admin-configurable store settings.
+// Newsletter signups from the footer / homepage forms. We collect emails
+// only (Brevo handles transactional but Mhiras can blast a new-arrivals
+// email to this list when there's a drop). `unsubscribedAt` makes opt-out
+// reversible without a destructive delete.
+model Subscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  source         String    @default("footer") // "footer" | "homepage" | other
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([createdAt])
+  @@map("subscribers")
+}
+
 model StoreSettings {
   id                   String   @id @default("singleton")
   stockpileExpiryDays  Int      @default(30) // days a customer has to request delivery
