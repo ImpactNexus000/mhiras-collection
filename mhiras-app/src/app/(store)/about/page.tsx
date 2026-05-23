@@ -46,7 +46,7 @@ const stats = [
 const faqs: FaqItem[] = [
   {
     q: "How do you source your items?",
-    a: "We curate every piece by hand from trusted UK suppliers and local sources, inspecting each item for quality before listing. Bales are graded UK ~55kg standard.",
+    a: "We curate every piece by hand from trusted UK and US suppliers and local sources, inspecting each item for quality before listing. Bales are graded UK ~55kg standard.",
   },
   {
     q: "What is your return policy?",
@@ -54,11 +54,11 @@ const faqs: FaqItem[] = [
   },
   {
     q: "How long does delivery take?",
-    a: "Lagos: 1–2 days. Abuja: 2–4 days. Other states: 3–7 days depending on the zone. You'll see the exact delivery fee and timing at checkout once you pick your state.",
+    a: "Lagos and Abuja: 3–5 days. Other states: 3–7 days depending on the zone. You'll see the exact delivery fee and timing at checkout once you pick your state. Once in a while transport services run slow and a delivery might take longer than the estimate — rest assured your order will still get to you, and we'll keep you posted if anything's held up.",
   },
   {
     q: "Can I pay on delivery?",
-    a: "We currently support card payment via Paystack and bank transfer to GTBank. Pay-on-delivery isn't available across all zones yet — we'll add it as we expand.",
+    a: "We currently support card payment via Paystack and bank transfer. Pay-on-delivery isn't available across all zones yet — we'll add it as we expand.",
   },
   {
     q: "Do you accept bulk orders?",
