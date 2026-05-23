@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import { Check, Recycle, BadgeDollarSign, Heart } from "lucide-react";
 import { FaqAccordion, type FaqItem } from "@/components/store/faq-accordion";
 import { getStoreSettings } from "@/lib/queries/settings";
@@ -73,22 +74,32 @@ export default async function AboutPage() {
     <>
       {/* Hero */}
       <section className="bg-charcoal">
-        <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
-          <div className="max-w-2xl">
-            <span className="text-xs tracking-widest uppercase text-copper mb-3 block">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 px-6 py-12 md:py-16">
+          <div className="flex flex-col justify-center">
+            <span className="text-xs tracking-widest uppercase text-copper mb-3">
               Our Story
             </span>
             <h1 className="font-display text-4xl md:text-5xl font-light text-cream italic leading-tight mb-5">
               Fashion Deserves
               <br />a <em className="text-gold">Second Life</em>
             </h1>
-            <p className="text-sm md:text-base text-charcoal-soft leading-relaxed">
+            <p className="text-sm md:text-base text-charcoal-soft leading-relaxed max-w-md">
               {settings.storeName} started as a passion project — curating
               beautiful pre-loved fashion pieces and sharing them on WhatsApp.
               What began as a small thrift page has grown into a community of
               fashion-forward individuals who believe style shouldn&apos;t break
               the bank, and great pieces deserve a second life.
             </p>
+          </div>
+          <div className="relative w-full min-h-[280px] md:min-h-[360px] rounded-lg overflow-hidden bg-charcoal-mid">
+            <Image
+              src="/founder.jpeg"
+              alt={`${settings.storeName} founder`}
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              priority
+              className="object-cover"
+            />
           </div>
         </div>
       </section>
