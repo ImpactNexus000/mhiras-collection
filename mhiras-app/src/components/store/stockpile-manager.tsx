@@ -218,62 +218,113 @@ export function StockpileManager({
           </p>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded">
+            <div
+              role="alert"
+              className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
+            >
               {error}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+              <label
+                htmlFor="stockpile-firstName"
+                className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+              >
                 First Name
               </label>
-              <input className="input-base" name="firstName" />
+              <input
+                id="stockpile-firstName"
+                className="input-base"
+                name="firstName"
+                autoComplete="given-name"
+              />
             </div>
             <div>
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+              <label
+                htmlFor="stockpile-lastName"
+                className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+              >
                 Last Name
               </label>
-              <input className="input-base" name="lastName" />
+              <input
+                id="stockpile-lastName"
+                className="input-base"
+                name="lastName"
+                autoComplete="family-name"
+              />
             </div>
           </div>
 
           <div className="mb-3">
-            <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+            <label
+              htmlFor="stockpile-phone"
+              className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+            >
               Phone Number
             </label>
-            <input className="input-base" name="phone" type="tel" />
+            <input
+              id="stockpile-phone"
+              className="input-base"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+            />
           </div>
 
           <div className="mb-3">
-            <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+            <label
+              htmlFor="stockpile-address"
+              className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+            >
               Delivery Address
             </label>
-            <input className="input-base" name="address" />
+            <input
+              id="stockpile-address"
+              className="input-base"
+              name="address"
+              autoComplete="street-address"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+              <label
+                htmlFor="stockpile-state"
+                className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+              >
                 State
               </label>
               <select
+                id="stockpile-state"
                 className="input-base"
                 name="state"
                 value={selectedState}
                 onChange={(e) => setSelectedState(e.target.value)}
+                autoComplete="address-level1"
               >
                 <option value="">Select state</option>
                 {states.map((s) => (
-                  <option key={s}>{s}</option>
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+              <label
+                htmlFor="stockpile-lga"
+                className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+              >
                 LGA
               </label>
-              <input className="input-base" name="lga" />
+              <input
+                id="stockpile-lga"
+                className="input-base"
+                name="lga"
+                autoComplete="address-level2"
+              />
             </div>
           </div>
 

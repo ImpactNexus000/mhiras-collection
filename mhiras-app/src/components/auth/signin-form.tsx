@@ -54,26 +54,37 @@ export function SignInForm() {
   return (
     <form onSubmit={handleSubmit} noValidate>
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded">
+        <div
+          role="alert"
+          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
+        >
           {error}
         </div>
       )}
 
       <div className="mb-4">
-        <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+        <label
+          htmlFor="signin-identifier"
+          className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+        >
           Email or Phone Number
         </label>
         <input
+          id="signin-identifier"
           className="input-base"
           type="text"
           name="identifier"
+          autoComplete="username"
           placeholder="amara@email.com or +234 801 234 5678"
         />
       </div>
 
       <div className="mb-2">
         <div className="flex justify-between items-center mb-1">
-          <label className="text-xs uppercase tracking-wider text-charcoal-soft">
+          <label
+            htmlFor="signin-password"
+            className="text-xs uppercase tracking-wider text-charcoal-soft"
+          >
             Password
           </label>
           <Link
@@ -84,9 +95,11 @@ export function SignInForm() {
           </Link>
         </div>
         <input
+          id="signin-password"
           className="input-base"
           type="password"
           name="password"
+          autoComplete="current-password"
           placeholder="••••••••"
         />
       </div>

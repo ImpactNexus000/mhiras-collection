@@ -292,16 +292,26 @@ export function CheckoutForm({
           {/* Form */}
           <div className="p-5 md:p-6">
             {serverError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded">
+              <div
+                role="alert"
+                className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
+              >
                 {serverError}
               </div>
             )}
 
             {/* Fulfillment choice */}
-            <div className="text-xs uppercase tracking-widest text-copper font-medium mb-3">
+            <div
+              id="fulfillment-heading"
+              className="text-xs uppercase tracking-widest text-copper font-medium mb-3"
+            >
               How would you like this order?
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-6">
+            <div
+              role="radiogroup"
+              aria-labelledby="fulfillment-heading"
+              className="grid grid-cols-2 gap-2 mb-6"
+            >
               {(
                 [
                   {
@@ -321,6 +331,8 @@ export function CheckoutForm({
                 <button
                   key={opt.value}
                   type="button"
+                  role="radio"
+                  aria-checked={fulfillment === opt.value}
                   onClick={() => selectFulfillment(opt.value)}
                   className={`flex items-start gap-2.5 p-3 border text-left cursor-pointer transition-colors ${
                     fulfillment === opt.value
@@ -330,6 +342,7 @@ export function CheckoutForm({
                 >
                   <opt.icon
                     size={18}
+                    aria-hidden="true"
                     className={
                       fulfillment === opt.value
                         ? "text-copper mt-0.5"
@@ -373,23 +386,47 @@ export function CheckoutForm({
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                    <label
+                      htmlFor="checkout-firstName"
+                      className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                    >
                       First Name
                     </label>
-                    <input className="input-base" name="firstName" />
+                    <input
+                      id="checkout-firstName"
+                      className="input-base"
+                      name="firstName"
+                      autoComplete="given-name"
+                      aria-invalid={!!errors.firstName || undefined}
+                      aria-describedby={
+                        errors.firstName ? "checkout-firstName-err" : undefined
+                      }
+                    />
                     {errors.firstName && (
-                      <p className="text-xs text-red-600 mt-1">
+                      <p id="checkout-firstName-err" className="text-xs text-red-600 mt-1">
                         {errors.firstName}
                       </p>
                     )}
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                    <label
+                      htmlFor="checkout-lastName"
+                      className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                    >
                       Last Name
                     </label>
-                    <input className="input-base" name="lastName" />
+                    <input
+                      id="checkout-lastName"
+                      className="input-base"
+                      name="lastName"
+                      autoComplete="family-name"
+                      aria-invalid={!!errors.lastName || undefined}
+                      aria-describedby={
+                        errors.lastName ? "checkout-lastName-err" : undefined
+                      }
+                    />
                     {errors.lastName && (
-                      <p className="text-xs text-red-600 mt-1">
+                      <p id="checkout-lastName-err" className="text-xs text-red-600 mt-1">
                         {errors.lastName}
                       </p>
                     )}
@@ -398,23 +435,49 @@ export function CheckoutForm({
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                    <label
+                      htmlFor="checkout-phone"
+                      className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                    >
                       Phone Number
                     </label>
-                    <input className="input-base" name="phone" type="tel" />
+                    <input
+                      id="checkout-phone"
+                      className="input-base"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      aria-invalid={!!errors.phone || undefined}
+                      aria-describedby={
+                        errors.phone ? "checkout-phone-err" : undefined
+                      }
+                    />
                     {errors.phone && (
-                      <p className="text-xs text-red-600 mt-1">
+                      <p id="checkout-phone-err" className="text-xs text-red-600 mt-1">
                         {errors.phone}
                       </p>
                     )}
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                    <label
+                      htmlFor="checkout-email"
+                      className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                    >
                       Email
                     </label>
-                    <input className="input-base" name="email" type="email" />
+                    <input
+                      id="checkout-email"
+                      className="input-base"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      aria-invalid={!!errors.email || undefined}
+                      aria-describedby={
+                        errors.email ? "checkout-email-err" : undefined
+                      }
+                    />
                     {errors.email && (
-                      <p className="text-xs text-red-600 mt-1">
+                      <p id="checkout-email-err" className="text-xs text-red-600 mt-1">
                         {errors.email}
                       </p>
                     )}
@@ -422,12 +485,24 @@ export function CheckoutForm({
                 </div>
 
                 <div className="mb-3">
-                  <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                  <label
+                    htmlFor="checkout-address"
+                    className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                  >
                     Delivery Address
                   </label>
-                  <input className="input-base" name="address" />
+                  <input
+                    id="checkout-address"
+                    className="input-base"
+                    name="address"
+                    autoComplete="street-address"
+                    aria-invalid={!!errors.address || undefined}
+                    aria-describedby={
+                      errors.address ? "checkout-address-err" : undefined
+                    }
+                  />
                   {errors.address && (
-                    <p className="text-xs text-red-600 mt-1">
+                    <p id="checkout-address-err" className="text-xs text-red-600 mt-1">
                       {errors.address}
                     </p>
                   )}
@@ -435,31 +510,50 @@ export function CheckoutForm({
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                    <label
+                      htmlFor="checkout-state"
+                      className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                    >
                       State
                     </label>
                     <select
+                      id="checkout-state"
                       className="input-base"
                       name="state"
                       value={selectedState}
                       onChange={(e) => setSelectedState(e.target.value)}
+                      autoComplete="address-level1"
+                      aria-invalid={!!errors.state || undefined}
+                      aria-describedby={
+                        errors.state ? "checkout-state-err" : undefined
+                      }
                     >
                       <option value="">Select state</option>
                       {states.map((s) => (
-                        <option key={s}>{s}</option>
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
                       ))}
                     </select>
                     {errors.state && (
-                      <p className="text-xs text-red-600 mt-1">
+                      <p id="checkout-state-err" className="text-xs text-red-600 mt-1">
                         {errors.state}
                       </p>
                     )}
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+                    <label
+                      htmlFor="checkout-lga"
+                      className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+                    >
                       LGA
                     </label>
-                    <input className="input-base" name="lga" />
+                    <input
+                      id="checkout-lga"
+                      className="input-base"
+                      name="lga"
+                      autoComplete="address-level2"
+                    />
                   </div>
                 </div>
               </>
@@ -468,15 +562,24 @@ export function CheckoutForm({
             <div className="h-px bg-border my-6" />
 
             {/* Payment method */}
-            <div className="text-xs uppercase tracking-widest text-copper font-medium mb-4">
+            <div
+              id="payment-heading"
+              className="text-xs uppercase tracking-widest text-copper font-medium mb-4"
+            >
               Payment Method
             </div>
 
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div
+              role="radiogroup"
+              aria-labelledby="payment-heading"
+              className="flex flex-wrap gap-2 mb-4"
+            >
               {visibleMethods.map((pm) => (
                 <button
                   key={pm.value}
                   type="button"
+                  role="radio"
+                  aria-checked={paymentMethod === pm.value}
                   onClick={() => setPaymentMethod(pm.value)}
                   className={`flex items-center gap-2 px-4 py-2.5 border text-sm cursor-pointer transition-colors ${
                     paymentMethod === pm.value
@@ -484,7 +587,7 @@ export function CheckoutForm({
                       : "border-border bg-white text-charcoal-mid hover:border-charcoal-soft"
                   }`}
                 >
-                  <pm.icon size={16} />
+                  <pm.icon size={16} aria-hidden="true" />
                   {pm.label}
                 </button>
               ))}
@@ -572,11 +675,16 @@ export function CheckoutForm({
               ) : (
                 <>
                   <div className="flex gap-2">
+                    <label htmlFor="checkout-promo" className="sr-only">
+                      Promo code
+                    </label>
                     <input
+                      id="checkout-promo"
                       type="text"
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value)}
                       placeholder="Promo code"
+                      autoComplete="off"
                       className="input-base flex-1 uppercase"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {

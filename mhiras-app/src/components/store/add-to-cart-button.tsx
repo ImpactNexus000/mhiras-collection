@@ -53,21 +53,33 @@ export function AddToCartButton({
     }
 
     return (
-      <button
-        onClick={handleClick}
-        disabled={status === "loading"}
-        className="w-full bg-charcoal text-cream text-xs uppercase tracking-wider py-2.5 hover:bg-copper transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      >
-        {status === "loading" && <Loader2 size={12} className="animate-spin" />}
-        {status === "added" && <Check size={12} />}
-        {status === "loading"
-          ? "Adding..."
-          : status === "added"
-            ? "Added!"
+      <>
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={status === "loading"}
+          className="w-full bg-charcoal text-cream text-xs uppercase tracking-wider py-2.5 hover:bg-copper transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+        >
+          {status === "loading" && (
+            <Loader2 size={12} aria-hidden="true" className="animate-spin" />
+          )}
+          {status === "added" && <Check size={12} aria-hidden="true" />}
+          {status === "loading"
+            ? "Adding..."
+            : status === "added"
+              ? "Added!"
+              : status === "error"
+                ? "Try Again"
+                : "Add to Cart"}
+        </button>
+        <span role="status" aria-live="polite" className="sr-only">
+          {status === "added"
+            ? "Added to cart"
             : status === "error"
-              ? "Try Again"
-              : "Add to Cart"}
-      </button>
+              ? errorMsg
+              : ""}
+        </span>
+      </>
     );
   }
 

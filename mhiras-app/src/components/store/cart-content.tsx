@@ -63,19 +63,22 @@ export function CartContent() {
           {items.map((item) => (
             <div
               key={item.cartItemId}
-              className="grid grid-cols-[80px_1fr_auto] gap-4 py-5 border-b border-border last:border-b-0"
+              className="grid grid-cols-[64px_1fr_auto] md:grid-cols-[80px_1fr_auto] gap-3 md:gap-4 py-5 border-b border-border last:border-b-0"
             >
               {/* Thumbnail */}
-              <Link href={`/shop/${item.slug}`}>
+              <Link href={`/shop/${item.slug}`} aria-label={item.name}>
                 {item.image ? (
                   <img
                     src={getOptimizedUrl(item.image, { width: 160, height: 192 })}
-                    alt={item.name}
-                    className="w-20 h-24 object-cover rounded"
+                    alt=""
+                    className="w-16 md:w-20 h-20 md:h-24 object-cover rounded"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="w-20 h-24 bg-gradient-to-br from-cream-dark to-gold/30 rounded" />
+                  <div
+                    aria-hidden="true"
+                    className="w-16 md:w-20 h-20 md:h-24 bg-gradient-to-br from-cream-dark to-gold/30 rounded"
+                  />
                 )}
               </Link>
 
@@ -93,20 +96,28 @@ export function CartContent() {
                 {/* Quantity controls */}
                 <div className="flex items-center gap-3 mt-3">
                   <button
+                    type="button"
                     onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
-                    className="w-8 h-8 border border-border flex items-center justify-center cursor-pointer hover:bg-cream-dark transition-colors"
+                    aria-label={`Decrease quantity of ${item.name}`}
+                    className="w-9 h-9 border border-border flex items-center justify-center cursor-pointer hover:bg-cream-dark transition-colors"
                   >
-                    <Minus size={14} />
+                    <Minus size={14} aria-hidden="true" />
                   </button>
-                  <span className="text-base font-medium w-5 text-center">
+                  <span
+                    aria-live="polite"
+                    aria-label={`Quantity: ${item.quantity}`}
+                    className="text-base font-medium w-5 text-center"
+                  >
                     {item.quantity}
                   </span>
                   <button
+                    type="button"
                     onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
                     disabled={item.quantity >= item.maxStock}
-                    className="w-8 h-8 border border-border flex items-center justify-center cursor-pointer hover:bg-cream-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={`Increase quantity of ${item.name}`}
+                    className="w-9 h-9 border border-border flex items-center justify-center cursor-pointer hover:bg-cream-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    <Plus size={14} />
+                    <Plus size={14} aria-hidden="true" />
                   </button>
                   {item.maxStock <= 2 && (
                     <span className="text-xs text-copper-dark ml-1">
@@ -127,10 +138,12 @@ export function CartContent() {
                   </div>
                 )}
                 <button
+                  type="button"
                   onClick={() => removeItem(item.cartItemId)}
+                  aria-label={`Remove ${item.name} from cart`}
                   className="text-xs text-charcoal-soft hover:text-danger mt-3 cursor-pointer flex items-center gap-1 ml-auto"
                 >
-                  <X size={12} /> Remove
+                  <X size={12} aria-hidden="true" /> Remove
                 </button>
               </div>
             </div>
@@ -166,14 +179,22 @@ export function CartContent() {
 
           {/* Promo code */}
           <div className="flex mt-4">
+            <label htmlFor="cart-promo" className="sr-only">
+              Promo code
+            </label>
             <input
+              id="cart-promo"
               type="text"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
               placeholder="Enter promo code"
+              autoComplete="off"
               className="flex-1 border border-border px-3 py-2.5 text-sm bg-white outline-none focus:border-copper"
             />
-            <button className="bg-charcoal text-cream px-5 py-2.5 text-xs uppercase tracking-wider font-medium cursor-pointer hover:bg-copper transition-colors">
+            <button
+              type="button"
+              className="bg-charcoal text-cream px-5 py-2.5 text-xs uppercase tracking-wider font-medium cursor-pointer hover:bg-copper transition-colors"
+            >
               Apply
             </button>
           </div>

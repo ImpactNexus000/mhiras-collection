@@ -58,14 +58,19 @@ export default function ForgotPasswordPage() {
 
           <form>
             <div className="mb-5">
-              <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+              <label
+                htmlFor="forgot-identifier"
+                className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+              >
                 Email or Phone Number
               </label>
               <input
+                id="forgot-identifier"
                 className="input-base"
                 type="text"
                 placeholder="amara@email.com or +234 801 234 5678"
                 name="identifier"
+                autoComplete="username"
               />
             </div>
 

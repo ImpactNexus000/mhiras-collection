@@ -47,11 +47,19 @@ export async function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/search" className="text-charcoal-soft hover:text-cream transition-colors">
-            <Search size={18} />
+          <Link
+            href="/search"
+            aria-label="Search products"
+            className="text-charcoal-soft hover:text-cream transition-colors"
+          >
+            <Search size={18} aria-hidden="true" />
           </Link>
-          <Link href="/wishlist" className="text-cream hover:text-copper transition-colors relative">
-            <Heart size={18} />
+          <Link
+            href="/wishlist"
+            aria-label="View wishlist"
+            className="text-cream hover:text-copper transition-colors relative"
+          >
+            <Heart size={18} aria-hidden="true" />
           </Link>
           <CartBadge className="text-cream hover:text-copper transition-colors" />
           <div className="w-px h-5 bg-charcoal-mid mx-1" />
@@ -90,13 +98,24 @@ export async function Navbar() {
           />
         </Link>
         <div className="flex items-center gap-3">
-          <Link href="/search" className="text-charcoal-soft">
-            <Search size={18} />
+          <Link
+            href="/search"
+            aria-label="Search products"
+            className="text-charcoal-soft"
+          >
+            <Search size={18} aria-hidden="true" />
           </Link>
           <CartBadge className="text-charcoal-soft" />
           {user ? (
-            <Link href="/account" className="text-charcoal-soft hover:text-cream transition-colors">
-              <span className="w-7 h-7 rounded-full bg-copper/80 flex items-center justify-center text-[11px] font-medium text-white">
+            <Link
+              href="/account"
+              aria-label="My account"
+              className="text-charcoal-soft hover:text-cream transition-colors"
+            >
+              <span
+                aria-hidden="true"
+                className="w-7 h-7 rounded-full bg-copper/80 flex items-center justify-center text-[11px] font-medium text-white"
+              >
                 {user.firstName?.[0]}
                 {user.lastName?.[0]}
               </span>

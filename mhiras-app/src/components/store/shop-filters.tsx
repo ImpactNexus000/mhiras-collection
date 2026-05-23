@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SlidersHorizontal, X } from "lucide-react";
@@ -9,6 +9,7 @@ interface Category {
   id: string;
   slug: string;
   name: string;
+  sizeOptions?: string | null;
   _count: { products: number };
 }
 
@@ -22,8 +23,6 @@ const conditionOptions = [
   { value: "FAIR", label: "Fair" },
 ];
 
-const sizes = ["XS", "S", "M", "L", "XL"];
-
 const sortOptions = [
   { value: "newest", label: "Newest First" },
   { value: "price-asc", label: "Price: Low–High" },
@@ -34,6 +33,27 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+
+  // Close the mobile filter drawer on Escape, lock body scroll while open,
+  // and move focus into the drawer (returning focus to the toggle on close).
+  useEffect(() => {
+    if (!showMobileFilters) return;
+    const toggleNode = mobileToggleRef.current;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowMobileFilters(false);
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawerCloseRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      toggleNode?.focus();
+    };
+  }, [showMobileFilters]);
 
   // Read current filter state from URL
   const activeCategory = searchParams.get("category") ?? "";
@@ -42,6 +62,21 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
   const activeSort = searchParams.get("sort") ?? "newest";
   const minPrice = searchParams.get("minPrice") ?? "";
   const maxPrice = searchParams.get("maxPrice") ?? "";
+
+  // Derive size options from the real catalog. When a category is selected,
+  // narrow to that category's sizes; otherwise show the union across all.
+  const sizes = (() => {
+    const source = activeCategory
+      ? categories.filter((c) => c.slug === activeCategory)
+      : categories;
+    const all = source.flatMap((c) =>
+      (c.sizeOptions ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    );
+    return Array.from(new Set(all));
+  })();
 
   // Local state for price inputs (applied on blur/enter)
   const [localMinPrice, setLocalMinPrice] = useState(minPrice);
@@ -174,26 +209,31 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
         </div>
 
         {/* Size */}
-        <div className="mb-5">
-          <div className="text-sm font-medium mb-2">Size</div>
-          <div className={cn("flex flex-wrap", isMobile ? "gap-2" : "gap-1.5")}>
-            {sizes.map((s) => (
-              <button
-                key={s}
-                onClick={() => toggleSize(s)}
-                className={cn(
-                  "flex items-center justify-center text-sm border cursor-pointer transition-colors",
-                  isMobile ? "w-11 h-11" : "w-10 h-10",
-                  activeSize === s
-                    ? "bg-charcoal text-cream border-charcoal"
-                    : "bg-white text-charcoal border-border hover:border-charcoal-soft"
-                )}
-              >
-                {s}
-              </button>
-            ))}
+        {sizes.length > 0 && (
+          <div className="mb-5">
+            <div className="text-sm font-medium mb-2">Size</div>
+            <div className={cn("flex flex-wrap", isMobile ? "gap-2" : "gap-1.5")}>
+              {sizes.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleSize(s)}
+                  aria-pressed={activeSize === s}
+                  aria-label={`Size ${s}`}
+                  className={cn(
+                    "flex items-center justify-center text-sm border cursor-pointer transition-colors",
+                    isMobile ? "w-11 h-11" : "w-10 h-10",
+                    activeSize === s
+                      ? "bg-charcoal text-cream border-charcoal"
+                      : "bg-white text-charcoal border-border hover:border-charcoal-soft"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </>
     );
   }
@@ -204,12 +244,23 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
       <div className="flex items-center gap-2 px-4 md:px-6 py-3 bg-cream-dark border-b border-border overflow-x-auto">
         {/* Mobile filter toggle */}
         <button
+          ref={mobileToggleRef}
+          type="button"
           onClick={() => setShowMobileFilters(true)}
+          aria-expanded={showMobileFilters}
+          aria-controls="mobile-filter-drawer"
+          aria-haspopup="dialog"
           className="md:hidden flex items-center gap-1.5 px-3 py-1.5 border border-border bg-white text-sm cursor-pointer"
         >
-          <SlidersHorizontal size={14} /> Filters
+          <SlidersHorizontal size={14} aria-hidden="true" /> Filters
           {hasActiveFilters && (
-            <span className="w-2 h-2 rounded-full bg-copper" />
+            <span
+              aria-hidden="true"
+              className="w-2 h-2 rounded-full bg-copper"
+            />
+          )}
+          {hasActiveFilters && (
+            <span className="sr-only">(filters active)</span>
           )}
         </button>
 
@@ -217,16 +268,28 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
         {activeCategory && (
           <span className="flex items-center gap-1 px-3 py-1.5 bg-charcoal text-cream text-sm">
             {categories.find((c) => c.slug === activeCategory)?.name}
-            <button onClick={() => toggleCategory(activeCategory)} className="cursor-pointer">
-              <X size={12} />
+            <button
+              type="button"
+              onClick={() => toggleCategory(activeCategory)}
+              aria-label={`Remove ${
+                categories.find((c) => c.slug === activeCategory)?.name
+              } filter`}
+              className="cursor-pointer"
+            >
+              <X size={12} aria-hidden="true" />
             </button>
           </span>
         )}
         {activeSize && (
           <span className="flex items-center gap-1 px-3 py-1.5 bg-charcoal text-cream text-sm">
             Size {activeSize}
-            <button onClick={() => toggleSize(activeSize)} className="cursor-pointer">
-              <X size={12} />
+            <button
+              type="button"
+              onClick={() => toggleSize(activeSize)}
+              aria-label={`Remove size ${activeSize} filter`}
+              className="cursor-pointer"
+            >
+              <X size={12} aria-hidden="true" />
             </button>
           </span>
         )}
@@ -236,13 +299,21 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
             className="flex items-center gap-1 px-3 py-1.5 bg-charcoal text-cream text-sm"
           >
             {conditionOptions.find((o) => o.value === c)?.label}
-            <button onClick={() => toggleCondition(c)} className="cursor-pointer">
-              <X size={12} />
+            <button
+              type="button"
+              onClick={() => toggleCondition(c)}
+              aria-label={`Remove ${
+                conditionOptions.find((o) => o.value === c)?.label
+              } filter`}
+              className="cursor-pointer"
+            >
+              <X size={12} aria-hidden="true" />
             </button>
           </span>
         ))}
         {hasActiveFilters && (
           <button
+            type="button"
             onClick={clearAll}
             className="text-xs text-copper hover:text-copper-dark cursor-pointer whitespace-nowrap"
           >
@@ -251,7 +322,11 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
         )}
 
         {/* Sort (desktop) */}
+        <label htmlFor="shop-sort-desktop" className="sr-only">
+          Sort products
+        </label>
         <select
+          id="shop-sort-desktop"
           value={activeSort}
           onChange={(e) => handleSort(e.target.value)}
           className="ml-auto hidden md:block text-sm px-3 py-1.5 border border-border bg-white text-charcoal cursor-pointer"
@@ -274,19 +349,32 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
 
       {/* Mobile filter drawer */}
       {showMobileFilters && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          <div
-            className="absolute inset-0 bg-charcoal/40"
+        <div
+          id="mobile-filter-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mobile-filter-heading"
+          className="md:hidden fixed inset-0 z-50 flex"
+        >
+          <button
+            type="button"
+            aria-label="Close filters"
             onClick={() => setShowMobileFilters(false)}
+            className="absolute inset-0 bg-charcoal/40 cursor-default"
           />
           <div className="relative ml-auto w-[85%] max-w-sm bg-white h-full overflow-y-auto p-5">
             <div className="flex justify-between items-center mb-5">
-              <span className="text-base font-medium">Filters</span>
+              <h2 id="mobile-filter-heading" className="text-base font-medium">
+                Filters
+              </h2>
               <button
+                ref={drawerCloseRef}
+                type="button"
                 onClick={() => setShowMobileFilters(false)}
-                className="cursor-pointer"
+                aria-label="Close filters"
+                className="cursor-pointer w-9 h-9 flex items-center justify-center"
               >
-                <X size={20} />
+                <X size={20} aria-hidden="true" />
               </button>
             </div>
 
@@ -294,8 +382,14 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
 
             {/* Sort (mobile) */}
             <div className="mb-6">
-              <div className="text-sm font-medium mb-2">Sort By</div>
+              <label
+                htmlFor="shop-sort-mobile"
+                className="text-sm font-medium mb-2 block"
+              >
+                Sort By
+              </label>
               <select
+                id="shop-sort-mobile"
                 value={activeSort}
                 onChange={(e) => handleSort(e.target.value)}
                 className="w-full text-sm px-3 py-2.5 border border-border bg-white text-charcoal"
@@ -309,6 +403,7 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
             </div>
 
             <button
+              type="button"
               onClick={() => setShowMobileFilters(false)}
               className="w-full bg-copper text-white text-sm uppercase tracking-wider py-3 cursor-pointer"
             >

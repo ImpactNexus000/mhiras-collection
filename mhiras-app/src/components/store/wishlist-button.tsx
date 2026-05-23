@@ -55,15 +55,19 @@ export function WishlistButton({
   if (variant === "icon") {
     return (
       <button
+        type="button"
         onClick={handleToggle}
         disabled={loading || !checked}
+        aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        aria-pressed={wishlisted}
         className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors disabled:opacity-50"
       >
         {loading ? (
-          <Loader2 size={14} className="animate-spin text-copper" />
+          <Loader2 size={14} aria-hidden="true" className="animate-spin text-copper" />
         ) : (
           <Heart
             size={16}
+            aria-hidden="true"
             className={cn(
               "transition-colors",
               wishlisted

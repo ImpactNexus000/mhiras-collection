@@ -86,102 +86,167 @@ export function SignUpForm() {
   return (
     <form onSubmit={handleSubmit} noValidate>
       {serverError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded">
+        <div
+          role="alert"
+          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
+        >
           {serverError}
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
-          <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+          <label
+            htmlFor="signup-firstName"
+            className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+          >
             First Name
           </label>
           <input
+            id="signup-firstName"
             className="input-base"
             placeholder="Amara"
             name="firstName"
+            autoComplete="given-name"
+            aria-invalid={!!errors.firstName || undefined}
+            aria-describedby={errors.firstName ? "signup-firstName-err" : undefined}
           />
           {errors.firstName && (
-            <p className="text-xs text-red-600 mt-1">{errors.firstName}</p>
+            <p id="signup-firstName-err" className="text-xs text-red-600 mt-1">
+              {errors.firstName}
+            </p>
           )}
         </div>
         <div>
-          <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+          <label
+            htmlFor="signup-lastName"
+            className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+          >
             Last Name
           </label>
           <input
+            id="signup-lastName"
             className="input-base"
             placeholder="Okonkwo"
             name="lastName"
+            autoComplete="family-name"
+            aria-invalid={!!errors.lastName || undefined}
+            aria-describedby={errors.lastName ? "signup-lastName-err" : undefined}
           />
           {errors.lastName && (
-            <p className="text-xs text-red-600 mt-1">{errors.lastName}</p>
+            <p id="signup-lastName-err" className="text-xs text-red-600 mt-1">
+              {errors.lastName}
+            </p>
           )}
         </div>
       </div>
 
       <div className="mb-3">
-        <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+        <label
+          htmlFor="signup-email"
+          className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+        >
           Email Address
         </label>
         <input
+          id="signup-email"
           className="input-base"
           type="email"
           placeholder="amara@email.com"
           name="email"
+          autoComplete="email"
+          aria-invalid={!!errors.email || undefined}
+          aria-describedby={errors.email ? "signup-email-err" : undefined}
         />
         {errors.email && (
-          <p className="text-xs text-red-600 mt-1">{errors.email}</p>
+          <p id="signup-email-err" className="text-xs text-red-600 mt-1">
+            {errors.email}
+          </p>
         )}
       </div>
 
       <div className="mb-3">
-        <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+        <label
+          htmlFor="signup-phone"
+          className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+        >
           Phone Number (WhatsApp)
         </label>
         <input
+          id="signup-phone"
           className="input-base"
           type="tel"
           placeholder="+234 801 234 5678"
           name="phone"
+          autoComplete="tel"
+          aria-invalid={!!errors.phone || undefined}
+          aria-describedby={errors.phone ? "signup-phone-err" : undefined}
         />
         {errors.phone && (
-          <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+          <p id="signup-phone-err" className="text-xs text-red-600 mt-1">
+            {errors.phone}
+          </p>
         )}
       </div>
 
       <div className="mb-3">
-        <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+        <label
+          htmlFor="signup-password"
+          className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+        >
           Password
         </label>
         <input
+          id="signup-password"
           className="input-base"
           type="password"
           placeholder="Min. 8 characters"
           name="password"
+          autoComplete="new-password"
+          aria-invalid={!!errors.password || undefined}
+          aria-describedby={errors.password ? "signup-password-err" : undefined}
         />
         {errors.password && (
-          <p className="text-xs text-red-600 mt-1">{errors.password}</p>
+          <p id="signup-password-err" className="text-xs text-red-600 mt-1">
+            {errors.password}
+          </p>
         )}
       </div>
 
       <div className="mb-4">
-        <label className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block">
+        <label
+          htmlFor="signup-confirmPassword"
+          className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
+        >
           Confirm Password
         </label>
         <input
+          id="signup-confirmPassword"
           className="input-base"
           type="password"
           placeholder="Re-enter password"
           name="confirmPassword"
+          autoComplete="new-password"
+          aria-invalid={!!errors.confirmPassword || undefined}
+          aria-describedby={
+            errors.confirmPassword ? "signup-confirmPassword-err" : undefined
+          }
         />
         {errors.confirmPassword && (
-          <p className="text-xs text-red-600 mt-1">{errors.confirmPassword}</p>
+          <p id="signup-confirmPassword-err" className="text-xs text-red-600 mt-1">
+            {errors.confirmPassword}
+          </p>
         )}
       </div>
 
       <label className="flex items-start gap-2 text-xs text-charcoal-soft mb-5 cursor-pointer leading-relaxed">
-        <input type="checkbox" name="terms" className="accent-copper mt-0.5" />
+        <input
+          type="checkbox"
+          name="terms"
+          className="accent-copper mt-0.5"
+          aria-invalid={!!errors.terms || undefined}
+          aria-describedby={errors.terms ? "signup-terms-err" : undefined}
+        />
         <span>
           I agree to the{" "}
           <Link href="/terms" className="text-copper underline">
@@ -194,7 +259,9 @@ export function SignUpForm() {
         </span>
       </label>
       {errors.terms && (
-        <p className="text-xs text-red-600 -mt-4 mb-4">{errors.terms}</p>
+        <p id="signup-terms-err" className="text-xs text-red-600 -mt-4 mb-4">
+          {errors.terms}
+        </p>
       )}
 
       <Button

@@ -18,22 +18,35 @@ export function SearchBar() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-xl mx-auto relative">
+    <form
+      onSubmit={handleSubmit}
+      role="search"
+      aria-label="Site search"
+      className="max-w-xl mx-auto relative"
+    >
+      <label htmlFor="site-search" className="sr-only">
+        Search products
+      </label>
       <Search
         size={18}
+        aria-hidden="true"
         className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal-soft"
       />
       <input
-        type="text"
+        id="site-search"
+        type="search"
+        name="q"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search for dresses, bags, shoes..."
+        autoComplete="off"
         className="w-full pl-11 pr-16 py-3.5 text-base rounded bg-white border-none outline-none text-charcoal"
       />
       {query && (
         <button
           type="button"
           onClick={() => setQuery("")}
+          aria-label="Clear search"
           className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-charcoal-soft uppercase tracking-wider cursor-pointer hover:text-charcoal"
         >
           Clear

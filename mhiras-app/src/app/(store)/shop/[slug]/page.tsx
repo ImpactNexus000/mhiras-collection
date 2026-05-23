@@ -183,19 +183,22 @@ export default async function ProductDetailPage({
           ) : (
             <div className="w-40 h-56 bg-gradient-to-br from-gold to-copper-dark/50 opacity-60 rounded" />
           )}
-          {/* Thumbnails */}
+          {/* Thumbnails (display only — main image is fixed for now) */}
           {product.images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            <div
+              aria-hidden="true"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"
+            >
               {product.images.map((img, i) => (
                 <div
                   key={img.id}
                   className={`w-12 h-16 bg-cream-dark border ${
                     i === 0 ? "border-copper" : "border-border"
-                  } cursor-pointer overflow-hidden`}
+                  } overflow-hidden`}
                 >
                   <img
                     src={getOptimizedUrl(img.url, { width: 80, height: 100 })}
-                    alt={img.alt ?? ""}
+                    alt=""
                     className="w-full h-full object-cover"
                   />
                 </div>

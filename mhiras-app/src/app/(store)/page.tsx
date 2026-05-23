@@ -206,11 +206,17 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="flex w-full md:w-auto">
+            <label htmlFor="home-newsletter" className="sr-only">
+              Your WhatsApp number
+            </label>
             <input
+              id="home-newsletter"
+              type="tel"
+              autoComplete="tel"
               placeholder="Your WhatsApp number"
               className="input-base flex-1 md:w-60"
             />
-            <Button variant="primary" className="px-5">
+            <Button variant="primary" type="button" className="px-5">
               Notify Me
             </Button>
           </div>
