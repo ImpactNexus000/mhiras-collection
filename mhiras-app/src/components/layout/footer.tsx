@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getStoreSettings } from "@/lib/queries/settings";
 
-export function Footer() {
+export async function Footer() {
+  const settings = await getStoreSettings();
+
   return (
     <footer className="bg-charcoal text-charcoal-soft mt-auto">
       <div className="max-w-6xl mx-auto px-6 py-12">
@@ -8,7 +11,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="font-display text-3xl font-light text-cream italic mb-3">
-              Mhiras Collection
+              {settings.storeName}
             </div>
             <p className="text-sm leading-relaxed">
               Curated thrift fashion — handpicked, pre-loved, and premium.
@@ -49,9 +52,9 @@ export function Footer() {
               Connect
             </h4>
             <ul className="space-y-2.5 text-sm">
-              <li>WhatsApp: +234 801 234 5678</li>
-              <li>Email: hello@mhirascollection.com</li>
-              <li>Instagram: @mhirascollection</li>
+              <li>WhatsApp: {settings.whatsappNumber}</li>
+              <li>Email: {settings.contactEmail}</li>
+              <li>Instagram: {settings.instagramHandle}</li>
             </ul>
             {/* Newsletter */}
             <div className="mt-4">
@@ -82,7 +85,7 @@ export function Footer() {
 
         <div className="border-t border-charcoal-mid mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs">
-            &copy; {new Date().getFullYear()} Mhiras Collection. All rights reserved.
+            &copy; {new Date().getFullYear()} {settings.storeName}. All rights reserved.
           </p>
           <div className="flex gap-4 text-xs">
             <Link href="/privacy" className="hover:text-cream transition-colors">Privacy</Link>

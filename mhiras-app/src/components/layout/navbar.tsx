@@ -3,17 +3,20 @@ import Image from "next/image";
 import { Search, Heart } from "lucide-react";
 import { CartBadge } from "./cart-badge";
 import { auth } from "@/lib/auth";
+import { getStoreSettings } from "@/lib/queries/settings";
 
 export async function Navbar() {
-  const session = await auth();
+  const [session, settings] = await Promise.all([auth(), getStoreSettings()]);
   const user = session?.user;
 
   return (
     <header>
       {/* Announcement Bar */}
-      <div className="bg-copper text-white text-center text-sm tracking-wider py-2.5 px-4">
-        New arrivals every week — Free delivery on retail orders over &#8358;100,000
-      </div>
+      {settings.announcementVisible && settings.announcementText && (
+        <div className="bg-copper text-white text-center text-sm tracking-wider py-2.5 px-4">
+          {settings.announcementText}
+        </div>
+      )}
 
       {/* Desktop Nav */}
       <nav className="bg-charcoal text-cream hidden md:flex items-center justify-between pl-20 pr-6 h-16">

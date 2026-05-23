@@ -472,9 +472,15 @@ model Review {
 
 // Singleton row (id = "singleton") holding admin-configurable store settings.
 model StoreSettings {
-  id                  String   @id @default("singleton")
-  stockpileExpiryDays Int      @default(30) // days a customer has to request delivery
-  updatedAt           DateTime @updatedAt
+  id                   String   @id @default("singleton")
+  stockpileExpiryDays  Int      @default(30) // days a customer has to request delivery
+  storeName            String   @default("Mhiras Collection")
+  contactEmail         String   @default("hello@mhirascollection.com")
+  whatsappNumber       String   @default("+234 801 234 5678")
+  instagramHandle      String   @default("@mhirascollection")
+  announcementText     String   @default("New arrivals every week — Free delivery on retail orders over ₦100,000")
+  announcementVisible  Boolean  @default(true)
+  updatedAt            DateTime @updatedAt
 
   @@map("store_settings")
 }
