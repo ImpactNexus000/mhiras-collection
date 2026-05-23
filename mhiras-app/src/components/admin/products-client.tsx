@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProductForm } from "@/components/admin/product-form";
 import { Button } from "@/components/ui/button";
@@ -49,13 +50,16 @@ export function ProductsClient({
 }: ProductsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showForm, setShowForm] = useState(showNewForm || !!editProduct);
-  const [productToEdit, setProductToEdit] = useState<EditProduct | undefined>(
-    editProduct ?? undefined
-  );
   const [searchValue, setSearchValue] = useState(
     searchParams.get("search") ?? ""
   );
+
+  // Derive form visibility directly from props (URL is the source of truth).
+  // Using local state here caused stale-state bugs when navigating between
+  // edit targets via <Link>: the URL updated but useState's initial value
+  // never re-ran, so the form stayed closed until a full reload.
+  const showForm = showNewForm || !!editProduct;
+  const productToEdit = editProduct ?? undefined;
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
@@ -73,19 +77,18 @@ export function ProductsClient({
   );
 
   const handleCloseForm = useCallback(() => {
-    setShowForm(false);
-    setProductToEdit(undefined);
-    // Remove action/edit params from URL
     const params = new URLSearchParams(searchParams.toString());
     params.delete("action");
     params.delete("edit");
     router.replace(`/admin/products?${params.toString()}`);
   }, [searchParams, router]);
 
-  const handleNewProduct = useCallback(() => {
-    setProductToEdit(undefined);
-    setShowForm(true);
-  }, []);
+  const newProductHref = (() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("action", "new");
+    params.delete("edit");
+    return `/admin/products?${params.toString()}`;
+  })();
 
   return (
     <>
@@ -94,10 +97,12 @@ export function ProductsClient({
         <h1 className="font-display text-3xl md:text-4xl font-light italic">
           Products
         </h1>
-        <Button size="sm" onClick={handleNewProduct}>
-          <Plus size={14} className="mr-1.5" />
-          Add Product
-        </Button>
+        <Link href={newProductHref}>
+          <Button size="sm">
+            <Plus size={14} className="mr-1.5" aria-hidden="true" />
+            Add Product
+          </Button>
+        </Link>
       </div>
 
       {/* Search bar */}
