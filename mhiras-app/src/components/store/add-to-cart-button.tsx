@@ -72,6 +72,11 @@ export function AddToCartButton({
                 ? "Try Again"
                 : "Add to Cart"}
         </button>
+        {status === "error" && errorMsg && (
+          <p className="mt-1.5 text-[11px] text-danger leading-snug">
+            {errorMsg}
+          </p>
+        )}
         <span role="status" aria-live="polite" className="sr-only">
           {status === "added"
             ? "Added to cart"

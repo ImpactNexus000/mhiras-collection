@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toggleWishlist, isInWishlist } from "@/app/actions/wishlist";
 import { Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,13 +20,21 @@ export function WishlistButton({
   variant = "full",
   initialWishlisted,
 }: WishlistButtonProps) {
+  const { status } = useSession();
+  const pathname = usePathname();
   const [wishlisted, setWishlisted] = useState(initialWishlisted ?? false);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(initialWishlisted !== undefined);
+  const isAuthed = status === "authenticated";
 
-  // Check wishlist status on mount if not provided
+  // Check wishlist status on mount if not provided. Guests can't have a
+  // wishlist, so skip the lookup entirely.
   useEffect(() => {
     if (initialWishlisted !== undefined) return;
+    if (!isAuthed) {
+      setChecked(true);
+      return;
+    }
     let cancelled = false;
     isInWishlist(productId).then((result) => {
       if (!cancelled) {
@@ -34,7 +45,7 @@ export function WishlistButton({
     return () => {
       cancelled = true;
     };
-  }, [productId, initialWishlisted]);
+  }, [productId, initialWishlisted, isAuthed]);
 
   async function handleToggle(e: React.MouseEvent) {
     e.preventDefault();
@@ -52,7 +63,26 @@ export function WishlistButton({
     setLoading(false);
   }
 
+  // Wishlist is account-only — guests get a link to sign in that returns
+  // them to the page they were browsing.
+  const signinHref = `/auth/signin?from=${encodeURIComponent(pathname)}`;
+
   if (variant === "icon") {
+    if (!isAuthed) {
+      return (
+        <Link
+          href={signinHref}
+          aria-label="Sign in to save items to your wishlist"
+          className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors"
+        >
+          <Heart
+            size={16}
+            aria-hidden="true"
+            className="text-charcoal-soft hover:text-copper transition-colors"
+          />
+        </Link>
+      );
+    }
     return (
       <button
         type="button"
@@ -77,6 +107,22 @@ export function WishlistButton({
           />
         )}
       </button>
+    );
+  }
+
+  if (!isAuthed) {
+    return (
+      <Link href={signinHref} className="block">
+        <Button
+          variant="outline"
+          fullWidth
+          size="lg"
+          className="text-charcoal border-charcoal hover:bg-cream-dark"
+        >
+          <Heart size={16} aria-hidden="true" />
+          Sign in to save
+        </Button>
+      </Link>
     );
   }
 

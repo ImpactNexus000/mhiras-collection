@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/auth/signin");
+  if (!session?.user?.id) redirect("/auth/signin?from=/checkout");
 
   const [zones, settings] = await Promise.all([
     getDeliveryZones(),

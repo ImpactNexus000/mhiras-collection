@@ -2,12 +2,24 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Only allow internal absolute paths as a return URL, to prevent
+ * `?from=https://evil.com` open-redirect attacks.
+ */
+function safeReturnPath(value: string | null): string {
+  if (!value) return "/";
+  if (!value.startsWith("/") || value.startsWith("//")) return "/";
+  return value;
+}
+
 export function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = safeReturnPath(searchParams.get("from"));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +67,7 @@ export function SignInForm() {
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
       } else {
-        router.push("/");
+        router.push(returnTo);
         router.refresh();
       }
     } catch {

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { SignInForm } from "@/components/auth/signin-form";
 
@@ -46,7 +47,9 @@ export default function SignInPage() {
             Enter your details to access your account
           </p>
 
-          <SignInForm />
+          <Suspense fallback={null}>
+            <SignInForm />
+          </Suspense>
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-5">

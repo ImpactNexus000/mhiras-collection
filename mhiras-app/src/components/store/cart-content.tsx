@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import { useCart } from "@/context/cart-context";
 import { formatPrice } from "@/lib/utils";
 import { Minus, Plus, X, ShoppingBag, Loader2 } from "lucide-react";
@@ -12,10 +13,15 @@ const DELIVERY_FEE = 1500;
 
 export function CartContent() {
   const { items, itemCount, subtotal, loading, removeItem, updateQuantity } = useCart();
+  const { status } = useSession();
   const [promoCode, setPromoCode] = useState("");
   const [discount] = useState(0);
 
   const total = subtotal + DELIVERY_FEE - discount;
+  const checkoutHref =
+    status === "authenticated"
+      ? "/checkout"
+      : "/auth/signin?from=/checkout";
 
   if (loading) {
     return (
@@ -204,9 +210,9 @@ export function CartContent() {
             </button>
           </div>
 
-          <Link href="/checkout" className="block mt-5">
+          <Link href={checkoutHref} className="block mt-5">
             <Button variant="primary" fullWidth size="lg">
-              Checkout →
+              {status === "authenticated" ? "Checkout →" : "Sign in to checkout →"}
             </Button>
           </Link>
 
