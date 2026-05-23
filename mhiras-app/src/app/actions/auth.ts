@@ -136,10 +136,12 @@ export async function verifyEmail(formData: FormData) {
     },
   });
 
-  // Fire the welcome email now that the account is real.
-  after(() =>
-    sendWelcomeEmail({ to: user.email, customerName: user.firstName })
-  );
+  // Welcome email — marketing-class, so respect the user's preference.
+  if (user.marketingEmails) {
+    after(() =>
+      sendWelcomeEmail({ to: user.email, customerName: user.firstName })
+    );
+  }
 
   // If the verify-email page hands us the password (set right after signup),
   // sign the user in automatically. Otherwise the form sends them to /auth/signin.
