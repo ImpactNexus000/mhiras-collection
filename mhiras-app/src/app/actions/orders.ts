@@ -9,6 +9,7 @@ import { validatePromoCode } from "@/app/actions/promo-codes";
 import { getDeliveryFeeByState } from "@/lib/queries/delivery";
 import { getStoreSettings } from "@/lib/queries/settings";
 import { sendOrderConfirmation } from "@/lib/email";
+import { checkoutLimiter, checkRateLimit } from "@/lib/rate-limit";
 
 interface CartItem {
   productId: string;
@@ -31,6 +32,15 @@ export async function placeOrder(formData: FormData) {
   }
 
   const userId = session.user.id;
+
+  // Throttle per user — catches a runaway frontend retry and casual abuse
+  // without blocking households that share an IP.
+  const limit = await checkRateLimit(checkoutLimiter, `order:${userId}`);
+  if (!limit.success) {
+    return {
+      error: "Too many orders in a short time. Please wait a few minutes.",
+    };
+  }
 
   // Parse form fields
   const firstName = formData.get("firstName") as string;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadImage } from "@/lib/cloudinary";
+import { checkRateLimit, uploadLimiter } from "@/lib/rate-limit";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
@@ -9,6 +10,14 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limit = await checkRateLimit(uploadLimiter, `upload:${session.user.id}`);
+  if (!limit.success) {
+    return NextResponse.json(
+      { error: "Upload limit reached. Try again in an hour." },
+      { status: 429 }
+    );
   }
 
   const formData = await req.formData();

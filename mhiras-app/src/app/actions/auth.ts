@@ -1,12 +1,20 @@
 "use server";
 
 import { after } from "next/server";
+import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { signIn } from "@/lib/auth";
 import { sendWelcomeEmail } from "@/lib/email";
+import { authLimiter, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function registerUser(formData: FormData) {
+  const ip = getClientIp(await headers());
+  const limit = await checkRateLimit(authLimiter, `signup:${ip}`);
+  if (!limit.success) {
+    return { error: "Too many sign-up attempts. Try again in a few minutes." };
+  }
+
   const firstName = formData.get("firstName") as string;
   const lastName = formData.get("lastName") as string;
   const email = formData.get("email") as string;

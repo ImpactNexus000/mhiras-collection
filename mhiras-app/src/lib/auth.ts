@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
+import { authLimiter, checkRateLimit, getClientIp } from "./rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
@@ -23,9 +24,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null;
+        }
+
+        // Throttle by IP first — refuses credential stuffing before we ever
+        // touch the database or bcrypt-hash a password.
+        const ip = getClientIp(request.headers);
+        const { success } = await checkRateLimit(authLimiter, `signin:${ip}`);
+        if (!success) {
+          throw new Error("Too many sign-in attempts. Try again in a few minutes.");
         }
 
         const user = await db.user.findUnique({

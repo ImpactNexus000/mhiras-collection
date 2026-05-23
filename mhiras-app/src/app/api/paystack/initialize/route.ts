@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { initializeTransaction } from "@/lib/paystack";
+import { checkRateLimit, checkoutLimiter } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const limit = await checkRateLimit(
+    checkoutLimiter,
+    `paystack-init:${session.user.id}`
+  );
+  if (!limit.success) {
+    return NextResponse.json(
+      { error: "Too many payment attempts. Try again in a few minutes." },
+      { status: 429 }
+    );
   }
 
   const body = await req.json();

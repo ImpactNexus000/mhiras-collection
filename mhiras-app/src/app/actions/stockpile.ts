@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { getDeliveryFeeByState } from "@/lib/queries/delivery";
 import { generateDeliveryRequestNumber } from "@/lib/queries/stockpile";
 import { sendAdminDeliveryRequest } from "@/lib/email";
+import { checkRateLimit, generalLimiter } from "@/lib/rate-limit";
 
 /**
  * Create a delivery request for selected stockpiled items. The items are
@@ -17,6 +18,13 @@ export async function createDeliveryRequest(formData: FormData) {
     return { error: "You must be signed in." };
   }
   const userId = session.user.id;
+
+  const limit = await checkRateLimit(generalLimiter, `delivery:${userId}`);
+  if (!limit.success) {
+    return {
+      error: "Too many delivery requests in a short time. Try again later.",
+    };
+  }
 
   const firstName = (formData.get("firstName") as string)?.trim();
   const lastName = (formData.get("lastName") as string)?.trim();
