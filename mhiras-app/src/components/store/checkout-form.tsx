@@ -42,6 +42,9 @@ const states = [
 interface CheckoutFormProps {
   deliveryZones: DeliveryZoneLike[];
   stockpileExpiryDays: number;
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountName: string;
 }
 
 interface FieldErrors {
@@ -56,6 +59,9 @@ interface FieldErrors {
 export function CheckoutForm({
   deliveryZones,
   stockpileExpiryDays,
+  bankName,
+  bankAccountNumber,
+  bankAccountName,
 }: CheckoutFormProps) {
   const router = useRouter();
   const { items, itemCount, subtotal, refreshCart } = useCart();
@@ -611,7 +617,8 @@ export function CheckoutForm({
                   once payment is verified.
                 </p>
                 <div className="mt-3 p-3 bg-white border border-border text-sm">
-                  <strong>GTBank</strong> · 0123456789 · Mhiras Collection
+                  <strong>{bankName}</strong> · {bankAccountNumber} ·{" "}
+                  {bankAccountName}
                 </div>
               </div>
             )}

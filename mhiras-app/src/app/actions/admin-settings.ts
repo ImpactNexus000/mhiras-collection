@@ -46,6 +46,32 @@ export async function updateStoreInfo(formData: FormData) {
   return { success: true };
 }
 
+export async function updateBankDetails(formData: FormData) {
+  await requireAdmin();
+
+  const bankName = ((formData.get("bankName") as string) ?? "").trim();
+  const bankAccountNumber =
+    ((formData.get("bankAccountNumber") as string) ?? "").trim();
+  const bankAccountName =
+    ((formData.get("bankAccountName") as string) ?? "").trim();
+
+  if (!bankName) return { error: "Bank name is required." };
+  if (!/^\d{6,}$/.test(bankAccountNumber)) {
+    return { error: "Enter a valid account number (digits only)." };
+  }
+  if (!bankAccountName) return { error: "Account name is required." };
+
+  await db.storeSettings.upsert({
+    where: { id: "singleton" },
+    update: { bankName, bankAccountNumber, bankAccountName },
+    create: { id: "singleton", bankName, bankAccountNumber, bankAccountName },
+  });
+
+  // Checkout + order page read these — bust caches.
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
 export async function updateAnnouncement(formData: FormData) {
   await requireAdmin();
 

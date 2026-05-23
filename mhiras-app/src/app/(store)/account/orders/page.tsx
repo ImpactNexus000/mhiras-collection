@@ -42,7 +42,7 @@ export default async function OrderHistoryPage({
   searchParams,
 }: OrderHistoryPageProps) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/auth/signin");
+  if (!session?.user?.id) redirect("/auth/signin?from=/account/orders");
 
   const params = await searchParams;
   const statusFilter = params.status as OrderStatus | undefined;
@@ -160,12 +160,13 @@ export default async function OrderHistoryPage({
         <div className="flex justify-center gap-2 mt-8">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(
             (pageNum) => (
-              <a
+              <Link
                 key={pageNum}
                 href={`/account/orders?${new URLSearchParams({
                   ...(statusFilter ? { status: statusFilter } : {}),
                   page: String(pageNum),
                 }).toString()}`}
+                aria-current={pageNum === page ? "page" : undefined}
                 className={`px-3 py-1.5 text-sm border rounded transition-colors ${
                   pageNum === page
                     ? "border-copper bg-copper text-white"
@@ -173,7 +174,7 @@ export default async function OrderHistoryPage({
                 }`}
               >
                 {pageNum}
-              </a>
+              </Link>
             )
           )}
         </div>

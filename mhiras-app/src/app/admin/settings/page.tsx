@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { StockpileSettings } from "@/components/admin/stockpile-settings";
 import { StoreInfoSettings } from "@/components/admin/store-info-settings";
 import { AnnouncementSettings } from "@/components/admin/announcement-settings";
+import { BankDetailsSettings } from "@/components/admin/bank-details-settings";
 
 export const metadata = {
   title: "Settings",
@@ -41,6 +42,12 @@ export default async function AdminSettingsPage() {
         <AnnouncementSettings
           announcementText={settings.announcementText}
           announcementVisible={settings.announcementVisible}
+        />
+
+        <BankDetailsSettings
+          bankName={settings.bankName}
+          bankAccountNumber={settings.bankAccountNumber}
+          bankAccountName={settings.bankAccountName}
         />
 
         <StockpileSettings stockpileExpiryDays={settings.stockpileExpiryDays} />

@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { Check, Recycle, BadgeDollarSign, Heart } from "lucide-react";
+import { FaqAccordion, type FaqItem } from "@/components/store/faq-accordion";
+import { getStoreSettings } from "@/lib/queries/settings";
 
 export const metadata: Metadata = {
   title: "About Us",
@@ -41,45 +43,52 @@ const stats = [
   { value: "36", label: "States Delivered" },
 ];
 
-const faqs = [
-  "How do you source your items?",
-  "What is your return policy?",
-  "How long does delivery take?",
-  "Can I pay on delivery?",
-  "Do you accept bulk orders?",
+const faqs: FaqItem[] = [
+  {
+    q: "How do you source your items?",
+    a: "We curate every piece by hand from trusted UK suppliers and local sources, inspecting each item for quality before listing. Bales are graded UK ~55kg standard.",
+  },
+  {
+    q: "What is your return policy?",
+    a: "Because every retail piece is one-of-a-kind, returns are accepted within 48 hours of delivery for sizing or condition concerns. WhatsApp us with photos and your order number and we'll sort it out.",
+  },
+  {
+    q: "How long does delivery take?",
+    a: "Lagos: 1–2 days. Abuja: 2–4 days. Other states: 3–7 days depending on the zone. You'll see the exact delivery fee and timing at checkout once you pick your state.",
+  },
+  {
+    q: "Can I pay on delivery?",
+    a: "We currently support card payment via Paystack and bank transfer to GTBank. Pay-on-delivery isn't available across all zones yet — we'll add it as we expand.",
+  },
+  {
+    q: "Do you accept bulk orders?",
+    a: "Yes — head to the Bales section for our wholesale catalogue. Bales are UK ~55kg, sorted and graded, ideal for resellers and boutiques.",
+  },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getStoreSettings();
+
   return (
     <>
       {/* Hero */}
       <section className="bg-charcoal">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 px-6 py-12 md:py-16">
-          <div className="flex flex-col justify-center">
-            <span className="text-xs tracking-widest uppercase text-copper mb-3">
+        <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+          <div className="max-w-2xl">
+            <span className="text-xs tracking-widest uppercase text-copper mb-3 block">
               Our Story
             </span>
             <h1 className="font-display text-4xl md:text-5xl font-light text-cream italic leading-tight mb-5">
               Fashion Deserves
               <br />a <em className="text-gold">Second Life</em>
             </h1>
-            <p className="text-sm md:text-base text-charcoal-soft leading-relaxed max-w-md">
-              Mhiras Collection started as a passion project — curating beautiful
-              pre-loved fashion pieces and sharing them on WhatsApp. What began as
-              a small thrift page has grown into a community of fashion-forward
-              individuals who believe style shouldn&apos;t break the bank, and
-              great pieces deserve a second life.
+            <p className="text-sm md:text-base text-charcoal-soft leading-relaxed">
+              {settings.storeName} started as a passion project — curating
+              beautiful pre-loved fashion pieces and sharing them on WhatsApp.
+              What began as a small thrift page has grown into a community of
+              fashion-forward individuals who believe style shouldn&apos;t break
+              the bank, and great pieces deserve a second life.
             </p>
-          </div>
-          <div className="bg-gradient-to-br from-[#3D2E28] to-[#2A1F1C] rounded-lg flex items-center justify-center min-h-[280px]">
-            <div className="text-center">
-              <div className="font-display text-8xl font-light text-gold/30 italic">
-                M
-              </div>
-              <div className="text-[10px] tracking-widest uppercase text-charcoal-soft mt-2">
-                Founder Photo
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -93,7 +102,7 @@ export default function AboutPage() {
           {values.map((v) => (
             <div key={v.title} className="text-center">
               <div className="w-14 h-14 rounded-full bg-copper-light flex items-center justify-center mx-auto mb-3">
-                <v.icon size={22} className="text-copper" />
+                <v.icon size={22} className="text-copper" aria-hidden="true" />
               </div>
               <h3 className="text-sm font-medium mb-2">{v.title}</h3>
               <p className="text-sm text-charcoal-soft leading-relaxed">
@@ -121,29 +130,32 @@ export default function AboutPage() {
       </section>
 
       {/* Contact + FAQ */}
-      <section className="max-w-6xl mx-auto px-6 py-12">
+      <section
+        id="faq"
+        className="max-w-6xl mx-auto px-6 py-12 scroll-mt-4"
+      >
         <div className="grid md:grid-cols-2 gap-10">
           {/* Contact */}
-          <div>
+          <div id="contact" className="scroll-mt-4">
             <h2 className="font-display text-2xl font-light italic mb-5">
               Get in Touch
             </h2>
             <div className="text-sm leading-loose text-charcoal-soft space-y-1">
               <p>
-                <strong className="text-charcoal">WhatsApp:</strong> +234 801 234
-                5678
+                <strong className="text-charcoal">WhatsApp:</strong>{" "}
+                {settings.whatsappNumber}
               </p>
               <p>
                 <strong className="text-charcoal">Email:</strong>{" "}
-                hello@mhirascollection.com
+                {settings.contactEmail}
               </p>
               <p>
                 <strong className="text-charcoal">Instagram:</strong>{" "}
-                @mhirascollection
+                {settings.instagramHandle}
               </p>
               <p>
-                <strong className="text-charcoal">Hours:</strong> Mon–Sat, 9 AM –
-                8 PM
+                <strong className="text-charcoal">Hours:</strong> Mon–Sat, 9 AM
+                – 8 PM
               </p>
             </div>
           </div>
@@ -153,19 +165,7 @@ export default function AboutPage() {
             <h2 className="font-display text-2xl font-light italic mb-5">
               FAQ
             </h2>
-            <div className="border border-border rounded overflow-hidden">
-              {faqs.map((q, i) => (
-                <div
-                  key={q}
-                  className={`flex justify-between items-center px-4 py-3.5 text-sm cursor-pointer hover:bg-cream-dark transition-colors ${
-                    i < faqs.length - 1 ? "border-b border-border" : ""
-                  }`}
-                >
-                  <span>{q}</span>
-                  <span className="text-copper text-lg">+</span>
-                </div>
-              ))}
-            </div>
+            <FaqAccordion items={faqs} />
           </div>
         </div>
       </section>

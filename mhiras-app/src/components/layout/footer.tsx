@@ -25,11 +25,30 @@ export async function Footer() {
               Shop
             </h4>
             <ul className="space-y-2.5 text-sm">
-              <li><Link href="/shop?filter=new" className="hover:text-cream transition-colors">New Arrivals</Link></li>
-              <li><Link href="/shop?category=women" className="hover:text-cream transition-colors">Women</Link></li>
-              <li><Link href="/shop?category=men" className="hover:text-cream transition-colors">Men</Link></li>
-              <li><Link href="/shop?category=bags" className="hover:text-cream transition-colors">Bags &amp; Accessories</Link></li>
-              <li><Link href="/shop?category=shoes" className="hover:text-cream transition-colors">Shoes</Link></li>
+              <li>
+                <Link href="/shop?filter=new" className="hover:text-cream transition-colors">
+                  New Arrivals
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop" className="hover:text-cream transition-colors">
+                  All Retail
+                </Link>
+              </li>
+              <li>
+                <Link href="/wholesale" className="hover:text-cream transition-colors">
+                  Wholesale Bales
+                </Link>
+              </li>
+              <li className="text-charcoal-soft/70 cursor-default">
+                Men <span className="text-[10px] uppercase tracking-wider text-copper/80 ml-1">soon</span>
+              </li>
+              <li className="text-charcoal-soft/70 cursor-default">
+                Bags &amp; Accessories <span className="text-[10px] uppercase tracking-wider text-copper/80 ml-1">soon</span>
+              </li>
+              <li className="text-charcoal-soft/70 cursor-default">
+                Shoes <span className="text-[10px] uppercase tracking-wider text-copper/80 ml-1">soon</span>
+              </li>
             </ul>
           </div>
 

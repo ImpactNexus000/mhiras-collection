@@ -78,7 +78,7 @@ const drStatusClass: Record<string, string> = {
 
 export default async function StockpilePage({ searchParams }: PageProps) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/auth/signin");
+  if (!session?.user?.id) redirect("/auth/signin?from=/account/stockpile");
   const userId = session.user.id;
 
   // Handle Paystack callback for a delivery-fee payment

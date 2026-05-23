@@ -21,6 +21,9 @@ export default async function CheckoutPage() {
   return (
     <CheckoutForm
       stockpileExpiryDays={settings.stockpileExpiryDays}
+      bankName={settings.bankName}
+      bankAccountNumber={settings.bankAccountNumber}
+      bankAccountName={settings.bankAccountName}
       deliveryZones={zones.map((z) => ({
         id: z.id,
         name: z.name,

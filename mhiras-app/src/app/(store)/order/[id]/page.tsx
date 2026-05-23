@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Clock, XCircle, AlertTriangle, Package } from "lucide-react";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { getOrderByNumber } from "@/lib/queries/orders";
+import { getStoreSettings } from "@/lib/queries/settings";
 import { verifyTransaction } from "@/lib/paystack";
 import { db } from "@/lib/db";
 import { PaymentRetryButton } from "@/components/store/payment-retry-button";
@@ -129,6 +130,8 @@ export default async function OrderConfirmationPage({
   let order = await getOrderByNumber(id);
   if (!order) notFound();
 
+  const settings = await getStoreSettings();
+
   // If this is a Paystack callback, verify the payment
   let paymentVerified: "success" | "failed" | "pending" | null = null;
   const reference = query.reference || query.trxref;
@@ -233,19 +236,20 @@ export default async function OrderConfirmationPage({
             <h3 className="font-medium mb-2">Bank Transfer Details</h3>
             <div className="space-y-1 text-charcoal-soft">
               <div>
-                <span className="text-charcoal font-medium">Bank:</span> GTBank
+                <span className="text-charcoal font-medium">Bank:</span>{" "}
+                {settings.bankName}
               </div>
               <div>
                 <span className="text-charcoal font-medium">
                   Account Number:
                 </span>{" "}
-                0123456789
+                {settings.bankAccountNumber}
               </div>
               <div>
                 <span className="text-charcoal font-medium">
                   Account Name:
                 </span>{" "}
-                Mhiras Collection
+                {settings.bankAccountName}
               </div>
               <div>
                 <span className="text-charcoal font-medium">Amount:</span>{" "}
@@ -444,8 +448,8 @@ export default async function OrderConfirmationPage({
           <div className="mt-4 p-4 border border-border rounded bg-white text-sm">
             <div className="font-medium mb-1">Need help?</div>
             <p className="text-charcoal-soft text-xs leading-relaxed">
-              Contact us on WhatsApp at +234 901 234 5678 or email
-              hello@mhirascollection.com with your order number.
+              Contact us on WhatsApp at {settings.whatsappNumber} or email{" "}
+              {settings.contactEmail} with your order number.
             </p>
           </div>
         </div>

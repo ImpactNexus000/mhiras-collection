@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function MyReviewsPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/auth/signin");
+  if (!session?.user?.id) redirect("/auth/signin?from=/account/reviews");
 
   const reviews = await getMyReviews();
 

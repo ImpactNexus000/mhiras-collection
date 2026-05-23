@@ -503,6 +503,11 @@ model StoreSettings {
   instagramHandle      String   @default("@mhirascollection")
   announcementText     String   @default("New arrivals every week — Free delivery on retail orders over ₦100,000")
   announcementVisible  Boolean  @default(true)
+  // Bank transfer payment instructions (shown on checkout + order page when
+  // the customer picks bank transfer). Mhiras edits these in /admin/settings.
+  bankName             String   @default("GTBank")
+  bankAccountNumber    String   @default("0123456789")
+  bankAccountName      String   @default("Mhiras Collection")
   updatedAt            DateTime @updatedAt
 
   @@map("store_settings")

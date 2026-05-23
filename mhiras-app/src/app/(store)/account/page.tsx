@@ -31,7 +31,7 @@ const menuItems = [
 
 export default async function AccountPage() {
   const session = await auth();
-  if (!session?.user?.id) redirect("/auth/signin");
+  if (!session?.user?.id) redirect("/auth/signin?from=/account");
 
   const userId = session.user.id;
 

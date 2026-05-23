@@ -49,7 +49,30 @@ export async function getProducts(
   }
 
   if (filters.search) {
-    where.name = { contains: filters.search, mode: "insensitive" };
+    // Tokenize the query — every word must appear somewhere in
+    // name / description / category name. Each token gets its own OR
+    // group, and the AND across tokens narrows the result.
+    // "white dress" matches a product where "white" hits the name and
+    // "dress" hits the category, not just "white dress" verbatim.
+    const tokens = filters.search
+      .trim()
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
+    if (tokens.length > 0) {
+      where.AND = tokens.map((token) => ({
+        OR: [
+          { name: { contains: token, mode: "insensitive" } },
+          { description: { contains: token, mode: "insensitive" } },
+          {
+            category: {
+              name: { contains: token, mode: "insensitive" },
+            },
+          },
+        ],
+      }));
+    }
   }
 
   if (filters.featured) {
