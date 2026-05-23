@@ -17,6 +17,23 @@ function generateToken(): string {
 }
 
 /**
+ * Build the absolute base URL from the incoming request headers, so the
+ * reset link points back to whichever host the user actually used (localhost
+ * in dev, the real domain in prod). Falls back to SITE_URL if we can't
+ * piece one together.
+ */
+function originFromHeaders(h: Headers): string {
+  const host =
+    h.get("x-forwarded-host") ?? h.get("host") ?? new URL(SITE_URL).host;
+  const proto =
+    h.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.0.0.1")
+      ? "http"
+      : "https");
+  return `${proto}://${host}`;
+}
+
+/**
  * Start a password reset. Generates a random token, stores its bcrypt hash
  * with a 60-minute expiry, and emails the plain token in a reset link.
  *
@@ -24,7 +41,8 @@ function generateToken(): string {
  * have accounts.
  */
 export async function requestPasswordReset(formData: FormData) {
-  const ip = getClientIp(await headers());
+  const reqHeaders = await headers();
+  const ip = getClientIp(reqHeaders);
   const limit = await checkRateLimit(authLimiter, `forgot:${ip}`);
   if (!limit.success) {
     return { error: "Too many requests. Try again in a few minutes." };
@@ -64,7 +82,8 @@ export async function requestPasswordReset(formData: FormData) {
       }),
     ]);
 
-    const resetUrl = `${SITE_URL}/auth/reset-password?token=${encodeURIComponent(
+    const baseUrl = originFromHeaders(reqHeaders);
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${encodeURIComponent(
       token
     )}`;
 
