@@ -1,13 +1,21 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
 export const metadata: Metadata = {
-  title: "Reset Password",
+  title: "Set New Password",
 };
 
-export default function ForgotPasswordPage() {
+interface ResetPasswordPageProps {
+  searchParams: Promise<{ token?: string }>;
+}
+
+export default async function ResetPasswordPage({
+  searchParams,
+}: ResetPasswordPageProps) {
+  const { token } = await searchParams;
+
   return (
     <div className="min-h-screen grid md:grid-cols-2">
       {/* Brand panel */}
@@ -17,12 +25,12 @@ export default function ForgotPasswordPage() {
         </span>
         <div className="z-10 text-center">
           <h1 className="font-display text-5xl font-light text-cream italic mb-3">
-            Don&apos;t Worry
+            New Password
           </h1>
           <p className="text-sm text-charcoal-soft leading-relaxed">
-            It happens to the best of us.
+            Pick something strong this time
             <br />
-            We&apos;ll help you get back in.
+            and we&apos;ll get you back in.
           </p>
         </div>
       </div>
@@ -49,24 +57,13 @@ export default function ForgotPasswordPage() {
           </Link>
 
           <h2 className="font-display text-3xl font-light italic mb-1">
-            Reset Password
+            Set new password
           </h2>
           <p className="text-sm text-charcoal-soft mb-6">
-            Enter the email on your account and we&apos;ll send you a reset
-            link.
+            Enter and confirm a new password for your account.
           </p>
 
-          <ForgotPasswordForm />
-
-          <p className="text-center text-sm text-charcoal-soft mt-6">
-            Remember your password?{" "}
-            <Link
-              href="/auth/signin"
-              className="text-copper font-medium hover:text-copper-dark"
-            >
-              Sign In
-            </Link>
-          </p>
+          <ResetPasswordForm token={token ?? ""} />
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { WelcomeEmail } from "./templates/welcome";
 import { VerificationCodeEmail } from "./templates/verification-code";
 import { AdminSigninCodeEmail } from "./templates/admin-signin-code";
 import { AdminNewOrderEmail } from "./templates/admin-new-order";
+import { PasswordResetEmail } from "./templates/password-reset";
 import {
   AdminDeliveryRequestEmail,
   type AdminDeliveryRequestItem,
@@ -151,6 +152,25 @@ export function sendAdminSigninCode(args: AdminSigninCodeArgs) {
     template: AdminSigninCodeEmail({
       adminName: args.adminName,
       code: args.code,
+      expiresMinutes: args.expiresMinutes,
+    }),
+  });
+}
+
+interface PasswordResetArgs {
+  to: string;
+  customerName: string;
+  resetUrl: string;
+  expiresMinutes: number;
+}
+
+export function sendPasswordReset(args: PasswordResetArgs) {
+  return sendEmail({
+    to: args.to,
+    subject: "Reset your Mhiras Collection password",
+    template: PasswordResetEmail({
+      customerName: args.customerName,
+      resetUrl: args.resetUrl,
       expiresMinutes: args.expiresMinutes,
     }),
   });

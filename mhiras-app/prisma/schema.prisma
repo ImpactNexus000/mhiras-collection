@@ -42,10 +42,29 @@ model User {
   deliveryRequests DeliveryRequest[]
   cart             Cart?
   wishlist         WishlistItem[]
-  reviews          Review[]
-  adminOtps        AdminOtp[]
+  reviews             Review[]
+  adminOtps           AdminOtp[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+// Single-use password reset tokens. The plain token only ever leaves the
+// server inside the reset email; we store a bcrypt hash so a DB leak
+// doesn't let an attacker reset anyone's password.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  consumed  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 // Two-factor signin code for admin accounts. Issued after a successful
