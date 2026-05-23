@@ -3,11 +3,12 @@
 /**
  * Global next/image loader (configured in next.config.ts).
  *
- * - For Cloudinary URLs (`res.cloudinary.com`), rewrites the URL with the
- *   f_auto, q_auto, w_<width>, c_limit transformations so each srcset entry
- *   asks Cloudinary for a properly sized WebP/AVIF.
- * - For anything else (local /public assets, etc.) we delegate to Next's
- *   built-in optimizer at /_next/image so those still get resized + cached.
+ * Cloudinary URLs get an `f_auto, q_auto, w_<width>, c_limit` transform so
+ * each srcset entry asks Cloudinary for a properly sized WebP/AVIF. Local
+ * /public assets are returned unchanged — setting `images.loader: "custom"`
+ * disables Next's built-in `/_next/image` endpoint, so there's nothing to
+ * delegate to. Pair local <Image> instances with `unoptimized` to skip the
+ * (now redundant) srcset.
  *
  * Replacing the global loader is the only way to use a function-valued
  * loader, since passing `loader={...}` directly from a Server Component
@@ -29,6 +30,5 @@ export default function imageLoader({
       `/upload/f_auto,q_${q},w_${width},c_limit/`
     );
   }
-  const q = quality ?? 75;
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${width}&q=${q}`;
+  return src;
 }

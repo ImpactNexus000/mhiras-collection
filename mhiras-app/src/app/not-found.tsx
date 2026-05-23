@@ -10,6 +10,7 @@ export default function NotFound() {
         alt="Mhiras Collection"
         width={843}
         height={273}
+        unoptimized
         className="h-9 w-auto opacity-90"
       />
 

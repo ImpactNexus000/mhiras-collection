@@ -24,6 +24,7 @@ export async function Navbar() {
             width={843}
             height={273}
             priority
+            unoptimized
             className="h-12 w-auto"
           />
         </Link>
@@ -94,6 +95,7 @@ export async function Navbar() {
             width={843}
             height={273}
             priority
+            unoptimized
             className="h-9 w-auto"
           />
         </Link>
