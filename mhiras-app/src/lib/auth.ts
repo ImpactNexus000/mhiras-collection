@@ -2,9 +2,13 @@ import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { after } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { authLimiter, checkRateLimit, getClientIp } from "./rate-limit";
+import { sendAdminSigninCode } from "./email";
+
+const ADMIN_OTP_TTL_MINUTES = 10;
 
 /**
  * Surfaced to the client via `result.code` from `signIn(..., { redirect: false })`.
@@ -12,6 +16,19 @@ import { authLimiter, checkRateLimit, getClientIp } from "./rate-limit";
  */
 class EmailNotVerifiedError extends CredentialsSignin {
   code = "email_not_verified";
+}
+
+/**
+ * Same idea — but for the admin two-factor flow. After a correct password,
+ * we send a 6-digit code by email and ask the admin to enter it on
+ * /auth/admin-verify before granting a session.
+ */
+class AdminOtpRequiredError extends CredentialsSignin {
+  code = "admin_otp_required";
+}
+
+function generateOtp(): string {
+  return String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -68,6 +85,91 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!user.emailVerified) {
           throw new EmailNotVerifiedError();
         }
+
+        // Admin accounts get a second factor — issue a fresh OTP, send it,
+        // and tell the client to redirect to /auth/admin-verify. Any prior
+        // unconsumed OTPs for this user are invalidated so we can't have
+        // two open challenges at once.
+        if (user.role === "ADMIN") {
+          const code = generateOtp();
+          const codeHash = await bcrypt.hash(code, 10);
+          await db.$transaction([
+            db.adminOtp.updateMany({
+              where: { userId: user.id, consumed: false },
+              data: { consumed: true },
+            }),
+            db.adminOtp.create({
+              data: {
+                userId: user.id,
+                codeHash,
+                expiresAt: new Date(
+                  Date.now() + ADMIN_OTP_TTL_MINUTES * 60_000
+                ),
+              },
+            }),
+          ]);
+          after(() =>
+            sendAdminSigninCode({
+              to: user.email,
+              adminName: user.firstName,
+              code,
+              expiresMinutes: ADMIN_OTP_TTL_MINUTES,
+            })
+          );
+          throw new AdminOtpRequiredError();
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          image: user.image,
+        };
+      },
+    }),
+    Credentials({
+      id: "admin-otp",
+      name: "admin-otp",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        code: { label: "Code", type: "text" },
+      },
+      async authorize(credentials, request) {
+        if (!credentials?.email || !credentials?.code) return null;
+
+        const ip = getClientIp(request.headers);
+        const { success } = await checkRateLimit(
+          authLimiter,
+          `admin-otp:${ip}`
+        );
+        if (!success) {
+          throw new Error("Too many attempts. Try again in a few minutes.");
+        }
+
+        const email = String(credentials.email).trim().toLowerCase();
+        const code = String(credentials.code).trim();
+        if (!/^\d{6}$/.test(code)) return null;
+
+        const user = await db.user.findUnique({ where: { email } });
+        if (!user || user.role !== "ADMIN") return null;
+
+        const otp = await db.adminOtp.findFirst({
+          where: {
+            userId: user.id,
+            consumed: false,
+            expiresAt: { gt: new Date() },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+        if (!otp) return null;
+
+        const matches = await bcrypt.compare(code, otp.codeHash);
+        if (!matches) return null;
+
+        await db.adminOtp.update({
+          where: { id: otp.id },
+          data: { consumed: true },
+        });
 
         return {
           id: user.id,

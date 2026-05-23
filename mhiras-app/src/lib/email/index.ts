@@ -11,6 +11,7 @@ import {
 } from "./templates/order-status";
 import { WelcomeEmail } from "./templates/welcome";
 import { VerificationCodeEmail } from "./templates/verification-code";
+import { AdminSigninCodeEmail } from "./templates/admin-signin-code";
 import {
   AdminDeliveryRequestEmail,
   type AdminDeliveryRequestItem,
@@ -127,6 +128,25 @@ export function sendVerificationCode(args: VerificationCodeArgs) {
     subject: `Your Mhiras Collection verification code: ${args.code}`,
     template: VerificationCodeEmail({
       customerName: args.customerName,
+      code: args.code,
+      expiresMinutes: args.expiresMinutes,
+    }),
+  });
+}
+
+interface AdminSigninCodeArgs {
+  to: string;
+  adminName: string;
+  code: string;
+  expiresMinutes: number;
+}
+
+export function sendAdminSigninCode(args: AdminSigninCodeArgs) {
+  return sendEmail({
+    to: args.to,
+    subject: `Mhiras Collection admin sign-in code: ${args.code}`,
+    template: AdminSigninCodeEmail({
+      adminName: args.adminName,
       code: args.code,
       expiresMinutes: args.expiresMinutes,
     }),

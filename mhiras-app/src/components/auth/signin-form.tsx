@@ -45,6 +45,13 @@ export function SignInForm() {
         return;
       }
 
+      if (result?.code === "admin_otp_required") {
+        router.push(
+          `/auth/admin-verify?email=${encodeURIComponent(identifier)}`
+        );
+        return;
+      }
+
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
       } else {

@@ -43,8 +43,29 @@ model User {
   cart             Cart?
   wishlist         WishlistItem[]
   reviews          Review[]
+  adminOtps        AdminOtp[]
 
   @@map("users")
+}
+
+// Two-factor signin code for admin accounts. Issued after a successful
+// password check on /auth/signin; consumed when the admin enters the code
+// on /auth/admin-verify. We keep this as its own table (rather than reusing
+// User.verificationCode) so the signup-verification and admin-signin flows
+// don't trip over each other.
+model AdminOtp {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String
+  expiresAt DateTime
+  consumed  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("admin_otps")
 }
 
 model Account {

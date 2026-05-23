@@ -86,6 +86,25 @@ New users must verify their email before they can sign in.
   (`emailVerified = NOW()` for any row with `role = 'ADMIN'`). Existing
   test customer accounts will need to re-verify or be wiped before launch.
 
+## 4b. Admin two-factor signin
+
+Admin accounts (any user with `role = 'ADMIN'`) get a second factor.
+Customers are unaffected.
+
+- Admin enters email + password on `/auth/signin`. After the password
+  verifies, the server creates an `AdminOtp` row (10-min expiry), sends a
+  6-digit code to the admin's email, and returns a `code: "admin_otp_required"`
+  signal. The signin form auto-routes to `/auth/admin-verify?email=…`.
+- Admin enters the code on `/auth/admin-verify`; the second Credentials
+  provider (`admin-otp`) validates the open OTP, marks it consumed, and
+  grants the session.
+- Any prior unconsumed OTP for that admin is invalidated when a new one is
+  issued — only one challenge is live at a time.
+- No resend button on the verify page (would need to re-prove the password).
+  If the code doesn't arrive, the admin signs in again to send a fresh one.
+- Rate limit: 5 attempts per IP per 15 min on both the password step and
+  the code submission step (via `authLimiter`).
+
 ## 5. Rate limiting (Upstash Redis)
 
 1. Sign up at https://upstash.com (free tier).
