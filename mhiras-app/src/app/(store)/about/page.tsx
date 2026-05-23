@@ -98,6 +98,7 @@ export default async function AboutPage() {
               fill
               sizes="(min-width: 768px) 50vw, 100vw"
               priority
+              unoptimized
               className="object-cover"
             />
           </div>
