@@ -2,6 +2,9 @@ import Link from "next/link";
 import { getAdminCustomers, getCustomerStats } from "@/lib/queries/admin";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { CustomersSearch } from "@/components/admin/customers-search";
+import { AnonymizeCustomerButton } from "@/components/admin/anonymize-customer-button";
+
+const ANON_DOMAIN = "anon.local";
 
 interface AdminCustomersPageProps {
   searchParams: Promise<{
@@ -98,23 +101,28 @@ export default async function AdminCustomersPage({
                   <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
                     Status
                   </th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 {customers.map((c) => {
+                  const isAnonymized = c.email.endsWith(`@${ANON_DOMAIN}`);
                   const initials = `${c.firstName[0]}${c.lastName[0]}`;
-                  const customerStatus =
-                    c._count.orders === 0
+                  const customerStatus = isAnonymized
+                    ? "deleted"
+                    : c._count.orders === 0
                       ? "new"
                       : c._count.orders >= 5
                         ? "vip"
                         : "active";
                   const statusStyle =
-                    customerStatus === "vip"
-                      ? "bg-copper-light text-copper-dark"
-                      : customerStatus === "new"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-green-100 text-green-700";
+                    customerStatus === "deleted"
+                      ? "bg-gray-100 text-gray-500"
+                      : customerStatus === "vip"
+                        ? "bg-copper-light text-copper-dark"
+                        : customerStatus === "new"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-green-100 text-green-700";
 
                   return (
                     <tr
@@ -131,7 +139,7 @@ export default async function AdminCustomersPage({
                               {c.firstName} {c.lastName}
                             </div>
                             <div className="text-xs text-charcoal-soft">
-                              {c.email}
+                              {isAnonymized ? "—" : c.email}
                             </div>
                           </div>
                         </div>
@@ -152,6 +160,14 @@ export default async function AdminCustomersPage({
                         >
                           {customerStatus}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {!isAnonymized && (
+                          <AnonymizeCustomerButton
+                            userId={c.id}
+                            customerName={`${c.firstName} ${c.lastName}`}
+                          />
+                        )}
                       </td>
                     </tr>
                   );
