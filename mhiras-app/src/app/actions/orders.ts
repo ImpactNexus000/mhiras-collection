@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { generateOrderNumber } from "@/lib/queries/orders";
@@ -7,6 +8,7 @@ import { PaymentMethod } from "@/generated/prisma/client";
 import { validatePromoCode } from "@/app/actions/promo-codes";
 import { getDeliveryFeeByState } from "@/lib/queries/delivery";
 import { getStoreSettings } from "@/lib/queries/settings";
+import { sendOrderConfirmation } from "@/lib/email";
 
 interface CartItem {
   productId: string;
@@ -217,6 +219,39 @@ export async function placeOrder(formData: FormData) {
   });
   if (cart) {
     await db.cartItem.deleteMany({ where: { cartId: cart.id } });
+  }
+
+  // Fire the confirmation email after the response is sent so a slow mailer
+  // never blocks the order placement.
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { firstName: true, email: true },
+  });
+  if (user) {
+    const items = cartItems.map((item) => {
+      const product = productMap.get(item.productId)!;
+      return {
+        name: product.name,
+        quantity: item.quantity,
+        size: item.size ?? null,
+        price: product.sellingPrice,
+      };
+    });
+    after(() =>
+      sendOrderConfirmation({
+        to: user.email,
+        customerName: user.firstName,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        items,
+        subtotal,
+        deliveryFee,
+        discount,
+        total,
+        fulfillmentType: isStockpile ? "STOCKPILE" : "IMMEDIATE",
+        stockpileExpiresAt,
+      })
+    );
   }
 
   return {

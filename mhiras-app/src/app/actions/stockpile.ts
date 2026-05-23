@@ -1,9 +1,11 @@
 "use server";
 
+import { after } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { getDeliveryFeeByState } from "@/lib/queries/delivery";
 import { generateDeliveryRequestNumber } from "@/lib/queries/stockpile";
+import { sendAdminDeliveryRequest } from "@/lib/email";
 
 /**
  * Create a delivery request for selected stockpiled items. The items are
@@ -92,6 +94,38 @@ export async function createDeliveryRequest(formData: FormData) {
 
       return newRequest;
     });
+
+    // Notify admin so Mhiras can fulfill. Best-effort + after the response.
+    const [user, items] = await Promise.all([
+      db.user.findUnique({
+        where: { id: userId },
+        select: { firstName: true, lastName: true, email: true },
+      }),
+      db.orderItem.findMany({
+        where: { deliveryRequestId: deliveryRequest.id },
+        include: { product: { select: { name: true } } },
+      }),
+    ]);
+    if (user) {
+      after(() =>
+        sendAdminDeliveryRequest({
+          requestNumber: deliveryRequest.requestNumber,
+          customerName: `${user.firstName} ${user.lastName}`,
+          customerEmail: user.email,
+          customerPhone: phone,
+          itemCount: items.reduce((n, it) => n + it.quantity, 0),
+          items: items.map((it) => ({
+            name: it.product.name,
+            quantity: it.quantity,
+            size: it.size,
+          })),
+          deliveryFee: zone.fee,
+          addressLine: address,
+          city: lga || state,
+          state,
+        })
+      );
+    }
 
     return {
       success: true,

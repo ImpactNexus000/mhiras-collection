@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import crypto from "crypto";
 import { db } from "@/lib/db";
+import { sendPaymentConfirmed } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -99,6 +100,27 @@ export async function POST(req: NextRequest) {
         },
       });
     });
+
+    // Send payment-confirmed email — canonical fire point. The order-page
+    // callback (verifyPaymentCallback) updates the DB silently to keep the
+    // race-window single-email.
+    const customer = await db.user.findUnique({
+      where: { id: order.userId },
+      select: { firstName: true, email: true },
+    });
+    if (customer) {
+      after(() =>
+        sendPaymentConfirmed({
+          to: customer.email,
+          customerName: customer.firstName,
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          total: order.total,
+          channel,
+          fulfillmentType: order.fulfillmentType,
+        })
+      );
+    }
   }
 
   if (event.event === "charge.failed") {

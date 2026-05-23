@@ -1,8 +1,10 @@
 "use server";
 
+import { after } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { signIn } from "@/lib/auth";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function registerUser(formData: FormData) {
   const firstName = formData.get("firstName") as string;
@@ -50,6 +52,9 @@ export async function registerUser(formData: FormData) {
       passwordHash,
     },
   });
+
+  // Welcome email — best-effort, runs after the redirect.
+  after(() => sendWelcomeEmail({ to: email, customerName: firstName }));
 
   // Auto sign in after registration
   await signIn("credentials", {

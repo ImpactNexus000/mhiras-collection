@@ -1,9 +1,11 @@
 "use server";
 
+import { after } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { OrderStatus } from "@/generated/prisma/client";
+import { sendOrderStatusUpdate } from "@/lib/email";
 
 async function requireAdmin() {
   const session = await auth();
@@ -66,6 +68,33 @@ export async function updateOrderStatus(
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
   revalidatePath("/admin");
+
+  // Notify the customer on customer-visible milestones. CONFIRMED is covered
+  // by the payment-confirmed email; PENDING/CANCELLED/REFUNDED are admin-side.
+  if (
+    newStatus !== order.status &&
+    (newStatus === "PROCESSING" ||
+      newStatus === "SHIPPED" ||
+      newStatus === "DELIVERED")
+  ) {
+    const customer = await db.user.findUnique({
+      where: { id: order.userId },
+      select: { firstName: true, email: true },
+    });
+    if (customer) {
+      after(() =>
+        sendOrderStatusUpdate({
+          to: customer.email,
+          customerName: customer.firstName,
+          orderId,
+          orderNumber: order.orderNumber,
+          status: newStatus,
+          note: note ?? null,
+        })
+      );
+    }
+  }
+
   return { success: true };
 }
 
