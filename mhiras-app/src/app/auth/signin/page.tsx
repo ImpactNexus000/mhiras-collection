@@ -51,25 +51,6 @@ export default function SignInPage() {
             <SignInForm />
           </Suspense>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-charcoal-soft uppercase tracking-wider">
-              Or continue with
-            </span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          {/* Social login */}
-          <div className="flex gap-3">
-            <button className="flex-1 py-2.5 border border-border text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-cream-dark transition-colors">
-              <span className="font-bold">G</span> Google
-            </button>
-            <button className="flex-1 py-2.5 border border-border text-sm flex items-center justify-center gap-2 cursor-pointer hover:bg-cream-dark transition-colors">
-              Phone OTP
-            </button>
-          </div>
-
           <p className="text-center text-sm text-charcoal-soft mt-6">
             Don&apos;t have an account?{" "}
             <Link
