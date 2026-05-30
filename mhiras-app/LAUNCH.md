@@ -122,13 +122,27 @@ Current limits (tune in `src/lib/rate-limit.ts` if needed):
 
 ## 6. Security patches
 
-Run `npm audit` — at last check there were Next.js DoS / cache-poisoning
-advisories fixed in 16.2.6+. Bump and retest:
+Last applied 2026-05-30: `next` + `eslint-config-next` 16.2.2 → 16.2.6
+(closed all the high/moderate Next.js advisories — DoS, cache-poisoning,
+middleware bypass, CSP-nonce XSS, etc.) and `npm audit fix`
+(brace-expansion, fast-uri).
+
+Before launch, re-run:
 
 ```
-npm install next@latest
-npm run build  # confirm no breaking changes
+npm audit
+npm install next@latest && npm run build  # only if newer minor is out
 ```
+
+**Residual advisories (accepted, dev-only):**
+- `@hono/node-server` + `hono` chain via `prisma → @prisma/dev` (Prisma 7's
+  studio/dev tooling; not in runtime). "Fix" downgrades Prisma 7 → 6.19.3
+  — unacceptable.
+- `postcss@8.4.31` pinned inside `next`; only used at build time. "Fix"
+  downgrades Next 16 → 9 — unacceptable.
+
+If a future Prisma / Next minor publishes with the chain advanced, re-run
+`npm audit` and they'll clear automatically.
 
 ## 7. Last-mile smoke test (on the real domain)
 
