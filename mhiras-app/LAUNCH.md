@@ -160,17 +160,19 @@ If a future Prisma / Next minor publishes with the chain advanced, re-run
 
 ## 8. Things we deferred (post-launch)
 
-These were called out during build and are not blockers, but worth tackling
-soon after going live:
+Most original deferred items have shipped. What's left:
 
-- Newsletter "Notify Me" button (footer + homepage) is non-functional —
-  decide on a mailing-list provider and wire it up
-- Cart "Apply promo code" button doesn't run validation client-side (it
-  works at checkout, where validation is real)
-- Social sign-in buttons on `/auth/signin` (Google, Phone OTP) are mock
-  controls
-- `/auth/forgot-password` form has no handler — wire up a Resend-based
-  reset flow before any customer asks
-- `/account/addresses`, `/account/payments`, `/account/notifications` menu
-  items lead nowhere
-- Lighthouse + bundle audit (now that the site is live)
+- **Google + Phone OTP buttons on `/auth/signin`** are still mock controls
+  (`src/app/auth/signin/page.tsx` lines 64-71 — no `onClick`, no
+  `signIn("google")` call). Either wire Google up (auth.ts already supports
+  it via `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET`) or delete the buttons
+  before launch so customers don't click dead UI. Phone OTP would require
+  a new provider — recommend deleting unless explicitly requested.
+- **Lighthouse + bundle audit** — run from PageSpeed Insights against the
+  live URL once deployed. Aim ≥ 90 on Performance + Accessibility.
+  Bundle splitting deferred until there's a clear offender.
+
+Already shipped since the original list was written (no action needed):
+newsletter (real `Subscriber` model), cart promo Apply (hands off to
+checkout), `/auth/forgot-password` + `/auth/reset-password`,
+`/account/addresses`, `/account/payments`, `/account/notifications`.
