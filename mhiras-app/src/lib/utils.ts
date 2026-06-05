@@ -21,3 +21,11 @@ export function formatDate(date: Date | string): string {
     year: "numeric",
   }).format(new Date(date));
 }
+
+/** Time-of-day, e.g. "3:30 PM". Pairs with formatDate for date + time displays. */
+export function formatTime(date: Date | string): string {
+  return new Intl.DateTimeFormat("en-NG", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(date));
+}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAdminOrders, getOrderStatusCounts } from "@/lib/queries/admin";
 import { OrderStatus } from "@/generated/prisma/client";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDate, formatTime } from "@/lib/utils";
 import { OrdersSearch } from "@/components/admin/orders-search";
 
 const statusStyles: Record<string, string> = {
@@ -109,7 +109,7 @@ export default async function AdminOrdersPage({
                     Status
                   </th>
                   <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-charcoal-soft font-medium">
-                    Date
+                    Date / Time
                   </th>
                   <th className="px-4 py-3"></th>
                 </tr>
@@ -151,8 +151,11 @@ export default async function AdminOrdersPage({
                         {order.status.toLowerCase()}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-charcoal-soft text-xs">
+                    <td className="px-4 py-3 text-charcoal-soft text-xs whitespace-nowrap">
                       {formatDate(order.createdAt)}
+                      <div className="text-charcoal-soft/70">
+                        {formatTime(order.createdAt)}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <Link
