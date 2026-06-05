@@ -23,6 +23,8 @@ export interface ProductCardProps {
   showAddToCart?: boolean;
   ratingAverage?: number;
   ratingCount?: number;
+  /** Eager-load + prioritize this card's image (use for above-the-fold cards to improve LCP). */
+  priority?: boolean;
   className?: string;
 }
 
@@ -42,6 +44,7 @@ export function ProductCard({
   showAddToCart = true,
   ratingAverage,
   ratingCount,
+  priority = false,
   className,
 }: ProductCardProps) {
   const discount =
@@ -66,6 +69,7 @@ export function ProductCard({
               alt={name}
               fill
               sizes="(min-width: 768px) 33vw, 50vw"
+              priority={priority}
               className="object-cover"
             />
           ) : (

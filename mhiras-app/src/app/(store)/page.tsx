@@ -78,7 +78,7 @@ export default async function HomePage() {
             <br />
             <em className="text-gold">Elevated.</em>
           </h1>
-          <p className="text-sm md:text-base text-charcoal-soft mb-8 leading-relaxed max-w-md">
+          <p className="text-sm md:text-base text-cream/75 mb-8 leading-relaxed max-w-md">
             Handpicked fashion pieces, pre-loved and premium.
             <br />
             Every item is unique — once it&apos;s gone, it&apos;s gone.
@@ -151,7 +151,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {justDropped.map((product) => (
+            {justDropped.map((product, i) => (
               <ProductCard
                 key={product.id}
                 productId={product.id}
@@ -168,6 +168,7 @@ export default async function HomePage() {
                 isWishlisted={wishlistSet.has(product.id)}
                 ratingAverage={ratingMap.get(product.id)?.average}
                 ratingCount={ratingMap.get(product.id)?.count}
+                priority={i < 2}
               />
             ))}
           </div>
