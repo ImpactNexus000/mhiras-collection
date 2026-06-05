@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/components/providers";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
 import "./globals.css";
@@ -74,6 +75,7 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col font-body">
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );
