@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { SlidersHorizontal, X } from "lucide-react";
@@ -15,6 +16,8 @@ interface Category {
 
 interface ShopFiltersProps {
   categories: Category[];
+  /** Products column — rendered beside the desktop sidebar, full-width on mobile. */
+  children?: ReactNode;
 }
 
 const conditionOptions = [
@@ -29,7 +32,7 @@ const sortOptions = [
   { value: "price-desc", label: "Price: High–Low" },
 ];
 
-export function ShopFilters({ categories }: ShopFiltersProps) {
+export function ShopFilters({ categories, children }: ShopFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -339,13 +342,17 @@ export function ShopFilters({ categories }: ShopFiltersProps) {
         </select>
       </div>
 
-      {/* Desktop sidebar */}
-      <aside className="hidden md:block w-[220px] p-4 border-r border-border bg-cream flex-shrink-0">
-        <div className="text-xs uppercase tracking-widest text-charcoal-soft font-medium mb-4">
-          Filter By
-        </div>
-        <FilterControls />
-      </aside>
+      {/* Sidebar (desktop) + products row. On mobile the sidebar is hidden and
+          the products take the full width below the chips bar. */}
+      <div className="flex">
+        <aside className="hidden md:block w-[220px] p-4 border-r border-border bg-cream flex-shrink-0">
+          <div className="text-xs uppercase tracking-widest text-charcoal-soft font-medium mb-4">
+            Filter By
+          </div>
+          <FilterControls />
+        </aside>
+        {children}
+      </div>
 
       {/* Mobile filter drawer */}
       {showMobileFilters && (

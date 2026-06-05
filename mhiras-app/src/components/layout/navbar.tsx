@@ -11,10 +11,23 @@ export async function Navbar() {
 
   return (
     <header>
-      {/* Announcement Bar */}
+      {/* Announcement Bar — seamless scrolling marquee. Screen readers get a
+          single clean copy; the looping visual track is aria-hidden. */}
       {settings.announcementVisible && settings.announcementText && (
-        <div className="bg-copper text-white text-center text-sm tracking-wider py-2.5 px-4">
-          {settings.announcementText}
+        <div className="bg-copper text-white text-sm tracking-wider py-2.5 overflow-hidden">
+          <span className="sr-only">{settings.announcementText}</span>
+          <div className="marquee" aria-hidden="true">
+            {[0, 1].map((group) => (
+              <div key={group} className="flex shrink-0">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <span key={i} className="flex items-center">
+                    <span className="px-6">{settings.announcementText}</span>
+                    <span className="text-white/40">✦</span>
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

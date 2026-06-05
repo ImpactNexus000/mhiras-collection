@@ -86,14 +86,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       </div>
 
       {/* Filters + Products */}
-      <div className="flex flex-col">
-        <Suspense fallback={null}>
-          <div className="flex">
-            <ShopFilters categories={categories} />
-
-            {/* Products grid */}
-            <div className="flex-1">
-              <div className="flex justify-between items-center px-4 py-3 bg-cream-dark border-b border-border text-sm text-charcoal-soft">
+      <Suspense fallback={null}>
+        <ShopFilters categories={categories}>
+          {/* Products grid */}
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-center px-4 py-3 bg-cream-dark border-b border-border text-sm text-charcoal-soft">
                 <span>
                   Showing{" "}
                   <strong className="text-charcoal">{total} results</strong>{" "}
@@ -180,10 +177,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                   )}
                 </div>
               )}
-            </div>
           </div>
-        </Suspense>
-      </div>
+        </ShopFilters>
+      </Suspense>
     </>
   );
 }

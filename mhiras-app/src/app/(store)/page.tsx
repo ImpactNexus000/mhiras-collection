@@ -69,7 +69,7 @@ export default async function HomePage() {
       <section className="bg-charcoal grid md:grid-cols-2 min-h-[320px]">
         <div className="p-8 md:py-10 md:pr-10 md:pl-20 flex flex-col justify-center">
           <span className="text-xs md:text-sm tracking-widest uppercase text-copper mb-3">
-            New Arrivals — Spring Edit
+            Mhiras Picks
           </span>
           <h1 className="font-display text-5xl md:text-[72px] leading-none font-light text-cream mb-3">
             Curated
@@ -111,24 +111,27 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Category Bar */}
+      {/* Category Bar — horizontally scrollable tab strip on mobile, even
+          5-up grid on desktop. */}
       {categories.length > 0 && (
-        <section className="grid grid-cols-3 md:grid-cols-5 bg-copper-light">
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/shop?category=${cat.slug}`}
-              className="py-3 md:py-3.5 text-center border-r border-b border-copper/15 hover:bg-copper/5 transition-colors"
-            >
-              <div className="text-sm font-medium uppercase tracking-wider text-charcoal-mid">
-                {cat.name}
-              </div>
-              <div className="text-xs text-charcoal-soft mt-0.5">
-                {cat._count.products}{" "}
-                {cat._count.products === 1 ? "item" : "items"}
-              </div>
-            </Link>
-          ))}
+        <section className="bg-copper-light border-b border-copper/15">
+          <div className="flex overflow-x-auto no-scrollbar md:grid md:grid-cols-5">
+            {categories.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/shop?category=${cat.slug}`}
+                className="shrink-0 min-w-[30%] md:min-w-0 py-3 md:py-3.5 px-3 text-center border-r border-copper/15 last:border-r-0 md:last:border-r hover:bg-copper/5 transition-colors"
+              >
+                <div className="text-sm font-medium uppercase tracking-wider text-charcoal-mid whitespace-nowrap">
+                  {cat.name}
+                </div>
+                <div className="text-xs text-charcoal-soft mt-0.5">
+                  {cat._count.products}{" "}
+                  {cat._count.products === 1 ? "item" : "items"}
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
       )}
 
