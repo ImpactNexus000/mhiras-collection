@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 
 /**
  * Only allow internal absolute paths as a return URL, to prevent
@@ -20,24 +21,23 @@ export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = safeReturnPath(searchParams.get("from"));
-  const [error, setError] = useState("");
+  const { success, error: toastError } = useToast();
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
 
     const formData = new FormData(e.currentTarget);
     const identifier = (formData.get("identifier") as string)?.trim();
     const password = formData.get("password") as string;
 
     if (!identifier) {
-      setError("Email or phone number is required.");
+      toastError("Email or phone number is required.");
       return;
     }
 
     if (!password) {
-      setError("Password is required.");
+      toastError("Password is required.");
       return;
     }
 
@@ -65,13 +65,14 @@ export function SignInForm() {
       }
 
       if (result?.error) {
-        setError("Invalid email or password. Please try again.");
+        toastError("Invalid email or password. Please try again.");
       } else {
+        success("Welcome back!");
         router.push(returnTo);
         router.refresh();
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      toastError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -79,15 +80,6 @@ export function SignInForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-        >
-          {error}
-        </div>
-      )}
-
       <div className="mb-4">
         <label
           htmlFor="signin-identifier"

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { registerUser } from "@/app/actions/auth";
 
 interface FieldErrors {
@@ -18,8 +19,8 @@ interface FieldErrors {
 
 export function SignUpForm() {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
 
   function validate(formData: FormData): FieldErrors {
@@ -60,13 +61,13 @@ export function SignUpForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setServerError("");
 
     const formData = new FormData(e.currentTarget);
     const fieldErrors = validate(formData);
 
     if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
+      toastError("Please fix the highlighted fields and try again.");
       return;
     }
 
@@ -76,31 +77,23 @@ export function SignUpForm() {
     try {
       const result = await registerUser(formData);
       if (result?.error) {
-        setServerError(result.error);
+        toastError(result.error);
         setLoading(false);
         return;
       }
       // Account exists but isn't verified — send the user to the code page.
+      success("Account created — check your email for a verification code.");
       router.push(
         `/auth/verify-email?email=${encodeURIComponent(result.email ?? "")}`
       );
     } catch {
-      setServerError("Something went wrong. Please try again.");
+      toastError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      {serverError && (
-        <div
-          role="alert"
-          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-        >
-          {serverError}
-        </div>
-      )}
-
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
           <label

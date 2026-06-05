@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Save } from "lucide-react";
 import { updateNotificationPreferences } from "@/app/actions/notification-prefs";
 
@@ -10,24 +11,20 @@ export function NotificationPreferencesForm({
 }: {
   marketingEmails: boolean;
 }) {
+  const { success, error: toastError } = useToast();
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "ok" | "err";
-    text: string;
-  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
     const result = await updateNotificationPreferences(
       new FormData(e.currentTarget)
     );
     setSaving(false);
     if (result && "error" in result) {
-      setMessage({ type: "err", text: result.error });
+      toastError(result.error);
     } else {
-      setMessage({ type: "ok", text: "Saved." });
+      success("Preferences saved.");
     }
   }
 
@@ -76,16 +73,6 @@ export function NotificationPreferencesForm({
           <Save size={14} className="mr-1.5" aria-hidden="true" />
           {saving ? "Saving..." : "Save preferences"}
         </Button>
-        {message && (
-          <span
-            role={message.type === "err" ? "alert" : undefined}
-            className={`text-xs ${
-              message.type === "ok" ? "text-success" : "text-danger"
-            }`}
-          >
-            {message.text}
-          </span>
-        )}
       </div>
     </form>
   );

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { updateReview, deleteReview } from "@/app/actions/reviews";
 import { StarRating, StarRatingInput } from "@/components/store/star-rating";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 
 const MAX_COMMENT = 1000;
 
@@ -35,10 +36,10 @@ function formatDate(d: Date): string {
 
 export function MyReviewRow({ review }: MyReviewRowProps) {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [editing, setEditing] = useState(false);
   const [rating, setRating] = useState(review.rating);
   const [comment, setComment] = useState(review.comment ?? "");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const image = review.product.images[0]?.url ?? null;
@@ -46,20 +47,17 @@ export function MyReviewRow({ review }: MyReviewRowProps) {
   function startEdit() {
     setRating(review.rating);
     setComment(review.comment ?? "");
-    setError("");
     setEditing(true);
   }
 
   function cancelEdit() {
     setEditing(false);
-    setError("");
   }
 
   async function handleSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
     if (rating < 1) {
-      setError("Pick a star rating first.");
+      toastError("Pick a star rating first.");
       return;
     }
     setLoading(true);
@@ -68,11 +66,12 @@ export function MyReviewRow({ review }: MyReviewRowProps) {
     formData.set("comment", comment);
     const result = await updateReview(review.id, formData);
     if ("error" in result && result.error) {
-      setError(result.error);
+      toastError(result.error);
       setLoading(false);
       return;
     }
     setEditing(false);
+    success("Review updated.");
     router.refresh();
     setLoading(false);
   }
@@ -82,10 +81,11 @@ export function MyReviewRow({ review }: MyReviewRowProps) {
     setLoading(true);
     const result = await deleteReview(review.id);
     if ("error" in result && result.error) {
-      setError(result.error);
+      toastError(result.error);
       setLoading(false);
       return;
     }
+    success("Review removed.");
     router.refresh();
   }
 
@@ -151,9 +151,6 @@ export function MyReviewRow({ review }: MyReviewRowProps) {
                 >
                   Delete
                 </button>
-                {error && (
-                  <span className="text-xs text-danger ml-2">{error}</span>
-                )}
               </div>
             </>
           ) : (
@@ -177,11 +174,6 @@ export function MyReviewRow({ review }: MyReviewRowProps) {
               <div className="text-xs text-charcoal-soft text-right">
                 {comment.length}/{MAX_COMMENT}
               </div>
-              {error && (
-                <div className="text-sm text-danger bg-danger/10 px-3 py-2 rounded">
-                  {error}
-                </div>
-              )}
               <div className="flex gap-2">
                 <Button
                   type="submit"

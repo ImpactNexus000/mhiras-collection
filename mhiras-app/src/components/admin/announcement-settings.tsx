@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Save } from "lucide-react";
 import { updateAnnouncement } from "@/app/actions/admin-settings";
 
@@ -14,20 +15,16 @@ export function AnnouncementSettings({
   announcementText,
   announcementVisible,
 }: AnnouncementSettingsProps) {
+  const { success, error: toastError } = useToast();
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "ok" | "err";
-    text: string;
-  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
     const result = await updateAnnouncement(new FormData(e.currentTarget));
     setSaving(false);
-    if (result?.error) setMessage({ type: "err", text: result.error });
-    else setMessage({ type: "ok", text: "Saved." });
+    if (result?.error) toastError(result.error);
+    else success("Announcement saved.");
   }
 
   return (
@@ -72,16 +69,6 @@ export function AnnouncementSettings({
           <Save size={14} className="mr-1.5" aria-hidden="true" />
           {saving ? "Saving..." : "Save"}
         </Button>
-        {message && (
-          <span
-            role={message.type === "err" ? "alert" : undefined}
-            className={`text-xs ${
-              message.type === "ok" ? "text-success" : "text-danger"
-            }`}
-          >
-            {message.text}
-          </span>
-        )}
       </div>
     </form>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPromoCode, updatePromoCode } from "@/app/actions/promo-codes";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { X } from "lucide-react";
 
 export interface PromoData {
@@ -35,7 +36,7 @@ function toDateTimeLocal(iso: string | null): string {
 
 export function PromoForm({ promo, onClose }: PromoFormProps) {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const { success, error: toastError } = useToast();
   const [loading, setLoading] = useState(false);
   const [discountType, setDiscountType] = useState(
     promo?.discountType ?? "PERCENTAGE"
@@ -44,7 +45,6 @@ export function PromoForm({ promo, onClose }: PromoFormProps) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -54,11 +54,12 @@ export function PromoForm({ promo, onClose }: PromoFormProps) {
       : await createPromoCode(formData);
 
     if ("error" in result && result.error) {
-      setError(result.error);
+      toastError(result.error);
       setLoading(false);
       return;
     }
 
+    success(isEditing ? "Promo code updated." : "Promo code created.");
     router.refresh();
     onClose();
   }
@@ -80,11 +81,6 @@ export function PromoForm({ promo, onClose }: PromoFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="text-sm text-danger bg-danger/10 px-3 py-2 rounded">
-              {error}
-            </div>
-          )}
 
           {/* Code */}
           <div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { CreditCard } from "lucide-react";
 
 /**
@@ -13,6 +14,7 @@ export function DeliveryPaymentButton({
 }: {
   deliveryRequestId: string;
 }) {
+  const { error: toastError } = useToast();
   const [loading, setLoading] = useState(false);
 
   async function handlePay() {
@@ -28,9 +30,9 @@ export function DeliveryPaymentButton({
         window.location.href = data.authorization_url;
         return;
       }
-      alert(data.error || "Failed to start payment. Please try again.");
+      toastError(data.error || "Failed to start payment. Please try again.");
     } catch {
-      alert("Something went wrong. Please try again.");
+      toastError("Something went wrong. Please try again.");
     }
     setLoading(false);
   }

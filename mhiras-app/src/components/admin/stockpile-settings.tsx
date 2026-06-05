@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Save } from "lucide-react";
 import { updateStockpileSettings } from "@/app/actions/admin-stockpile";
 
@@ -10,23 +11,16 @@ export function StockpileSettings({
 }: {
   stockpileExpiryDays: number;
 }) {
+  const { success, error: toastError } = useToast();
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "ok" | "err";
-    text: string;
-  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
     const result = await updateStockpileSettings(new FormData(e.currentTarget));
     setSaving(false);
-    if (result?.error) {
-      setMessage({ type: "err", text: result.error });
-    } else {
-      setMessage({ type: "ok", text: "Saved." });
-    }
+    if (result?.error) toastError(result.error);
+    else success("Stockpile settings saved.");
   }
 
   return (
@@ -57,15 +51,6 @@ export function StockpileSettings({
           <Save size={14} className="mr-1.5" />
           {saving ? "Saving..." : "Save"}
         </Button>
-        {message && (
-          <span
-            className={`text-xs ${
-              message.type === "ok" ? "text-success" : "text-danger"
-            }`}
-          >
-            {message.text}
-          </span>
-        )}
       </div>
     </form>
   );

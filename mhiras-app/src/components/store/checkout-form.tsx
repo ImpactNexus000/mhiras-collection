@@ -22,6 +22,7 @@ import {
   type ValidatePromoResult,
 } from "@/app/actions/promo-codes";
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
+import { useToast } from "@/components/ui/toast";
 import { clearAppliedPromo, readAppliedPromo } from "@/lib/promo-storage";
 
 type PaymentMethod = "card" | "bank_transfer";
@@ -92,10 +93,10 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const router = useRouter();
   const { items, itemCount, subtotal, refreshCart } = useCart();
+  const { error: toastError } = useToast();
   const [fulfillment, setFulfillment] = useState<Fulfillment>("immediate");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -202,7 +203,6 @@ export function CheckoutForm({
   function selectFulfillment(next: Fulfillment) {
     setFulfillment(next);
     setErrors({});
-    setServerError("");
     if (next === "stockpile") setPaymentMethod("card");
   }
 
@@ -247,13 +247,13 @@ export function CheckoutForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setServerError("");
 
     const formData = new FormData(e.currentTarget);
     const fieldErrors = validate(formData);
 
     if (Object.keys(fieldErrors).length > 0) {
       setErrors(fieldErrors);
+      toastError("Please fix the highlighted fields and try again.");
       return;
     }
 
@@ -284,7 +284,7 @@ export function CheckoutForm({
       const result = await placeOrder(formData);
 
       if (result?.error) {
-        setServerError(result.error);
+        toastError(result.error);
         setLoading(false);
         return;
       }
@@ -333,7 +333,7 @@ export function CheckoutForm({
         }
 
         // If Paystack init fails, still redirect to order page
-        setServerError(
+        toastError(
           paystackData.error ||
             "Payment initialization failed. You can retry from your order page."
         );
@@ -348,7 +348,7 @@ export function CheckoutForm({
       // For bank transfer and pay on delivery, go straight to order page
       router.push(`/order/${result.orderNumber}`);
     } catch {
-      setServerError("Something went wrong. Please try again.");
+      toastError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
@@ -414,14 +414,6 @@ export function CheckoutForm({
         <div className="grid md:grid-cols-[1fr_340px]">
           {/* Form */}
           <div className="p-5 md:p-6">
-            {serverError && (
-              <div
-                role="alert"
-                className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-              >
-                {serverError}
-              </div>
-            )}
 
             {/* Fulfillment choice */}
             <div

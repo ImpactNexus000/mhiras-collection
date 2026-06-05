@@ -5,20 +5,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 
 export function AdminVerifyForm({ initialEmail }: { initialEmail: string }) {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
-  const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
 
     if (!/^\d{6}$/.test(code.trim())) {
-      setError("Enter the 6-digit code we sent.");
+      toastError("Enter the 6-digit code we sent.");
       return;
     }
 
@@ -31,30 +31,22 @@ export function AdminVerifyForm({ initialEmail }: { initialEmail: string }) {
       });
 
       if (result?.error) {
-        setError("Invalid or expired code. Try again or sign in for a new one.");
+        toastError("Invalid or expired code. Try again or sign in for a new one.");
         setVerifying(false);
         return;
       }
 
+      success("Signed in.");
       router.push("/admin");
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      toastError("Something went wrong. Please try again.");
       setVerifying(false);
     }
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-        >
-          {error}
-        </div>
-      )}
-
       <div className="mb-4">
         <label
           htmlFor="admin-verify-email"

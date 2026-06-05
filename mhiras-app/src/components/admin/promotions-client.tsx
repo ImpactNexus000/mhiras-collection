@@ -8,6 +8,7 @@ import {
   deletePromoCode,
 } from "@/app/actions/promo-codes";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Plus, Copy, Check } from "lucide-react";
 
 type PromoStatus = "active" | "inactive" | "expired" | "scheduled" | "used_up";
@@ -70,6 +71,7 @@ function formatDate(iso: string | null): string {
 
 export function PromotionsClient({ promos, stats }: PromotionsClientProps) {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<PromoData | undefined>(undefined);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -116,7 +118,9 @@ export function PromotionsClient({ promos, stats }: PromotionsClientProps) {
     startTransition(async () => {
       const result = await deletePromoCode(id);
       if ("message" in result && result.message) {
-        alert(result.message);
+        toastError(result.message);
+      } else {
+        success(`Promo code "${code}" deleted.`);
       }
       router.refresh();
       setPendingId(null);

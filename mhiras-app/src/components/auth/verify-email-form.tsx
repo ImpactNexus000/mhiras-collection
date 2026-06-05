@@ -3,24 +3,22 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { resendVerificationCode, verifyEmail } from "@/app/actions/auth";
 
 export function VerifyEmailForm({ initialEmail }: { initialEmail: string }) {
   const router = useRouter();
+  const { success, error: toastError, info } = useToast();
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [resending, startResend] = useTransition();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
-    setInfo("");
 
     if (!/^\d{6}$/.test(code.trim())) {
-      setError("Enter the 6-digit code we sent.");
+      toastError("Enter the 6-digit code we sent.");
       return;
     }
 
@@ -30,47 +28,31 @@ export function VerifyEmailForm({ initialEmail }: { initialEmail: string }) {
     setVerifying(false);
 
     if (result?.error) {
-      setError(result.error);
+      toastError(result.error);
       return;
     }
 
-    setInfo("Email verified. Redirecting to sign in...");
+    success("Email verified. Redirecting to sign in...");
     router.push(`/auth/signin?email=${encodeURIComponent(email)}`);
   }
 
   function handleResend() {
-    setError("");
-    setInfo("");
     if (!email.trim()) {
-      setError("Enter the email you signed up with first.");
+      toastError("Enter the email you signed up with first.");
       return;
     }
     startResend(async () => {
       const result = await resendVerificationCode(email);
       if (result?.error) {
-        setError(result.error);
+        toastError(result.error);
       } else {
-        setInfo("If that email is registered, a fresh code is on its way.");
+        info("If that email is registered, a fresh code is on its way.");
       }
     });
   }
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-        >
-          {error}
-        </div>
-      )}
-      {info && !error && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-sm text-green-800 rounded">
-          {info}
-        </div>
-      )}
-
       <div className="mb-4">
         <label
           htmlFor="verify-email"

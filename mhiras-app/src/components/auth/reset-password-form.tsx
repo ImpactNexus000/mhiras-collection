@@ -4,17 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { resetPassword } from "@/app/actions/password-reset";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
+  const { error: toastError } = useToast();
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
     setSaving(true);
 
     const formData = new FormData(e.currentTarget);
@@ -23,7 +23,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
     setSaving(false);
 
     if (result?.error) {
-      setError(result.error);
+      toastError(result.error);
       return;
     }
     setDone(true);
@@ -61,15 +61,6 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-        >
-          {error}
-        </div>
-      )}
-
       <div className="mb-3">
         <label
           htmlFor="reset-password"

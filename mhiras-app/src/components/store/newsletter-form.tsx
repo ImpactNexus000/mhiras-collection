@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
 import { subscribeToNewsletter } from "@/app/actions/newsletter";
 
@@ -13,38 +14,29 @@ interface NewsletterFormProps {
 }
 
 export function NewsletterForm({ source, variant = "light" }: NewsletterFormProps) {
+  const { success, error: toastError } = useToast();
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "err">("idle");
-  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading">("idle");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("loading");
-    setMessage("");
 
     const formData = new FormData(e.currentTarget);
     const result = await subscribeToNewsletter(formData);
+    setStatus("idle");
 
     if (result.error) {
-      setStatus("err");
-      setMessage(result.error);
+      toastError(result.error);
       return;
     }
 
-    setStatus("ok");
     setEmail("");
-    setMessage("You're on the list — we'll email you when new pieces drop.");
+    success("You're on the list — we'll email you when new pieces drop.");
   }
 
   const inputId = `newsletter-${source}`;
   const isDark = variant === "dark";
-  const helperColor = isDark
-    ? status === "err"
-      ? "text-red-300"
-      : "text-cream/80"
-    : status === "err"
-      ? "text-danger"
-      : "text-charcoal-soft";
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
@@ -82,14 +74,6 @@ export function NewsletterForm({ source, variant = "light" }: NewsletterFormProp
           )}
         </Button>
       </div>
-      {message && (
-        <p
-          role={status === "err" ? "alert" : "status"}
-          className={`mt-2 text-xs leading-snug ${helperColor}`}
-        >
-          {message}
-        </p>
-      )}
     </form>
   );
 }

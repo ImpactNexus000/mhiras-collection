@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/cart-context";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Loader2, Check } from "lucide-react";
 
 interface AddToCartButtonProps {
@@ -17,24 +18,24 @@ export function AddToCartButton({
   variant = "primary",
 }: AddToCartButtonProps) {
   const { addItem } = useCart();
+  const { success, error: toastError } = useToast();
   const [status, setStatus] = useState<"idle" | "loading" | "added" | "error">(
     "idle"
   );
-  const [errorMsg, setErrorMsg] = useState("");
 
   const isSoldOut = stock === 0;
 
   async function handleClick() {
     setStatus("loading");
-    setErrorMsg("");
 
     const result = await addItem(productId);
 
     if (result.error) {
-      setErrorMsg(result.error);
+      toastError(result.error);
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
     } else {
+      success("Added to cart.");
       setStatus("added");
       setTimeout(() => setStatus("idle"), 2000);
     }
@@ -72,18 +73,6 @@ export function AddToCartButton({
                 ? "Try Again"
                 : "Add to Cart"}
         </button>
-        {status === "error" && errorMsg && (
-          <p className="mt-1.5 text-[11px] text-danger leading-snug">
-            {errorMsg}
-          </p>
-        )}
-        <span role="status" aria-live="polite" className="sr-only">
-          {status === "added"
-            ? "Added to cart"
-            : status === "error"
-              ? errorMsg
-              : ""}
-        </span>
       </>
     );
   }
@@ -111,9 +100,6 @@ export function AddToCartButton({
           "Add to Cart"
         )}
       </Button>
-      {status === "error" && (
-        <p className="text-xs text-danger mt-1.5">{errorMsg}</p>
-      )}
     </div>
   );
 }

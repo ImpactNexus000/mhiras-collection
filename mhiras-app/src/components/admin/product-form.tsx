@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProduct, updateProduct } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { X } from "lucide-react";
 import { ImageUpload, UploadedImage } from "@/components/admin/image-upload";
 
@@ -43,7 +44,7 @@ interface ProductFormProps {
 
 export function ProductForm({ categories, product, onClose }: ProductFormProps) {
   const router = useRouter();
-  const [error, setError] = useState("");
+  const { success, error: toastError } = useToast();
   const [loading, setLoading] = useState(false);
   const isEditing = !!product;
 
@@ -58,7 +59,6 @@ export function ProductForm({ categories, product, onClose }: ProductFormProps) 
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -71,11 +71,12 @@ export function ProductForm({ categories, product, onClose }: ProductFormProps) 
       : await createProduct(formData);
 
     if (result.error) {
-      setError(result.error);
+      toastError(result.error);
       setLoading(false);
       return;
     }
 
+    success(isEditing ? "Product updated." : "Product created.");
     router.refresh();
     onClose();
   }
@@ -98,11 +99,6 @@ export function ProductForm({ categories, product, onClose }: ProductFormProps) 
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="text-sm text-danger bg-danger/10 px-3 py-2 rounded">
-              {error}
-            </div>
-          )}
 
           {/* Name */}
           <div>

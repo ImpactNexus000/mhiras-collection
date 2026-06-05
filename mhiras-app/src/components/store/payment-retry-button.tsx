@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { CreditCard } from "lucide-react";
 
 export function PaymentRetryButton({ orderId }: { orderId: string }) {
+  const { error: toastError } = useToast();
   const [loading, setLoading] = useState(false);
 
   async function handleRetry() {
@@ -24,9 +26,9 @@ export function PaymentRetryButton({ orderId }: { orderId: string }) {
         return;
       }
 
-      alert(data.error || "Failed to initialize payment. Please try again.");
+      toastError(data.error || "Failed to initialize payment. Please try again.");
     } catch {
-      alert("Something went wrong. Please try again.");
+      toastError("Something went wrong. Please try again.");
     }
 
     setLoading(false);

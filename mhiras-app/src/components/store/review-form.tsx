@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createReview, deleteReview } from "@/app/actions/reviews";
 import { StarRatingInput } from "@/components/store/star-rating";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 
 const MAX_COMMENT = 1000;
 
@@ -19,18 +20,17 @@ interface ReviewFormProps {
 
 export function ReviewForm({ productId, existingReview }: ReviewFormProps) {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [rating, setRating] = useState(existingReview?.rating ?? 0);
   const [comment, setComment] = useState(existingReview?.comment ?? "");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const isEditing = !!existingReview;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
 
     if (rating < 1) {
-      setError("Pick a star rating first.");
+      toastError("Pick a star rating first.");
       return;
     }
 
@@ -43,11 +43,12 @@ export function ReviewForm({ productId, existingReview }: ReviewFormProps) {
     const result = await createReview(productId, formData);
 
     if ("error" in result && result.error) {
-      setError(result.error);
+      toastError(result.error);
       setLoading(false);
       return;
     }
 
+    success(isEditing ? "Review updated." : "Review posted.");
     router.refresh();
     setLoading(false);
   }
@@ -58,12 +59,13 @@ export function ReviewForm({ productId, existingReview }: ReviewFormProps) {
     setLoading(true);
     const result = await deleteReview(existingReview.id);
     if ("error" in result && result.error) {
-      setError(result.error);
+      toastError(result.error);
       setLoading(false);
       return;
     }
     setRating(0);
     setComment("");
+    success("Review removed.");
     router.refresh();
     setLoading(false);
   }
@@ -95,12 +97,6 @@ export function ReviewForm({ productId, existingReview }: ReviewFormProps) {
           {comment.length}/{MAX_COMMENT}
         </div>
       </div>
-
-      {error && (
-        <div className="text-sm text-danger bg-danger/10 px-3 py-2 rounded">
-          {error}
-        </div>
-      )}
 
       <div className="flex gap-3">
         <Button type="submit" variant="primary" size="sm" disabled={loading}>

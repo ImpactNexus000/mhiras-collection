@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Upload, X, GripVertical, Star } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 export interface UploadedImage {
   url: string;
@@ -20,8 +21,8 @@ export function ImageUpload({
   onChange,
   maxImages = 6,
 }: ImageUploadProps) {
+  const { error: toastError } = useToast();
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -31,12 +32,11 @@ export function ImageUpload({
       const remaining = maxImages - images.length;
 
       if (remaining <= 0) {
-        setError(`Maximum ${maxImages} images allowed.`);
+        toastError(`Maximum ${maxImages} images allowed.`);
         return;
       }
 
       const toUpload = fileArray.slice(0, remaining);
-      setError("");
       setUploading(true);
 
       const newImages: UploadedImage[] = [];
@@ -54,7 +54,7 @@ export function ImageUpload({
           const data = await res.json();
 
           if (!res.ok) {
-            setError(data.error || "Upload failed");
+            toastError(data.error || "Upload failed");
             continue;
           }
 
@@ -64,7 +64,7 @@ export function ImageUpload({
             isPrimary: images.length === 0 && newImages.length === 0,
           });
         } catch {
-          setError("Upload failed. Please try again.");
+          toastError("Upload failed. Please try again.");
         }
       }
 
@@ -74,7 +74,7 @@ export function ImageUpload({
 
       setUploading(false);
     },
-    [images, maxImages, onChange]
+    [images, maxImages, onChange, toastError]
   );
 
   function handleDrop(e: React.DragEvent) {
@@ -155,10 +155,6 @@ export function ImageUpload({
           JPG, PNG, or WebP — max 5MB each — up to {maxImages} images
         </p>
       </div>
-
-      {error && (
-        <p className="text-xs text-danger mt-2">{error}</p>
-      )}
 
       {/* Image previews */}
       {images.length > 0 && (

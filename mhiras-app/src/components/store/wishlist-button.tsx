@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { toggleWishlist, isInWishlist } from "@/app/actions/wishlist";
 import { Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
 interface WishlistButtonProps {
@@ -20,6 +21,7 @@ export function WishlistButton({
   initialWishlisted,
 }: WishlistButtonProps) {
   const { status } = useSession();
+  const { success, error: toastError } = useToast();
   const pathname = usePathname();
   const router = useRouter();
   const [wishlisted, setWishlisted] = useState(initialWishlisted ?? false);
@@ -55,11 +57,13 @@ export function WishlistButton({
     const result = await toggleWishlist(productId);
 
     if (result.error) {
+      toastError(result.error);
       setLoading(false);
       return;
     }
 
     setWishlisted(result.added ?? false);
+    success(result.added ? "Added to wishlist." : "Removed from wishlist.");
     setLoading(false);
   }
 

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { createAddress, updateAddress } from "@/app/actions/addresses";
 import { NG_STATES } from "@/lib/ng-states";
 
@@ -29,13 +30,12 @@ interface AddressFormProps {
 
 export function AddressForm({ initial, forceDefault }: AddressFormProps) {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const isEdit = !!initial?.id;
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState("");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
     const formData = new FormData(e.currentTarget);
     if (forceDefault) formData.set("isDefault", "on");
 
@@ -45,9 +45,10 @@ export function AddressForm({ initial, forceDefault }: AddressFormProps) {
           ? await updateAddress(initial.id, formData)
           : await createAddress(formData);
       if (result && "error" in result) {
-        setError(result.error);
+        toastError(result.error);
         return;
       }
+      success(isEdit ? "Address updated." : "Address saved.");
       router.push("/account/addresses");
       router.refresh();
     });
@@ -55,15 +56,6 @@ export function AddressForm({ initial, forceDefault }: AddressFormProps) {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-        >
-          {error}
-        </div>
-      )}
-
       <div className="mb-3">
         <label
           htmlFor="addr-label"

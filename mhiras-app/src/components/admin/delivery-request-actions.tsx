@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
 import { updateDeliveryRequestStatus } from "@/app/actions/admin-stockpile";
 import type { DeliveryRequestStatus } from "@/generated/prisma/client";
 
@@ -36,6 +37,7 @@ export function DeliveryRequestActions({
   status: DeliveryRequestStatus;
 }) {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [loading, setLoading] = useState(false);
 
   const actions = nextActions[status] ?? [];
@@ -68,9 +70,10 @@ export function DeliveryRequestActions({
     setLoading(false);
 
     if (res?.error) {
-      alert(res.error);
+      toastError(res.error);
       return;
     }
+    success("Delivery request updated.");
     router.refresh();
   }
 

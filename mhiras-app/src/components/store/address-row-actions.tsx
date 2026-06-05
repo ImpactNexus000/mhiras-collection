@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteAddress, setDefaultAddress } from "@/app/actions/addresses";
+import { useToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
 
 interface AddressRowActionsProps {
@@ -17,24 +18,23 @@ export function AddressRowActions({
   isDefault,
   displayName,
 }: AddressRowActionsProps) {
+  const { success, error: toastError } = useToast();
   const [pending, startTransition] = useTransition();
   const [action, setAction] = useState<"none" | "default" | "delete">("none");
-  const [error, setError] = useState("");
 
   function handleDefault() {
-    setError("");
     setAction("default");
     const formData = new FormData();
     formData.set("addressId", addressId);
     startTransition(async () => {
       const result = await setDefaultAddress(formData);
-      if (result && "error" in result) setError(result.error);
+      if (result && "error" in result) toastError(result.error);
+      else success("Default address updated.");
       setAction("none");
     });
   }
 
   function handleDelete() {
-    setError("");
     const ok = window.confirm(`Delete ${displayName}?\n\nThis can't be undone.`);
     if (!ok) return;
     setAction("delete");
@@ -42,7 +42,8 @@ export function AddressRowActions({
     formData.set("addressId", addressId);
     startTransition(async () => {
       const result = await deleteAddress(formData);
-      if (result && "error" in result) setError(result.error);
+      if (result && "error" in result) toastError(result.error);
+      else success("Address deleted.");
       setAction("none");
     });
   }
@@ -81,11 +82,6 @@ export function AddressRowActions({
           Delete
         </button>
       </div>
-      {error && (
-        <p role="alert" className="text-xs text-danger mt-1">
-          {error}
-        </p>
-      )}
     </>
   );
 }

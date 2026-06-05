@@ -2,21 +2,21 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { requestPasswordReset } from "@/app/actions/password-reset";
 
 export function ForgotPasswordForm() {
+  const { error: toastError } = useToast();
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
-  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
     setSending(true);
     const result = await requestPasswordReset(new FormData(e.currentTarget));
     setSending(false);
     if (result?.error) {
-      setError(result.error);
+      toastError(result.error);
       return;
     }
     setDone(true);
@@ -36,15 +36,6 @@ export function ForgotPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-        >
-          {error}
-        </div>
-      )}
-
       <div className="mb-5">
         <label
           htmlFor="forgot-email"

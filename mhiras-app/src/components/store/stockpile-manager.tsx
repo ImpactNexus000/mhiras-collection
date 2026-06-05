@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { Package, Loader2, AlertTriangle } from "lucide-react";
 import { createDeliveryRequest } from "@/app/actions/stockpile";
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
@@ -47,7 +48,7 @@ export function StockpileManager({
   const [showForm, setShowForm] = useState(false);
   const [selectedState, setSelectedState] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { error: toastError } = useToast();
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -67,14 +68,13 @@ export function StockpileManager({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
 
     if (selected.size === 0) {
-      setError("Select at least one item to have delivered.");
+      toastError("Select at least one item to have delivered.");
       return;
     }
     if (!zone) {
-      setError("Please choose a state we deliver to.");
+      toastError("Please choose a state we deliver to.");
       return;
     }
 
@@ -85,7 +85,7 @@ export function StockpileManager({
     const result = await createDeliveryRequest(formData);
 
     if (result?.error) {
-      setError(result.error);
+      toastError(result.error);
       setLoading(false);
       return;
     }
@@ -102,12 +102,12 @@ export function StockpileManager({
         window.location.href = data.authorization_url;
         return;
       }
-      setError(
+      toastError(
         data.error ||
           "Your delivery request was created but payment could not start. Try again from your delivery requests."
       );
     } catch {
-      setError("Something went wrong starting payment. Please try again.");
+      toastError("Something went wrong starting payment. Please try again.");
     }
     setLoading(false);
   }
@@ -214,15 +214,6 @@ export function StockpileManager({
             {selected.size} item{selected.size === 1 ? "" : "s"} · where should
             we send them?
           </p>
-
-          {error && (
-            <div
-              role="alert"
-              className="mb-4 p-3 bg-red-50 border border-red-200 text-sm text-red-700 rounded"
-            >
-              {error}
-            </div>
-          )}
 
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
@@ -362,10 +353,7 @@ export function StockpileManager({
             </Button>
             <button
               type="button"
-              onClick={() => {
-                setShowForm(false);
-                setError("");
-              }}
+              onClick={() => setShowForm(false)}
               className="px-4 text-sm text-charcoal-soft hover:text-charcoal cursor-pointer"
             >
               Cancel
