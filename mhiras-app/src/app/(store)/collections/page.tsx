@@ -7,40 +7,61 @@ export const metadata: Metadata = {
 };
 
 // Hard-coded preview of upcoming curated edits. None of these are shoppable
-// yet — the cards render as non-interactive "Coming Soon" tiles. When the
-// Collection model is wired through admin (CollectionProduct join is already
-// in the schema), this becomes a DB-driven list and the cards link to
-// /collections/[slug].
+// yet — the cards render as non-interactive "Coming Soon" tiles. New Arrivals
+// is the pinned featured edit (always first). When the Collection model is
+// wired through admin (CollectionProduct join is already in the schema), this
+// becomes a DB-driven list and the cards link to /collections/[slug].
 const collections = [
   {
-    slug: "spring-edit-2026",
-    name: "Light Layers & Fresh Prints",
-    tag: "Spring Edit 2026",
-    size: "large",
+    slug: "new-arrivals",
+    name: "New Arrivals",
+    tag: "Fresh UK Bale · Just Arrived 🔥",
+    featured: true,
   },
   {
-    slug: "workwear-capsule",
-    name: "The Workwear Capsule",
-    tag: "Timeless Classics",
-    size: "large",
+    slug: "dresses",
+    name: "Dresses Collection",
+    tag: "Mini · Midi · Maxi · Dinner · Bodycon",
   },
   {
-    slug: "accessories-edit",
-    name: "The Accessories Edit",
-    tag: "Bags & More",
-    size: "small",
+    slug: "corporate-classy",
+    name: "Corporate / Classy Wear",
+    tag: "Office Fits · Boss Babe Collection",
   },
   {
-    slug: "budget-steals",
-    name: "Budget Steals",
-    tag: "Under ₦5,000",
-    size: "small",
+    slug: "casual-wear",
+    name: "Casual Wear",
+    tag: "Everyday Fits · Denim · Chill Fits",
   },
   {
-    slug: "for-him",
-    name: "For Him",
-    tag: "Men's Selection",
-    size: "small",
+    slug: "luxury-premium",
+    name: "Luxury / Premium Finds",
+    tag: "Rich Aunty Collection · Elite Closet",
+  },
+  {
+    slug: "shoes",
+    name: "Shoes Collection",
+    tag: "Heels · Sneakers · Flats · Sandals",
+  },
+  {
+    slug: "bags",
+    name: "Bags Collection",
+    tag: "Totes · Mini · Luxury · Everyday",
+  },
+  {
+    slug: "accessories",
+    name: "Accessories",
+    tag: "Jewelry · Sunglasses · Belts · Watches",
+  },
+  {
+    slug: "budget-corner",
+    name: "Budget Corner",
+    tag: "Under ₦5k · Steals · Affordable Picks",
+  },
+  {
+    slug: "sales-clearance",
+    name: "Sales & Clearance",
+    tag: "Flash Sale · Last Pieces · Clearance",
   },
 ];
 
@@ -62,8 +83,8 @@ function ComingSoonBadge() {
 }
 
 export default function CollectionsPage() {
-  const large = collections.filter((c) => c.size === "large");
-  const small = collections.filter((c) => c.size === "small");
+  const featured = collections.find((c) => c.featured);
+  const rest = collections.filter((c) => !c.featured);
 
   return (
     <>
@@ -83,37 +104,34 @@ export default function CollectionsPage() {
 
       {/* Collections grid — preview only, not yet shoppable */}
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
-        {/* Large cards */}
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
-          {large.map((col, i) => (
-            <div
-              key={col.slug}
-              aria-label={`${col.name} — coming soon`}
-              className={`bg-gradient-to-br ${gradients[i]} rounded-lg overflow-hidden min-h-[280px] md:min-h-[320px] flex flex-col justify-end p-7 relative opacity-90`}
-            >
-              <span className="absolute top-4 right-4">
-                <ComingSoonBadge />
-              </span>
-              <div className="text-xs tracking-widest uppercase text-copper mb-2">
-                {col.tag}
-              </div>
-              <h2 className="font-display text-3xl md:text-4xl font-light text-cream italic leading-tight mb-2">
-                {col.name}
-              </h2>
-              <p className="text-sm text-charcoal-soft">
-                We&apos;re putting this edit together — check back soon.
-              </p>
+        {/* Featured: New Arrivals — always on top */}
+        {featured && (
+          <div
+            aria-label={`${featured.name} — coming soon`}
+            className={`bg-gradient-to-br ${gradients[0]} rounded-lg overflow-hidden min-h-[280px] md:min-h-[320px] flex flex-col justify-end p-7 relative opacity-90 mb-4`}
+          >
+            <span className="absolute top-4 right-4">
+              <ComingSoonBadge />
+            </span>
+            <div className="text-xs tracking-widest uppercase text-copper mb-2">
+              {featured.tag}
             </div>
-          ))}
-        </div>
+            <h2 className="font-display text-3xl md:text-4xl font-light text-cream italic leading-tight mb-2">
+              {featured.name}
+            </h2>
+            <p className="text-sm text-charcoal-soft">
+              We&apos;re putting this edit together — check back soon.
+            </p>
+          </div>
+        )}
 
-        {/* Small cards */}
+        {/* The rest */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {small.map((col, i) => (
+          {rest.map((col, i) => (
             <div
               key={col.slug}
               aria-label={`${col.name} — coming soon`}
-              className={`bg-gradient-to-br ${gradients[i + 2]} rounded-lg overflow-hidden min-h-[200px] md:min-h-[240px] flex flex-col justify-end p-5 relative opacity-90`}
+              className={`bg-gradient-to-br ${gradients[i % gradients.length]} rounded-lg overflow-hidden min-h-[200px] md:min-h-[240px] flex flex-col justify-end p-5 relative opacity-90`}
             >
               <span className="absolute top-3 right-3">
                 <ComingSoonBadge />
