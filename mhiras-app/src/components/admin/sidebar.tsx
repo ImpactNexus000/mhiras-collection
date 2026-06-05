@@ -13,6 +13,8 @@ import {
   Megaphone,
   Truck,
   Settings,
+  Store,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +66,20 @@ export function AdminSidebar() {
           );
         })}
       </nav>
+
+      {/* View the customer-facing storefront (new tab so admin keeps this open) */}
+      <div className="border-t border-charcoal-mid py-2">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-5 py-3 text-sm text-charcoal-soft hover:text-cream hover:bg-charcoal-mid/50 transition-colors"
+        >
+          <Store size={16} />
+          View Store
+          <ExternalLink size={12} className="ml-auto opacity-60" aria-hidden="true" />
+        </a>
+      </div>
 
       {/* Admin user */}
       <div className="mt-auto px-5 py-4 border-t border-charcoal-mid">

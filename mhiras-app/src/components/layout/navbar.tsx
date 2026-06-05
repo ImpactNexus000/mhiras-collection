@@ -61,6 +61,14 @@ export async function Navbar() {
           <Link href="/about" className="hover:text-cream transition-colors">
             About
           </Link>
+          {user?.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className="text-copper hover:text-copper-light transition-colors font-medium"
+            >
+              Admin
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -124,6 +132,15 @@ export async function Navbar() {
             <Search size={18} aria-hidden="true" />
           </Link>
           <CartBadge className="text-charcoal-soft" />
+          {user?.role === "ADMIN" && (
+            <Link
+              href="/admin"
+              aria-label="Admin dashboard"
+              className="text-copper text-xs font-medium uppercase tracking-wider"
+            >
+              Admin
+            </Link>
+          )}
           {user ? (
             <Link
               href="/account"
