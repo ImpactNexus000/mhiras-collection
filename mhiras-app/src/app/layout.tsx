@@ -56,6 +56,10 @@ export const metadata: Metadata = {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
+  verification: {
+    // Google Search Console — renders <meta name="google-site-verification">.
+    google: "MkBOvggj2_xadFluoRewmDsqBxw4IN1LXTTQPEtVgGQ",
+  },
 };
 
 export default function RootLayout({
