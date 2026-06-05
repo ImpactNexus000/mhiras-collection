@@ -183,6 +183,14 @@ export default async function OrderConfirmationPage({
     order.paymentMethod === "CARD" &&
     order.paymentStatus === "PENDING" &&
     !isCancelled;
+  const isCardFailed =
+    order.paymentMethod === "CARD" &&
+    order.paymentStatus === "FAILED" &&
+    !isCancelled;
+  // A card order that still needs paying — never completed (PENDING) or
+  // declined (FAILED). Both should offer a fresh payment attempt; each retry
+  // initializes a brand-new Paystack reference.
+  const canRetryPayment = isCardPending || isCardFailed;
 
   // Banner config
   let bannerIcon = <Check size={28} className="text-white" />;
@@ -200,6 +208,11 @@ export default async function OrderConfirmationPage({
     bannerBg = "bg-warning";
     bannerTitle = "Payment Failed";
     bannerMessage = "Your payment could not be processed. You can retry below.";
+  } else if (isCardFailed) {
+    bannerIcon = <AlertTriangle size={28} className="text-white" />;
+    bannerBg = "bg-warning";
+    bannerTitle = "Payment Failed";
+    bannerMessage = "Your payment didn't go through. You can retry below.";
   } else if (isCardPending) {
     bannerIcon = <Clock size={28} className="text-white" />;
     bannerBg = "bg-gold";
@@ -240,7 +253,7 @@ export default async function OrderConfirmationPage({
         </p>
 
         <div className="flex gap-3 justify-center mt-5">
-          {isCardPending && (
+          {canRetryPayment && (
             <PaymentRetryButton orderId={order.id} />
           )}
           <Link href="/account/orders">
