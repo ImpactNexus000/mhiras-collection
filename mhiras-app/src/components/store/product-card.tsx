@@ -18,7 +18,7 @@ export interface ProductCardProps {
   badge?: string | null;
   image?: string | null;
   stock?: number;
-  /** UK sizes a customer may order. Omit for un-sized items (e.g. bales). */
+  /** Reserved. Size is chosen on the product page; cards quick-add directly. */
   availableSizes?: string[] | null;
   isSoldOut?: boolean;
   isWishlisted?: boolean;
@@ -41,7 +41,6 @@ export function ProductCard({
   badge,
   image,
   stock = 0,
-  availableSizes,
   isSoldOut = false,
   isWishlisted,
   showAddToCart = true,
@@ -142,15 +141,11 @@ export function ProductCard({
         </div>
       </Link>
 
-      {/* Actions — "Add to Cart" reveals a size picker for sized items so the
-          choice still flows to the order; un-sized items add directly. */}
+      {/* Actions — quick add straight to cart; size is chosen on the product
+          page. */}
       {showAddToCart && productId && (
         <div className="px-4 pb-4">
-          <CardAddToCart
-            productId={productId}
-            stock={stock}
-            availableSizes={availableSizes}
-          />
+          <CardAddToCart productId={productId} stock={stock} />
         </div>
       )}
     </div>
