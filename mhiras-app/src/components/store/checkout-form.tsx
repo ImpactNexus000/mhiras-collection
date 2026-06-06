@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/context/cart-context";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Lock,
@@ -24,9 +24,12 @@ import {
 import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
 import { useToast } from "@/components/ui/toast";
 import { clearAppliedPromo, readAppliedPromo } from "@/lib/promo-storage";
+import { SIZE_CHART } from "@/lib/size-guide";
 
 type PaymentMethod = "card" | "bank_transfer";
 type Fulfillment = "immediate" | "stockpile";
+
+const ALL_SIZES = SIZE_CHART.map((row) => row.size);
 
 const states = [
   "Lagos",
@@ -99,6 +102,10 @@ export function CheckoutForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  // Per-line chosen size, keyed by cartItemId. Seeded from any size already
+  // chosen (e.g. on the product page); card-added lines start blank.
+  const [itemSizes, setItemSizes] = useState<Record<string, string>>({});
+  const [sizeError, setSizeError] = useState(false);
 
   // Default-pick the customer's default saved address (or the first one) so
   // checkout is one-tap for repeat buyers.
@@ -245,6 +252,19 @@ export function CheckoutForm({
     clearAppliedPromo();
   }
 
+  // Seed each line's size from any size already chosen; new lines start blank.
+  useEffect(() => {
+    setItemSizes((prev) => {
+      const next = { ...prev };
+      for (const item of items) {
+        if (next[item.cartItemId] === undefined) {
+          next[item.cartItemId] = item.size ?? "";
+        }
+      }
+      return next;
+    });
+  }, [items]);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -256,6 +276,17 @@ export function CheckoutForm({
       toastError("Please fix the highlighted fields and try again.");
       return;
     }
+
+    // Every line must have a size before we can place the order.
+    const missingSize = items.some(
+      (item) => !(itemSizes[item.cartItemId] || item.size)
+    );
+    if (missingSize) {
+      setSizeError(true);
+      toastError("Please select a size for each item before checking out.");
+      return;
+    }
+    setSizeError(false);
 
     setErrors({});
     setLoading(true);
@@ -271,7 +302,7 @@ export function CheckoutForm({
           name: item.name,
           price: item.price,
           quantity: item.quantity,
-          size: item.size,
+          size: itemSizes[item.cartItemId] || item.size,
         }))
       )
     );
@@ -859,22 +890,63 @@ export function CheckoutForm({
             </h2>
 
             <div className="mb-4 space-y-3">
-              {items.map((item) => (
-                <div
-                  key={item.productId}
-                  className="flex gap-3 items-center pb-3 border-b border-border last:border-b-0"
-                >
-                  <div className="w-12 h-16 bg-cream-dark border border-border flex-shrink-0 rounded" />
-                  <div>
-                    <div className="text-sm font-medium">{item.name}</div>
-                    <div className="text-xs text-charcoal-soft">
-                      {item.size && `Size ${item.size} · `}
-                      {formatPrice(item.price)}
-                      {item.quantity > 1 && ` × ${item.quantity}`}
+              {items.map((item) => {
+                const chosenSize = itemSizes[item.cartItemId] ?? item.size ?? "";
+                const sizeOptions =
+                  item.availableSizes && item.availableSizes.length > 0
+                    ? item.availableSizes
+                    : ALL_SIZES;
+                const missing = sizeError && !chosenSize;
+                return (
+                  <div
+                    key={item.cartItemId}
+                    className="flex gap-3 items-center pb-3 border-b border-border last:border-b-0"
+                  >
+                    <div className="w-12 h-16 bg-cream-dark border border-border flex-shrink-0 rounded" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium">{item.name}</div>
+                      <div className="text-xs text-charcoal-soft">
+                        {formatPrice(item.price)}
+                        {item.quantity > 1 && ` × ${item.quantity}`}
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <label
+                          htmlFor={`size-${item.cartItemId}`}
+                          className="sr-only"
+                        >
+                          Size for {item.name}
+                        </label>
+                        <select
+                          id={`size-${item.cartItemId}`}
+                          value={chosenSize}
+                          onChange={(e) =>
+                            setItemSizes((prev) => ({
+                              ...prev,
+                              [item.cartItemId]: e.target.value,
+                            }))
+                          }
+                          className={cn(
+                            "text-xs border rounded px-2 py-1 bg-white outline-none focus:border-copper",
+                            missing ? "border-danger" : "border-border"
+                          )}
+                        >
+                          <option value="">Select size (UK)</option>
+                          {sizeOptions.map((s) => (
+                            <option key={s} value={s}>
+                              UK {s}
+                            </option>
+                          ))}
+                        </select>
+                        {missing && (
+                          <span className="text-[11px] text-danger">
+                            Required
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Promo code */}

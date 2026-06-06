@@ -210,6 +210,7 @@ export async function getProductsForCart(productIds: string[]) {
     originalPrice: p.originalPrice,
     imageUrl: p.images[0]?.url ?? null,
     stock: p.stock,
+    availableSizes: p.availableSizes,
   }));
 }
 

@@ -33,6 +33,7 @@ export interface CartItem {
   image?: string | null;
   quantity: number;
   maxStock: number;
+  availableSizes?: string[];
 }
 
 interface CartContextType {
@@ -119,6 +120,7 @@ function buildGuestItems(
       image: product.imageUrl,
       quantity: Math.min(entry.quantity, product.stock),
       maxStock: product.stock,
+      availableSizes: product.availableSizes,
     });
   }
   return items;
@@ -141,6 +143,7 @@ function mapDbCartToItems(
     image: item.product.images[0]?.url ?? null,
     quantity: item.quantity,
     maxStock: item.product.stock,
+    availableSizes: item.product.availableSizes,
   }));
 }
 
