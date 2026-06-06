@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
-import { AddToCartButton } from "@/components/store/add-to-cart-button";
 import { WishlistButton } from "@/components/store/wishlist-button";
 import { StarRating } from "@/components/store/star-rating";
 
@@ -139,14 +138,25 @@ export function ProductCard({
         </div>
       </Link>
 
-      {/* Actions */}
-      {showAddToCart && productId && (
+      {/* Actions — size is chosen on the product page, so cards link there
+          rather than quick-adding (keeps every order sized). */}
+      {showAddToCart && (
         <div className="px-4 pb-4">
-          <AddToCartButton
-            productId={productId}
-            stock={stock}
-            variant="card"
-          />
+          {isSoldOut ? (
+            <button
+              disabled
+              className="w-full bg-cream-dark text-charcoal-soft text-xs uppercase tracking-wider py-2.5 cursor-not-allowed"
+            >
+              Sold Out
+            </button>
+          ) : (
+            <Link
+              href={`/shop/${slug}`}
+              className="block w-full text-center bg-charcoal text-cream text-xs uppercase tracking-wider py-2.5 hover:bg-copper transition-colors"
+            >
+              Select Size
+            </Link>
+          )}
         </div>
       )}
     </div>

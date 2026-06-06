@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ProductCard } from "@/components/store/product-card";
-import { AddToCartButton } from "@/components/store/add-to-cart-button";
+import { ProductPurchase } from "@/components/store/product-purchase";
 import { SizeGuideModal } from "@/components/store/size-guide-modal";
 import { WishlistButton } from "@/components/store/wishlist-button";
 import { StarRating } from "@/components/store/star-rating";
@@ -301,7 +301,7 @@ export default async function ProductDetailPage({
 
           {/* CTA buttons */}
           <div className="flex flex-col gap-3">
-            <AddToCartButton productId={product.id} stock={product.stock} />
+            <ProductPurchase productId={product.id} stock={product.stock} />
             <WishlistButton
               productId={product.id}
               initialWishlisted={wishlistSet.has(product.id)}
