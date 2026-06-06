@@ -16,19 +16,31 @@ const conditionLabel: Record<string, string> = {
 };
 
 export default async function HomePage() {
-  const [categories, { products: justDropped }, wishlistSet] =
-    await Promise.all([
-      getCategories(CategoryKind.RETAIL),
-      getProducts({ kind: CategoryKind.RETAIL }, 1, 6, {
-        field: "createdAt",
-        direction: "desc",
-      }),
-      getWishlistSet(),
-    ]);
+  const [
+    categories,
+    { products: justDropped },
+    { products: featured },
+    wishlistSet,
+  ] = await Promise.all([
+    getCategories(CategoryKind.RETAIL),
+    getProducts({ kind: CategoryKind.RETAIL }, 1, 6, {
+      field: "createdAt",
+      direction: "desc",
+    }),
+    getProducts({ kind: CategoryKind.RETAIL, featured: true }, 1, 6, {
+      field: "createdAt",
+      direction: "desc",
+    }),
+    getWishlistSet(),
+  ]);
 
-  const ratingMap = await getRatingSummariesForProducts(
-    justDropped.map((p) => p.id)
-  );
+  // Don't repeat a featured item in New Arrivals — it already has a spotlight.
+  const featuredIds = new Set(featured.map((p) => p.id));
+  const newArrivals = justDropped.filter((p) => !featuredIds.has(p.id));
+
+  const ratingMap = await getRatingSummariesForProducts([
+    ...new Set([...featured, ...newArrivals].map((p) => p.id)),
+  ]);
 
   // Brand structured data — helps Google show the org and a search box.
   const jsonLd = [
@@ -135,12 +147,13 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Just Dropped */}
-      {justDropped.length > 0 && (
+      {/* Featured — admin-curated picks via the "Feature on homepage"
+          checkbox on the product form. Hidden when nothing is featured. */}
+      {featured.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 md:px-6 py-8">
           <div className="flex justify-between items-baseline mb-4">
             <h2 className="font-display text-3xl md:text-4xl font-light italic">
-              New Arrivals
+              Featured
             </h2>
             <Link
               href="/shop"
@@ -151,7 +164,7 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {justDropped.map((product, i) => (
+            {featured.map((product, i) => (
               <ProductCard
                 key={product.id}
                 productId={product.id}
@@ -169,6 +182,46 @@ export default async function HomePage() {
                 ratingAverage={ratingMap.get(product.id)?.average}
                 ratingCount={ratingMap.get(product.id)?.count}
                 priority={i < 2}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* New Arrivals */}
+      {newArrivals.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+          <div className="flex justify-between items-baseline mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-light italic">
+              New Arrivals
+            </h2>
+            <Link
+              href="/shop"
+              className="text-sm uppercase tracking-wider text-copper underline"
+            >
+              See all &rarr;
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {newArrivals.map((product, i) => (
+              <ProductCard
+                key={product.id}
+                productId={product.id}
+                slug={product.slug}
+                name={product.name}
+                category={product.category.name}
+                size={product.size}
+                price={product.sellingPrice}
+                originalPrice={product.originalPrice}
+                badge={conditionLabel[product.condition]}
+                image={product.images[0]?.url ?? null}
+                stock={product.stock}
+                isSoldOut={product.stock === 0}
+                isWishlisted={wishlistSet.has(product.id)}
+                ratingAverage={ratingMap.get(product.id)?.average}
+                ratingCount={ratingMap.get(product.id)?.count}
+                priority={featured.length === 0 && i < 2}
               />
             ))}
           </div>
