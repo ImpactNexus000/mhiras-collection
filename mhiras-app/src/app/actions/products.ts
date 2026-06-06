@@ -50,6 +50,7 @@ export async function createProduct(formData: FormData) {
   const stock = parseInt(formData.get("stock") as string, 10) || 1;
   const status = (formData.get("status") as string) as ProductStatus;
   const featured = formData.get("featured") === "on";
+  const availableSizes = formData.getAll("sizes").filter(Boolean) as string[];
   const images = parseImages(formData);
 
   if (!name || !categoryId || !sellingPrice) {
@@ -76,6 +77,7 @@ export async function createProduct(formData: FormData) {
       stock,
       status: status || "DRAFT",
       featured,
+      availableSizes,
       images: {
         create: images.map((img, i) => ({
           url: img.url,
@@ -105,6 +107,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   const stock = parseInt(formData.get("stock") as string, 10);
   const status = (formData.get("status") as string) as ProductStatus;
   const featured = formData.get("featured") === "on";
+  const availableSizes = formData.getAll("sizes").filter(Boolean) as string[];
   const images = parseImages(formData);
 
   if (!name || !categoryId || !sellingPrice) {
@@ -144,6 +147,7 @@ export async function updateProduct(productId: string, formData: FormData) {
         stock: isNaN(stock) ? product.stock : stock,
         status: status || product.status,
         featured,
+        availableSizes,
       },
     });
 

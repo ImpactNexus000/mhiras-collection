@@ -8,21 +8,29 @@ import { cn } from "@/lib/utils";
 import { Loader2, Check } from "lucide-react";
 import { SIZE_CHART } from "@/lib/size-guide";
 
-// Offer the same UK sizes the size guide documents.
-const SIZES = SIZE_CHART.map((row) => row.size);
+// Full UK range from the size guide — used when a product has no specific
+// available sizes configured.
+const ALL_SIZES = SIZE_CHART.map((row) => row.size);
 
 /**
  * Size picker + add-to-cart for the product detail page. A size must be chosen
  * before the item can be added — the choice flows through the cart into the
  * order (CartItem.size → OrderItem.size) so Mhira fulfils the right size.
+ *
+ * Offers the product's configured availableSizes, or the full UK range when
+ * none are set.
  */
 export function ProductPurchase({
   productId,
   stock,
+  availableSizes,
 }: {
   productId: string;
   stock: number;
+  availableSizes?: string[];
 }) {
+  const sizes =
+    availableSizes && availableSizes.length > 0 ? availableSizes : ALL_SIZES;
   const { addItem } = useCart();
   const { success, error: toastError } = useToast();
   const [size, setSize] = useState("");
@@ -56,7 +64,7 @@ export function ProductPurchase({
           Select size <span className="text-charcoal-soft">(UK)</span>
         </span>
         <div className="flex flex-wrap gap-2 mt-2">
-          {SIZES.map((s) => (
+          {sizes.map((s) => (
             <button
               key={s}
               type="button"

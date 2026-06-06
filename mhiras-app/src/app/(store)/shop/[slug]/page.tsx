@@ -301,7 +301,11 @@ export default async function ProductDetailPage({
 
           {/* CTA buttons */}
           <div className="flex flex-col gap-3">
-            <ProductPurchase productId={product.id} stock={product.stock} />
+            <ProductPurchase
+              productId={product.id}
+              stock={product.stock}
+              availableSizes={product.availableSizes}
+            />
             <WishlistButton
               productId={product.id}
               initialWishlisted={wishlistSet.has(product.id)}

@@ -88,6 +88,7 @@ export default async function AdminProductsPage({
         stock: product.stock,
         status: product.status,
         featured: product.featured,
+        availableSizes: product.availableSizes,
         images: product.images.map((img) => ({
           id: img.id,
           url: img.url,

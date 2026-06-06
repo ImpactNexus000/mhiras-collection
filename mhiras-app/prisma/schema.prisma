@@ -221,7 +221,8 @@ model Product {
   slug          String        @unique
   description   String?       @db.Text
   categoryId    String
-  size          String?
+  size          String?       // legacy single-size label (optional)
+  availableSizes String[]     @default([]) // UK sizes a customer can order; empty = offer the full range
   condition     Condition     @default(GOOD)
   sellingPrice  Int           // stored in kobo (smallest unit) or whole naira
   originalPrice Int?

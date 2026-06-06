@@ -26,6 +26,7 @@ interface EditProduct {
   description: string | null;
   categoryId: string;
   size: string | null;
+  availableSizes?: string[];
   condition: string;
   sellingPrice: number;
   originalPrice: number | null;

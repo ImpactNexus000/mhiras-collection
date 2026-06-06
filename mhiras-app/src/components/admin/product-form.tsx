@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { X } from "lucide-react";
 import { ImageUpload, UploadedImage } from "@/components/admin/image-upload";
+import { SIZE_CHART } from "@/lib/size-guide";
 
 interface Category {
   id: string;
@@ -27,6 +28,7 @@ interface ProductData {
   description: string | null;
   categoryId: string;
   size: string | null;
+  availableSizes?: string[];
   condition: string;
   sellingPrice: number;
   originalPrice: number | null;
@@ -171,6 +173,36 @@ export function ProductForm({ categories, product, onClose }: ProductFormProps) 
               className="w-full border border-border px-3 py-2.5 text-sm rounded outline-none focus:border-copper"
               placeholder="e.g. M, L, 40, One Size"
             />
+          </div>
+
+          {/* Available sizes (UK) */}
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-charcoal-soft mb-1.5">
+              Available sizes (UK)
+            </label>
+            <p className="text-xs text-charcoal-soft mb-2">
+              Tick the sizes a customer can order on this item. Leave all
+              unticked to offer the full UK range.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SIZE_CHART.map((row) => (
+                <label
+                  key={row.size}
+                  className="inline-flex items-center gap-1.5 border border-border rounded px-2.5 py-1.5 text-sm cursor-pointer has-[:checked]:border-copper has-[:checked]:bg-copper/5"
+                >
+                  <input
+                    type="checkbox"
+                    name="sizes"
+                    value={row.size}
+                    defaultChecked={
+                      product?.availableSizes?.includes(row.size) ?? false
+                    }
+                    className="accent-copper"
+                  />
+                  {row.size}
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Prices */}
