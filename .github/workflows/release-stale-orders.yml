@@ -1,0 +1,21 @@
+name: Release stale orders
+
+# Vercel Hobby only runs crons once per day, so we drive the 15-minute sweep
+# from GitHub Actions instead. It just pings the protected endpoint; all the
+# logic lives in /api/cron/release-stale-orders. GitHub's scheduler is
+# best-effort and can lag under load — fine here, releasing stock isn't
+# second-sensitive.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger stale-order release
+        run: |
+          curl -fsS --max-time 60 -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://mhirascollection.com/api/cron/release-stale-orders"

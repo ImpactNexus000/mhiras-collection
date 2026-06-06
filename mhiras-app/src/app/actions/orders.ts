@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { generateOrderNumber } from "@/lib/queries/orders";
-import { PaymentMethod } from "@/generated/prisma/client";
+import { PaymentMethod, type Order } from "@/generated/prisma/client";
 import { validatePromoCode } from "@/app/actions/promo-codes";
 import { getDeliveryFeeByState } from "@/lib/queries/delivery";
 import { getStoreSettings } from "@/lib/queries/settings";
@@ -24,6 +24,18 @@ const paymentMethodMap: Record<string, PaymentMethod> = {
   bank_transfer: "BANK_TRANSFER",
   pay_on_delivery: "PAY_ON_DELIVERY",
 };
+
+/**
+ * Thrown inside the order transaction when a product's stock was claimed by a
+ * concurrent checkout between our pre-check and the atomic decrement. Caught
+ * below and turned into a friendly message; throwing rolls back the order.
+ */
+class OutOfStockError extends Error {
+  constructor(public readonly productName: string) {
+    super(`${productName} is out of stock`);
+    this.name = "OutOfStockError";
+  }
+}
 
 export async function placeOrder(formData: FormData) {
   const session = await auth();
@@ -165,8 +177,12 @@ export async function placeOrder(formData: FormData) {
     );
   }
 
-  // Create address (immediate only), order, items, and decrement stock
-  const order = await db.$transaction(async (tx) => {
+  // Create address (immediate only), order, items, and decrement stock.
+  // Wrapped so an out-of-stock rollback (a race with another checkout) surfaces
+  // as a friendly error instead of an unhandled 500.
+  let order: Order;
+  try {
+    order = await db.$transaction(async (tx) => {
     let addressId: string | null = null;
 
     if (!isStockpile) {
@@ -224,12 +240,19 @@ export async function placeOrder(formData: FormData) {
       },
     });
 
-    // Decrement stock for each product
+    // Decrement stock atomically. The `stock: { gte }` guard means a second
+    // checkout racing for the same one-of-a-kind item updates 0 rows; we throw
+    // to roll the whole order back rather than let stock go negative.
     for (const item of cartItems) {
-      await tx.product.update({
-        where: { id: item.productId },
+      const updated = await tx.product.updateMany({
+        where: { id: item.productId, stock: { gte: item.quantity } },
         data: { stock: { decrement: item.quantity } },
       });
+      if (updated.count === 0) {
+        throw new OutOfStockError(
+          productMap.get(item.productId)?.name ?? "An item"
+        );
+      }
     }
 
     // Record promo usage
@@ -241,7 +264,15 @@ export async function placeOrder(formData: FormData) {
     }
 
     return newOrder;
-  });
+    });
+  } catch (err) {
+    if (err instanceof OutOfStockError) {
+      return {
+        error: `${err.productName} just sold out before we could place your order. Please remove it from your cart and try again.`,
+      };
+    }
+    throw err;
+  }
 
   // Clear the user's cart after successful order
   const cart = await db.cart.findUnique({

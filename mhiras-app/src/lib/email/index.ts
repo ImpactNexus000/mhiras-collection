@@ -14,6 +14,7 @@ import { WelcomeEmail } from "./templates/welcome";
 import { VerificationCodeEmail } from "./templates/verification-code";
 import { AdminSigninCodeEmail } from "./templates/admin-signin-code";
 import { AdminNewOrderEmail } from "./templates/admin-new-order";
+import { AdminRefundRequiredEmail } from "./templates/admin-refund-required";
 import { PasswordResetEmail } from "./templates/password-reset";
 import {
   AdminDeliveryRequestEmail,
@@ -224,6 +225,41 @@ export function sendAdminNewOrder(args: AdminNewOrderArgs) {
       itemCount: args.itemCount,
       total: formatPrice(args.total),
       fulfillmentType: args.fulfillmentType,
+      paymentChannel: args.paymentChannel,
+      adminUrl: adminOrderUrl(args.orderId),
+    }),
+  });
+}
+
+interface AdminRefundRequiredArgs {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  total: number;
+  paymentRef: string;
+  paymentChannel: string;
+}
+
+export function sendAdminRefundRequired(args: AdminRefundRequiredArgs) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn(
+      "[email] ADMIN_EMAIL not set; skipping refund-required notification"
+    );
+    return Promise.resolve();
+  }
+  return sendEmail({
+    to: adminEmail,
+    subject: `⚠ Refund required — ${args.orderNumber}`,
+    template: AdminRefundRequiredEmail({
+      orderNumber: args.orderNumber,
+      customerName: args.customerName,
+      customerEmail: args.customerEmail,
+      customerPhone: args.customerPhone,
+      total: formatPrice(args.total),
+      paymentRef: args.paymentRef,
       paymentChannel: args.paymentChannel,
       adminUrl: adminOrderUrl(args.orderId),
     }),

@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { OrderStatus } from "@/generated/prisma/client";
 import { sendOrderStatusUpdate } from "@/lib/email";
+import { releaseOrderStock } from "@/lib/stock";
 
 async function requireAdmin() {
   const session = await auth();
@@ -51,17 +52,10 @@ export async function updateOrderStatus(
       },
     });
 
-    // If cancelled, restore stock
-    if (newStatus === "CANCELLED" && order.status !== "CANCELLED") {
-      const items = await tx.orderItem.findMany({
-        where: { orderId },
-      });
-      for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { increment: item.quantity } },
-        });
-      }
+    // If cancelled, return items to stock. Idempotent — won't double-restore
+    // if a failed/abandoned payment already released them.
+    if (newStatus === "CANCELLED") {
+      await releaseOrderStock(tx, orderId);
     }
   });
 

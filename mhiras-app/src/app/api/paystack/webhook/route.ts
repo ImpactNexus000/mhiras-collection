@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import crypto from "crypto";
 import { db } from "@/lib/db";
-import { sendAdminNewOrder, sendPaymentConfirmed } from "@/lib/email";
+import {
+  sendAdminNewOrder,
+  sendAdminRefundRequired,
+  sendPaymentConfirmed,
+} from "@/lib/email";
+import {
+  reacquireOrderStock,
+  releaseOrderStock,
+  StockUnavailableError,
+} from "@/lib/stock";
 import type { PaystackAuthorization } from "@/lib/paystack";
 
 /**
@@ -109,19 +118,50 @@ export async function POST(req: NextRequest) {
       // Still update reference but flag as potential issue
     }
 
-    // Update order: mark as paid and confirmed
-    await db.$transaction(async (tx) => {
-      // A paid stockpile order becomes STOCKPILED (held); a normal order
-      // becomes CONFIRMED.
+    // Resolve the payment. Usually the order is still held (stock reserved at
+    // placement) and we simply confirm it. But if the stock was already
+    // released — a failed/abandoned payment the cron cleaned up — this is a
+    // *late* payment: try to re-reserve the items, and if they're gone, flag
+    // the order for a manual refund instead of fulfilling it.
+    const outcome = await db.$transaction(async (tx) => {
+      const fresh = await tx.order.findUnique({ where: { id: order.id } });
+      if (!fresh || fresh.paymentStatus === "PAID") return "noop" as const;
+
+      const isLate = fresh.stockReleased || fresh.status === "CANCELLED";
+
+      if (isLate) {
+        try {
+          await reacquireOrderStock(tx, fresh.id);
+        } catch (err) {
+          if (err instanceof StockUnavailableError) {
+            await tx.order.update({
+              where: { id: fresh.id },
+              data: { paymentStatus: "PAID", paymentRef: reference },
+            });
+            await tx.orderEvent.create({
+              data: {
+                orderId: fresh.id,
+                status: "Payment received after cancellation — refund required",
+                note: `Item sold out before this late payment landed (ref ${reference}). Manual refund needed.`,
+              },
+            });
+            return "refund" as const;
+          }
+          throw err;
+        }
+      }
+
+      // A paid stockpile order becomes STOCKPILED (held); everything else
+      // becomes CONFIRMED — reinstated, if this was a late payment.
       const paidStatus =
-        order.status === "PENDING"
-          ? order.fulfillmentType === "STOCKPILE"
-            ? "STOCKPILED"
-            : "CONFIRMED"
-          : order.status;
+        fresh.fulfillmentType === "STOCKPILE"
+          ? "STOCKPILED"
+          : isLate || fresh.status === "PENDING"
+            ? "CONFIRMED"
+            : fresh.status;
 
       await tx.order.update({
-        where: { id: order.id },
+        where: { id: fresh.id },
         data: {
           paymentStatus: "PAID",
           paymentRef: reference,
@@ -131,18 +171,52 @@ export async function POST(req: NextRequest) {
 
       await tx.orderEvent.create({
         data: {
-          orderId: order.id,
+          orderId: fresh.id,
           status:
             paidStatus === "STOCKPILED"
-              ? "Payment confirmed — added to stockpile"
-              : "Payment confirmed",
+              ? isLate
+                ? "Payment confirmed (late) — added to stockpile"
+                : "Payment confirmed — added to stockpile"
+              : isLate
+                ? "Payment confirmed (late) — order reinstated"
+                : "Payment confirmed",
           note: `Paid via ${channel} — ref: ${reference}`,
         },
       });
+      return "confirmed" as const;
     });
 
-    // Save the tokenized card so the customer can reuse it later.
+    if (outcome === "noop") {
+      return NextResponse.json({ received: true });
+    }
+
+    // A payment did land, so persist the reusable card either way.
     await maybeSaveAuthorization(order.userId, authorization);
+
+    if (outcome === "refund") {
+      console.error(
+        `Webhook: late payment on cancelled order ${order.orderNumber} — item unavailable, manual refund required (ref ${reference})`
+      );
+      const refundCustomer = await db.user.findUnique({
+        where: { id: order.userId },
+        select: { firstName: true, lastName: true, email: true, phone: true },
+      });
+      if (refundCustomer) {
+        after(() =>
+          sendAdminRefundRequired({
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            customerName: `${refundCustomer.firstName} ${refundCustomer.lastName}`,
+            customerEmail: refundCustomer.email,
+            customerPhone: refundCustomer.phone ?? "",
+            total: order.total,
+            paymentRef: reference,
+            paymentChannel: channel,
+          })
+        );
+      }
+      return NextResponse.json({ received: true });
+    }
 
     // Customer payment-confirmed email — canonical fire point. The order
     // page's verifyPaymentCallback updates the DB silently to keep this
@@ -213,15 +287,22 @@ export async function POST(req: NextRequest) {
           data: { paymentStatus: "FAILED" },
         });
 
+        // Return the reserved items immediately on an explicit failure. The
+        // cron handles silent abandonment (no webhook); this covers declines.
+        const released = await releaseOrderStock(tx, order.id);
+
         await tx.orderEvent.create({
           data: {
             orderId: order.id,
             status: "Payment failed",
-            note: `Reference: ${reference}`,
+            note: released
+              ? `Reference: ${reference} — items returned to stock.`
+              : `Reference: ${reference}`,
           },
         });
       });
     }
+
   }
 
   // Always return 200 to acknowledge receipt

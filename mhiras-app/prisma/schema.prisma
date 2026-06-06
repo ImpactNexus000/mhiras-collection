@@ -392,6 +392,7 @@ model Order {
   paymentMethod      PaymentMethod
   paymentStatus      PaymentStatus   @default(PENDING)
   paymentRef         String?         // Paystack/Flutterwave reference
+  stockReleased      Boolean         @default(false) // items returned to inventory (failed/abandoned/cancelled) — guards against double-restore
   subtotal           Int
   deliveryFee        Int
   discount           Int             @default(0)
