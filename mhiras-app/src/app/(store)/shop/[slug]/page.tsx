@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ProductCard } from "@/components/store/product-card";
 import { AddToCartButton } from "@/components/store/add-to-cart-button";
+import { SizeGuideModal } from "@/components/store/size-guide-modal";
 import { WishlistButton } from "@/components/store/wishlist-button";
 import { StarRating } from "@/components/store/star-rating";
 import { ReviewList } from "@/components/store/review-list";
@@ -277,6 +278,7 @@ export default async function ProductDetailPage({
             <span className="text-xs bg-cream-dark px-3 py-1">
               {isSoldOut ? "Sold Out" : `${product.stock} Available`}
             </span>
+            <SizeGuideModal />
           </div>
 
           {/* Trust signals */}

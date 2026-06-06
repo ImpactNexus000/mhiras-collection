@@ -60,6 +60,7 @@ export async function Footer() {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li><Link href="/about#faq" className="hover:text-cream transition-colors">FAQ</Link></li>
+              <li><Link href="/size-guide" className="hover:text-cream transition-colors">Size Guide</Link></li>
               <li><Link href="/about#returns" className="hover:text-cream transition-colors">Return Policy</Link></li>
               <li><Link href="/about#delivery" className="hover:text-cream transition-colors">Delivery Info</Link></li>
               <li><Link href="/about#contact" className="hover:text-cream transition-colors">Contact Us</Link></li>
