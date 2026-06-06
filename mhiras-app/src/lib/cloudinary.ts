@@ -87,9 +87,14 @@ export async function deleteImage(publicId: string): Promise<void> {
  */
 export function getOptimizedUrl(
   url: string,
-  options: { width?: number; height?: number; crop?: string } = {}
+  options: {
+    width?: number;
+    height?: number;
+    crop?: string;
+    gravity?: string;
+  } = {}
 ): string {
-  const { width, height, crop = "fill" } = options;
+  const { width, height, crop = "fill", gravity } = options;
 
   // Only transform Cloudinary URLs
   if (!url.includes("res.cloudinary.com")) return url;
@@ -99,6 +104,7 @@ export function getOptimizedUrl(
   if (width) transforms.push(`w_${width}`);
   if (height) transforms.push(`h_${height}`);
   if (width || height) transforms.push(`c_${crop}`);
+  if (gravity) transforms.push(`g_${gravity}`);
 
   return url.replace("/upload/", `/upload/${transforms.join(",")}/`);
 }

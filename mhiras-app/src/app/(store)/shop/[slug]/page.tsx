@@ -10,6 +10,7 @@ import { StarRating } from "@/components/store/star-rating";
 import { ReviewList } from "@/components/store/review-list";
 import { formatPrice } from "@/lib/utils";
 import { getProductBySlug, getRelatedProducts } from "@/lib/queries/products";
+import { getOptimizedUrl } from "@/lib/cloudinary";
 import { getWishlistSet } from "@/lib/queries/wishlist";
 import {
   getProductReviews,
@@ -42,8 +43,20 @@ export async function generateMetadata({
 
   const description =
     product.description ?? `Shop ${product.name} at Mhiras Collection`;
-  const image =
+  const rawImage =
     product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url;
+
+  // Smart-cropped 1200×630 share card from the product photo. Served straight
+  // from Cloudinary (globally cached), so the preview is reliable on the very
+  // first share — no dynamic generation cold-start.
+  const ogImage = rawImage
+    ? getOptimizedUrl(rawImage, {
+        width: 1200,
+        height: 630,
+        crop: "fill",
+        gravity: "auto",
+      })
+    : undefined;
 
   return {
     title: product.name,
@@ -54,13 +67,15 @@ export async function generateMetadata({
       title: product.name,
       description,
       url: `/shop/${product.slug}`,
-      images: image ? [{ url: image }] : undefined,
+      images: ogImage
+        ? [{ url: ogImage, width: 1200, height: 630, alt: product.name }]
+        : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: product.name,
       description,
-      images: image ? [image] : undefined,
+      images: ogImage ? [ogImage] : undefined,
     },
   };
 }
