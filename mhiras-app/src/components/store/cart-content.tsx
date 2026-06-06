@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/cart-context";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { Minus, Plus, X, ShoppingBag, Loader2, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -82,6 +82,12 @@ export function CartContent() {
     ? "/checkout"
     : "/auth/signin?from=/checkout";
 
+  // Block checkout while any line is sold out (maxStock 0) or asks for more
+  // than is in stock — the order would be rejected server-side anyway.
+  const hasUnavailable = items.some(
+    (i) => i.maxStock === 0 || i.quantity > i.maxStock
+  );
+
   if (loading) {
     return (
       <div className="text-center py-20 px-4">
@@ -125,10 +131,17 @@ export function CartContent() {
       <div className="max-w-5xl mx-auto grid md:grid-cols-[1fr_320px]">
         {/* Cart items */}
         <div className="p-5 md:p-6 md:border-r border-border">
-          {items.map((item) => (
+          {items.map((item) => {
+            const soldOut = item.maxStock === 0;
+            const overStock =
+              item.maxStock > 0 && item.quantity > item.maxStock;
+            return (
             <div
               key={item.cartItemId}
-              className="grid grid-cols-[64px_1fr_auto] md:grid-cols-[80px_1fr_auto] gap-3 md:gap-4 py-5 border-b border-border last:border-b-0"
+              className={cn(
+                "grid grid-cols-[64px_1fr_auto] md:grid-cols-[80px_1fr_auto] gap-3 md:gap-4 py-5 border-b border-border last:border-b-0",
+                soldOut && "opacity-60"
+              )}
             >
               {/* Thumbnail */}
               <Link
@@ -189,12 +202,28 @@ export function CartContent() {
                   >
                     <Plus size={14} aria-hidden="true" />
                   </button>
-                  {item.maxStock <= 2 && (
+                  {!soldOut && !overStock && item.maxStock <= 2 && (
                     <span className="text-xs text-copper-dark ml-1">
                       ({item.maxStock} left)
                     </span>
                   )}
                 </div>
+                {soldOut && (
+                  <p
+                    role="alert"
+                    className="mt-2 text-xs font-medium text-danger"
+                  >
+                    Sold out — remove to continue.
+                  </p>
+                )}
+                {overStock && (
+                  <p
+                    role="alert"
+                    className="mt-2 text-xs font-medium text-copper-dark"
+                  >
+                    Only {item.maxStock} left — reduce quantity to continue.
+                  </p>
+                )}
               </div>
 
               {/* Price + Remove */}
@@ -217,7 +246,8 @@ export function CartContent() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Order summary */}
@@ -331,11 +361,25 @@ export function CartContent() {
             )}
           </div>
 
-          <Link href={checkoutHref} className="block mt-5">
-            <Button variant="primary" fullWidth size="lg">
-              {status === "authenticated" ? "Checkout →" : "Sign in to checkout →"}
-            </Button>
-          </Link>
+          {hasUnavailable ? (
+            <div className="mt-5">
+              <Button variant="primary" fullWidth size="lg" disabled>
+                Update cart to checkout
+              </Button>
+              <p role="alert" className="text-center text-xs text-danger mt-2">
+                Some items are sold out or low on stock. Remove or reduce them to
+                continue.
+              </p>
+            </div>
+          ) : (
+            <Link href={checkoutHref} className="block mt-5">
+              <Button variant="primary" fullWidth size="lg">
+                {status === "authenticated"
+                  ? "Checkout →"
+                  : "Sign in to checkout →"}
+              </Button>
+            </Link>
+          )}
 
           <p className="text-center text-xs text-charcoal-soft mt-4">
             🔒 Paystack · Flutterwave · Bank Transfer
