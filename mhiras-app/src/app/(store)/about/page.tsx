@@ -59,7 +59,7 @@ const faqs: FaqItem[] = [
   },
   {
     q: "Can I pay on delivery?",
-    a: "We currently support card payment via Paystack and bank transfer. Pay-on-delivery isn't available across all zones yet — we'll add it as we expand.",
+    a: "We currently accept secure card payment via Paystack. Pay-on-delivery isn't available across all zones yet — we'll add it as we expand.",
   },
   {
     q: "Do you accept bulk orders?",

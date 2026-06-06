@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   Lock,
   CreditCard,
-  Building2,
   Truck,
   Package,
   Tag,
@@ -25,7 +24,7 @@ import { matchZoneForState, type DeliveryZoneLike } from "@/lib/delivery";
 import { useToast } from "@/components/ui/toast";
 import { clearAppliedPromo, readAppliedPromo } from "@/lib/promo-storage";
 
-type PaymentMethod = "card" | "bank_transfer";
+type PaymentMethod = "card";
 type Fulfillment = "immediate" | "stockpile";
 
 const states = [
@@ -85,9 +84,6 @@ interface FieldErrors {
 export function CheckoutForm({
   deliveryZones,
   stockpileExpiryDays,
-  bankName,
-  bankAccountNumber,
-  bankAccountName,
   savedAddresses,
   savedCards,
 }: CheckoutFormProps) {
@@ -192,7 +188,6 @@ export function CheckoutForm({
     icon: React.ElementType;
   }[] = [
     { value: "card", label: "Card Payment", icon: CreditCard },
-    { value: "bank_transfer", label: "Bank Transfer", icon: Building2 },
   ];
 
   // Stockpile orders must be prepaid online by card.
@@ -835,20 +830,6 @@ export function CheckoutForm({
                       ? "Stockpile orders are prepaid online by card. You'll be redirected to Paystack to securely complete payment after placing the order."
                       : "You'll be redirected to Paystack to securely complete your card payment after placing the order."}
                 </p>
-              </div>
-            )}
-
-            {paymentMethod === "bank_transfer" && (
-              <div className="bg-cream-dark p-4 border border-border">
-                <p className="text-sm text-charcoal-soft leading-relaxed">
-                  After placing your order, you&apos;ll receive bank account
-                  details to complete the transfer. Your order will be confirmed
-                  once payment is verified.
-                </p>
-                <div className="mt-3 p-3 bg-white border border-border text-sm">
-                  <strong>{bankName}</strong> · {bankAccountNumber} ·{" "}
-                  {bankAccountName}
-                </div>
               </div>
             )}
 

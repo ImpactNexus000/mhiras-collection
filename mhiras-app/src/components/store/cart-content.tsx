@@ -421,7 +421,7 @@ export function CartContent() {
           )}
 
           <p className="text-center text-xs text-charcoal-soft mt-4">
-            🔒 Paystack · Flutterwave · Bank Transfer
+            🔒 Secure card payment via Paystack
           </p>
         </div>
       </div>
