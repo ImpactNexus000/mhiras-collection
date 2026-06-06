@@ -379,6 +379,7 @@ export default async function ProductDetailPage({
                 }
                 image={p.images[0]?.url ?? null}
                 stock={p.stock}
+                availableSizes={p.availableSizes}
                 isSoldOut={p.stock === 0}
                 isWishlisted={wishlistSet.has(p.id)}
                 ratingAverage={relatedRatingMap.get(p.id)?.average}

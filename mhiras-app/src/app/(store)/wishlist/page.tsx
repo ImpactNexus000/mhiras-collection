@@ -58,6 +58,7 @@ export default async function WishlistPage() {
                 badge={conditionLabel[item.product.condition]}
                 image={item.product.images[0]?.url ?? null}
                 stock={item.product.stock}
+                availableSizes={item.product.availableSizes}
                 isSoldOut={item.product.stock === 0}
                 isWishlisted={true}
                 ratingAverage={ratingMap.get(item.product.id)?.average}

@@ -131,6 +131,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                       badge={conditionLabel[product.condition]}
                       image={product.images[0]?.url ?? null}
                       stock={product.stock}
+                      availableSizes={product.availableSizes}
                       isSoldOut={product.stock === 0}
                       isWishlisted={wishlistSet.has(product.id)}
                       ratingAverage={ratingMap.get(product.id)?.average}

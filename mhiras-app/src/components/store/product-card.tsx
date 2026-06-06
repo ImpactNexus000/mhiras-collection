@@ -3,6 +3,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/utils";
 import { WishlistButton } from "@/components/store/wishlist-button";
+import { CardAddToCart } from "@/components/store/card-add-to-cart";
 import { StarRating } from "@/components/store/star-rating";
 
 export interface ProductCardProps {
@@ -17,6 +18,8 @@ export interface ProductCardProps {
   badge?: string | null;
   image?: string | null;
   stock?: number;
+  /** UK sizes a customer may order. Omit for un-sized items (e.g. bales). */
+  availableSizes?: string[] | null;
   isSoldOut?: boolean;
   isWishlisted?: boolean;
   showAddToCart?: boolean;
@@ -38,6 +41,7 @@ export function ProductCard({
   badge,
   image,
   stock = 0,
+  availableSizes,
   isSoldOut = false,
   isWishlisted,
   showAddToCart = true,
@@ -138,25 +142,15 @@ export function ProductCard({
         </div>
       </Link>
 
-      {/* Actions — size is chosen on the product page, so cards link there
-          rather than quick-adding (keeps every order sized). */}
-      {showAddToCart && (
+      {/* Actions — "Add to Cart" reveals a size picker for sized items so the
+          choice still flows to the order; un-sized items add directly. */}
+      {showAddToCart && productId && (
         <div className="px-4 pb-4">
-          {isSoldOut ? (
-            <button
-              disabled
-              className="w-full bg-cream-dark text-charcoal-soft text-xs uppercase tracking-wider py-2.5 cursor-not-allowed"
-            >
-              Sold Out
-            </button>
-          ) : (
-            <Link
-              href={`/shop/${slug}`}
-              className="block w-full text-center bg-charcoal text-cream text-xs uppercase tracking-wider py-2.5 hover:bg-copper transition-colors"
-            >
-              Select Size
-            </Link>
-          )}
+          <CardAddToCart
+            productId={productId}
+            stock={stock}
+            availableSizes={availableSizes}
+          />
         </div>
       )}
     </div>
