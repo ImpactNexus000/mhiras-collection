@@ -3,6 +3,7 @@ import { getAdminProducts, getProductStatusCounts } from "@/lib/queries/admin";
 import { getCategories } from "@/lib/queries/products";
 import { formatPrice } from "@/lib/utils";
 import { ProductsClient } from "@/components/admin/products-client";
+import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { db } from "@/lib/db";
 import { getOptimizedUrl } from "@/lib/cloudinary";
 
@@ -217,12 +218,18 @@ export default async function AdminProductsPage({
                       {product._count.orderItems}
                     </td>
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/products?edit=${product.id}`}
-                        className="text-copper text-sm hover:text-copper-dark"
-                      >
-                        Edit
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/admin/products?edit=${product.id}`}
+                          className="text-copper text-sm hover:text-copper-dark"
+                        >
+                          Edit
+                        </Link>
+                        <DeleteProductButton
+                          productId={product.id}
+                          productName={product.name}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

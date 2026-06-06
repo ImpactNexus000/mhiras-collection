@@ -180,18 +180,23 @@ export async function deleteProduct(productId: string) {
     return { error: "Product not found." };
   }
 
-  // If product has orders, archive instead of deleting
+  // If the product has orders, archive it instead of deleting so order
+  // history (and its line items) stay intact. Otherwise hard-delete —
+  // images, cart items, wishlist items, reviews and collection links all
+  // cascade away with it.
+  let archived = false;
   if (product._count.orderItems > 0) {
     await db.product.update({
       where: { id: productId },
       data: { status: "ARCHIVED" },
     });
+    archived = true;
   } else {
-    // ProductImage cascade deletes with the product
     await db.product.delete({ where: { id: productId } });
   }
 
   revalidatePath("/admin/products");
   revalidatePath("/shop");
-  return { success: true };
+  revalidatePath("/");
+  return { success: true, archived };
 }
