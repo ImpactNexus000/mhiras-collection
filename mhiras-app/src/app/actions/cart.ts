@@ -134,6 +134,55 @@ export async function updateCartItemQuantity(
   return { success: true };
 }
 
+export async function updateCartItemSize(cartItemId: string, size: string) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "You must be signed in." };
+  }
+
+  const cartItem = await db.cartItem.findUnique({
+    where: { id: cartItemId },
+    include: { cart: true },
+  });
+
+  if (!cartItem || cartItem.cart.userId !== session.user.id) {
+    return { error: "Cart item not found." };
+  }
+
+  if (cartItem.size === size) {
+    return { success: true };
+  }
+
+  // If a line for the same product already has this size, merge into it
+  // (the [cartId, productId, size] uniqueness would otherwise be violated).
+  const existing = await db.cartItem.findUnique({
+    where: {
+      cartId_productId_size: {
+        cartId: cartItem.cartId,
+        productId: cartItem.productId,
+        size,
+      },
+    },
+  });
+
+  if (existing && existing.id !== cartItemId) {
+    await db.$transaction([
+      db.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: existing.quantity + cartItem.quantity },
+      }),
+      db.cartItem.delete({ where: { id: cartItemId } }),
+    ]);
+  } else {
+    await db.cartItem.update({
+      where: { id: cartItemId },
+      data: { size },
+    });
+  }
+
+  return { success: true };
+}
+
 export async function removeFromCart(cartItemId: string) {
   const session = await auth();
   if (!session?.user?.id) {

@@ -17,6 +17,7 @@ import {
   mergeGuestCart,
   removeFromCart,
   updateCartItemQuantity,
+  updateCartItemSize,
 } from "@/app/actions/cart";
 
 export interface CartItem {
@@ -48,6 +49,7 @@ interface CartContextType {
   ) => Promise<{ error?: string }>;
   removeItem: (cartItemId: string) => Promise<void>;
   updateQuantity: (cartItemId: string, quantity: number) => Promise<void>;
+  updateSize: (cartItemId: string, size: string) => Promise<void>;
   clearCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
 }
@@ -329,6 +331,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [isAuthed, refreshCart, removeItemFn]
   );
 
+  const updateSizeFn = useCallback(
+    async (cartItemId: string, size: string) => {
+      if (isAuthed) {
+        await updateCartItemSize(cartItemId, size);
+        await refreshCart();
+        return;
+      }
+
+      // Guest — update the localStorage entry's size, merging into an existing
+      // line if one for the same product already has that size.
+      const entries = readGuestCart();
+      const idx = entries.findIndex(
+        (e) => guestKey(e.productId, e.size) === cartItemId
+      );
+      if (idx < 0) return;
+      const entry = entries[idx];
+      const targetIdx = entries.findIndex(
+        (e, i) => i !== idx && e.productId === entry.productId && e.size === size
+      );
+      if (targetIdx >= 0) {
+        entries[targetIdx] = {
+          ...entries[targetIdx],
+          quantity: entries[targetIdx].quantity + entry.quantity,
+        };
+        entries.splice(idx, 1);
+      } else {
+        entries[idx] = { ...entry, size };
+      }
+      writeGuestCart(entries);
+      await refreshCart();
+    },
+    [isAuthed, refreshCart]
+  );
+
   const clearCartFn = useCallback(async () => {
     setItems([]);
     if (isAuthed) {
@@ -354,6 +390,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         addItem: addItemFn,
         removeItem: removeItemFn,
         updateQuantity: updateQuantityFn,
+        updateSize: updateSizeFn,
         clearCart: clearCartFn,
         refreshCart,
       }}

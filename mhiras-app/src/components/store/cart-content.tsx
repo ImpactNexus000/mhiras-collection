@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useCart } from "@/context/cart-context";
 import { cn, formatPrice } from "@/lib/utils";
+import { SIZE_CHART } from "@/lib/size-guide";
 import { Minus, Plus, X, ShoppingBag, Loader2, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -20,9 +21,11 @@ import {
 } from "@/lib/promo-storage";
 
 const DELIVERY_FEE = 1500;
+const ALL_SIZES = SIZE_CHART.map((row) => row.size);
 
 export function CartContent() {
-  const { items, itemCount, subtotal, loading, removeItem, updateQuantity } = useCart();
+  const { items, itemCount, subtotal, loading, removeItem, updateQuantity, updateSize } =
+    useCart();
   const { status } = useSession();
   const isAuthed = status === "authenticated";
   const [promoCode, setPromoCode] = useState("");
@@ -87,6 +90,9 @@ export function CartContent() {
   const hasUnavailable = items.some(
     (i) => i.maxStock === 0 || i.quantity > i.maxStock
   );
+  // Every line must have a size before checkout.
+  const hasMissingSize = items.some((i) => !i.size);
+  const blockCheckout = hasUnavailable || hasMissingSize;
 
   if (loading) {
     return (
@@ -172,9 +178,41 @@ export function CartContent() {
                     {item.name}
                   </div>
                 </Link>
-                <div className="text-sm text-charcoal-soft mt-1">
-                  {item.size && `Size: ${item.size} · `}
-                  {item.condition && `Condition: ${item.condition}`}
+                {item.condition && (
+                  <div className="text-sm text-charcoal-soft mt-1">
+                    Condition: {item.condition}
+                  </div>
+                )}
+                {/* Size — required before checkout */}
+                <div className="mt-2 flex items-center gap-2">
+                  <label
+                    htmlFor={`size-${item.cartItemId}`}
+                    className="text-xs text-charcoal-soft"
+                  >
+                    Size:
+                  </label>
+                  <select
+                    id={`size-${item.cartItemId}`}
+                    value={item.size ?? ""}
+                    onChange={(e) => updateSize(item.cartItemId, e.target.value)}
+                    className={cn(
+                      "text-xs border rounded px-2 py-1 bg-white outline-none focus:border-copper",
+                      item.size ? "border-border" : "border-danger"
+                    )}
+                  >
+                    <option value="">Select (UK)</option>
+                    {(item.availableSizes && item.availableSizes.length > 0
+                      ? item.availableSizes
+                      : ALL_SIZES
+                    ).map((s) => (
+                      <option key={s} value={s}>
+                        UK {s}
+                      </option>
+                    ))}
+                  </select>
+                  {!item.size && (
+                    <span className="text-[11px] text-danger">Choose a size</span>
+                  )}
                 </div>
                 {/* Quantity controls */}
                 <div className="flex items-center gap-3 mt-3">
@@ -361,14 +399,15 @@ export function CartContent() {
             )}
           </div>
 
-          {hasUnavailable ? (
+          {blockCheckout ? (
             <div className="mt-5">
               <Button variant="primary" fullWidth size="lg" disabled>
-                Update cart to checkout
+                {hasUnavailable ? "Update cart to checkout" : "Choose sizes to checkout"}
               </Button>
               <p role="alert" className="text-center text-xs text-danger mt-2">
-                Some items are sold out or low on stock. Remove or reduce them to
-                continue.
+                {hasUnavailable
+                  ? "Some items are sold out or low on stock. Remove or reduce them to continue."
+                  : "Please choose a size for each item to continue."}
               </p>
             </div>
           ) : (
