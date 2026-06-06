@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/store/product-card";
+import { FeaturedCarousel } from "@/components/store/featured-carousel";
 import { NewsletterForm } from "@/components/store/newsletter-form";
 import { getCategories, getProducts } from "@/lib/queries/products";
 import { getWishlistSet } from "@/lib/queries/wishlist";
@@ -163,28 +164,25 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {featured.map((product, i) => (
-              <ProductCard
-                key={product.id}
-                productId={product.id}
-                slug={product.slug}
-                name={product.name}
-                category={product.category.name}
-                size={product.size}
-                price={product.sellingPrice}
-                originalPrice={product.originalPrice}
-                badge={conditionLabel[product.condition]}
-                image={product.images[0]?.url ?? null}
-                stock={product.stock}
-                isSoldOut={product.stock === 0}
-                isWishlisted={wishlistSet.has(product.id)}
-                ratingAverage={ratingMap.get(product.id)?.average}
-                ratingCount={ratingMap.get(product.id)?.count}
-                priority={i < 2}
-              />
-            ))}
-          </div>
+          <FeaturedCarousel
+            items={featured.map((product, i) => ({
+              productId: product.id,
+              slug: product.slug,
+              name: product.name,
+              category: product.category.name,
+              size: product.size,
+              price: product.sellingPrice,
+              originalPrice: product.originalPrice,
+              badge: conditionLabel[product.condition],
+              image: product.images[0]?.url ?? null,
+              stock: product.stock,
+              isSoldOut: product.stock === 0,
+              isWishlisted: wishlistSet.has(product.id),
+              ratingAverage: ratingMap.get(product.id)?.average,
+              ratingCount: ratingMap.get(product.id)?.count,
+              priority: i < 3,
+            }))}
+          />
         </section>
       )}
 
