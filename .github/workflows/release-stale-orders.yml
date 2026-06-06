@@ -16,6 +16,10 @@ jobs:
     steps:
       - name: Trigger stale-order release
         run: |
-          curl -fsS --max-time 60 -X GET \
+          # Use the canonical www host directly: the apex 307-redirects to www,
+          # and curl drops the Authorization header across a host change. --fail
+          # makes a non-2xx (e.g. 401) fail the job instead of passing silently.
+          response=$(curl -sS --fail-with-body --max-time 60 -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://mhirascollection.com/api/cron/release-stale-orders"
+            "https://www.mhirascollection.com/api/cron/release-stale-orders")
+          echo "Response: $response"
