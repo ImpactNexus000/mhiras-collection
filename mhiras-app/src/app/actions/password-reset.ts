@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { sendPasswordReset } from "@/lib/email";
 import { authLimiter, checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { SITE_URL } from "@/lib/site";
+import { normalizeEmail } from "@/lib/utils";
 
 const RESET_TTL_MINUTES = 60;
 const TOKEN_BYTES = 32;
@@ -48,7 +49,7 @@ export async function requestPasswordReset(formData: FormData) {
     return { error: "Too many requests. Try again in a few minutes." };
   }
 
-  const email = ((formData.get("email") as string) ?? "").trim().toLowerCase();
+  const email = normalizeEmail((formData.get("email") as string) ?? "");
   if (!email) return { error: "Enter the email on your account." };
 
   const user = await db.user.findUnique({
