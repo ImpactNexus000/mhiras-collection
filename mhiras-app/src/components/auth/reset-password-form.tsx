@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { PasswordInput } from "@/components/auth/password-input";
 import { resetPassword } from "@/app/actions/password-reset";
 
 export function ResetPasswordForm({ token }: { token: string }) {
@@ -12,9 +14,29 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const { error: toastError } = useToast();
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [touched, setTouched] = useState({ password: false, confirm: false });
+
+  const tooShort = password.length > 0 && password.length < 8;
+  const passwordsMatch =
+    confirmPassword.length > 0 && password === confirmPassword;
+  const mismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (password.length < 8) {
+      setTouched({ password: true, confirm: touched.confirm });
+      toastError("Password must be at least 8 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setTouched({ password: true, confirm: true });
+      toastError("Passwords do not match.");
+      return;
+    }
+
     setSaving(true);
 
     const formData = new FormData(e.currentTarget);
@@ -68,16 +90,24 @@ export function ResetPasswordForm({ token }: { token: string }) {
         >
           New Password
         </label>
-        <input
+        <PasswordInput
           id="reset-password"
           name="password"
-          type="password"
           autoComplete="new-password"
-          required
-          minLength={8}
           placeholder="Min. 8 characters"
-          className="input-base"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+          aria-invalid={(touched.password && tooShort) || undefined}
+          aria-describedby={
+            touched.password && tooShort ? "reset-password-err" : undefined
+          }
         />
+        {touched.password && tooShort && (
+          <p id="reset-password-err" className="text-xs text-red-600 mt-1">
+            Password must be at least 8 characters
+          </p>
+        )}
       </div>
 
       <div className="mb-5">
@@ -87,16 +117,39 @@ export function ResetPasswordForm({ token }: { token: string }) {
         >
           Confirm Password
         </label>
-        <input
+        <PasswordInput
           id="reset-confirmPassword"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
-          required
-          minLength={8}
           placeholder="Re-enter password"
-          className="input-base"
+          valid={passwordsMatch}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
+          aria-invalid={(touched.confirm && mismatch) || undefined}
+          aria-describedby={
+            touched.confirm && mismatch
+              ? "reset-confirmPassword-err"
+              : passwordsMatch
+                ? "reset-confirmPassword-ok"
+                : undefined
+          }
         />
+        {touched.confirm && mismatch ? (
+          <p
+            id="reset-confirmPassword-err"
+            className="text-xs text-red-600 mt-1"
+          >
+            Passwords do not match
+          </p>
+        ) : passwordsMatch ? (
+          <p
+            id="reset-confirmPassword-ok"
+            className="text-xs text-green-600 mt-1 flex items-center gap-1"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Passwords match
+          </p>
+        ) : null}
       </div>
 
       <Button
