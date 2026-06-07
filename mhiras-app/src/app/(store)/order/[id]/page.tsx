@@ -218,7 +218,7 @@ export default async function OrderConfirmationPage({
     bannerBg = "bg-gold";
     bannerTitle = "Awaiting Payment";
     bannerMessage =
-      "Your order has been placed. Complete your card payment to confirm.";
+      "Your order has been placed. Complete your payment to confirm.";
   } else if (
     order.paymentMethod === "BANK_TRANSFER" &&
     !isPaid

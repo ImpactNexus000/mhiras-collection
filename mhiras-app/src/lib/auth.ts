@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { authLimiter, checkRateLimit, getClientIp } from "./rate-limit";
 import { sendAdminSigninCode } from "./email";
+import { normalizeEmail } from "./utils";
 
 const ADMIN_OTP_TTL_MINUTES = 10;
 
@@ -63,7 +64,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         const user = await db.user.findUnique({
-          where: { email: credentials.email as string },
+          where: { email: normalizeEmail(credentials.email as string) },
         });
 
         if (!user || !user.passwordHash) {
@@ -146,7 +147,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Too many attempts. Try again in a few minutes.");
         }
 
-        const email = String(credentials.email).trim().toLowerCase();
+        const email = normalizeEmail(String(credentials.email));
         const code = String(credentials.code).trim();
         if (!/^\d{6}$/.test(code)) return null;
 

@@ -421,7 +421,7 @@ export function CartContent() {
           )}
 
           <p className="text-center text-xs text-charcoal-soft mt-4">
-            🔒 Secure card payment via Paystack
+            🔒 Secure payment via Paystack — card, bank transfer or USSD
           </p>
         </div>
       </div>

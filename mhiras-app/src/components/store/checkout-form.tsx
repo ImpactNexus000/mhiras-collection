@@ -8,7 +8,10 @@ import { formatPrice } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Lock,
+  Wallet,
   CreditCard,
+  Landmark,
+  Smartphone,
   Truck,
   Package,
   Tag,
@@ -187,7 +190,7 @@ export function CheckoutForm({
     label: string;
     icon: React.ElementType;
   }[] = [
-    { value: "card", label: "Card Payment", icon: CreditCard },
+    { value: "card", label: "Card or Bank Transfer", icon: Wallet },
   ];
 
   // Stockpile orders must be prepaid online by card.
@@ -785,6 +788,20 @@ export function CheckoutForm({
               ))}
             </div>
 
+            {/* The single Paystack option covers several rails — spell them out
+                so transfer-preferring shoppers know before they commit. */}
+            <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-charcoal-soft">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-white">
+                <CreditCard size={13} aria-hidden="true" /> Card
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-white">
+                <Landmark size={13} aria-hidden="true" /> Bank Transfer
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 border border-border bg-white">
+                <Smartphone size={13} aria-hidden="true" /> USSD
+              </span>
+            </div>
+
             {paymentMethod === "card" && (
               <div className="bg-cream-dark p-4 border border-border">
                 {usableCards.length > 0 && (
@@ -827,8 +844,8 @@ export function CheckoutForm({
                   {selectedCardId
                     ? "Click the pay button to charge the saved card above."
                     : isStockpile
-                      ? "Stockpile orders are prepaid online by card. You'll be redirected to Paystack to securely complete payment after placing the order."
-                      : "You'll be redirected to Paystack to securely complete your card payment after placing the order."}
+                      ? "Stockpile orders are prepaid online. After you place the order, you'll be redirected to Paystack to pay securely — by debit/credit card, bank transfer, or USSD."
+                      : "After you place the order, you'll be redirected to Paystack to pay securely. You can pay with a debit/credit card, a bank transfer, or USSD — whichever you prefer."}
                 </p>
               </div>
             )}

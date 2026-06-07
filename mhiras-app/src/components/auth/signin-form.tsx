@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { PasswordInput } from "@/components/auth/password-input";
 
 /**
  * Only allow internal absolute paths as a return URL, to prevent
@@ -112,10 +113,8 @@ export function SignInForm() {
             Forgot password?
           </Link>
         </div>
-        <input
+        <PasswordInput
           id="signin-password"
-          className="input-base"
-          type="password"
           name="password"
           autoComplete="current-password"
           placeholder="••••••••"

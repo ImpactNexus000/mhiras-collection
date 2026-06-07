@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { signIn } from "@/lib/auth";
 import { sendVerificationCode, sendWelcomeEmail } from "@/lib/email";
 import { authLimiter, checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { isValidEmail, normalizeEmail } from "@/lib/utils";
 
 const CODE_TTL_MINUTES = 15;
 
@@ -27,16 +28,20 @@ export async function registerUser(formData: FormData) {
     return { error: "Too many sign-up attempts. Try again in a few minutes." };
   }
 
-  const firstName = formData.get("firstName") as string;
-  const lastName = formData.get("lastName") as string;
-  const email = formData.get("email") as string;
-  const phone = (formData.get("phone") as string) || null;
+  const firstName = ((formData.get("firstName") as string) ?? "").trim();
+  const lastName = ((formData.get("lastName") as string) ?? "").trim();
+  const email = normalizeEmail((formData.get("email") as string) ?? "");
+  const phone = ((formData.get("phone") as string) || "").trim() || null;
   const password = formData.get("password") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
   // Validation
   if (!firstName || !lastName || !email || !password) {
     return { error: "All fields are required." };
+  }
+
+  if (!isValidEmail(email)) {
+    return { error: "Enter a valid email address." };
   }
 
   if (password.length < 8) {
@@ -99,7 +104,7 @@ export async function verifyEmail(formData: FormData) {
     };
   }
 
-  const email = ((formData.get("email") as string) ?? "").trim().toLowerCase();
+  const email = normalizeEmail((formData.get("email") as string) ?? "");
   const code = ((formData.get("code") as string) ?? "").trim();
   const password = (formData.get("password") as string) ?? "";
 
@@ -159,7 +164,7 @@ export async function resendVerificationCode(email: string) {
     return { error: "Too many requests. Try again in a few minutes." };
   }
 
-  const normalized = email.trim().toLowerCase();
+  const normalized = normalizeEmail(email);
   if (!normalized) return { error: "Enter the email you signed up with." };
 
   const user = await db.user.findUnique({ where: { email: normalized } });

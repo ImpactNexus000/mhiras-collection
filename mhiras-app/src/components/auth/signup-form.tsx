@@ -3,9 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { PasswordInput } from "@/components/auth/password-input";
 import { registerUser } from "@/app/actions/auth";
+import { isValidEmail } from "@/lib/utils";
 
 interface FieldErrors {
   firstName?: string;
@@ -17,64 +20,101 @@ interface FieldErrors {
   terms?: string;
 }
 
+interface Values {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  terms: boolean;
+}
+
+const EMPTY: Values = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+  terms: false,
+};
+
+/** Pure validation — derived from the current values on every render. */
+function computeErrors(v: Values): FieldErrors {
+  const errs: FieldErrors = {};
+
+  if (!v.firstName.trim()) errs.firstName = "First name is required";
+  if (!v.lastName.trim()) errs.lastName = "Last name is required";
+
+  if (!v.email.trim()) {
+    errs.email = "Email is required";
+  } else if (!isValidEmail(v.email.trim())) {
+    errs.email = "Enter a valid email address";
+  }
+
+  if (!v.password) {
+    errs.password = "Password is required";
+  } else if (v.password.length < 8) {
+    errs.password = "Password must be at least 8 characters";
+  }
+
+  if (!v.confirmPassword) {
+    errs.confirmPassword = "Please confirm your password";
+  } else if (v.password !== v.confirmPassword) {
+    errs.confirmPassword = "Passwords do not match";
+  }
+
+  if (!v.terms) errs.terms = "You must agree to the terms";
+
+  return errs;
+}
+
 export function SignUpForm() {
   const router = useRouter();
   const { success, error: toastError } = useToast();
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const [values, setValues] = useState<Values>(EMPTY);
+  const [touched, setTouched] = useState<Partial<Record<keyof Values, boolean>>>(
+    {}
+  );
   const [loading, setLoading] = useState(false);
 
-  function validate(formData: FormData): FieldErrors {
-    const errs: FieldErrors = {};
+  const errors = computeErrors(values);
+  // Only surface a field's error once the user has interacted with it.
+  const errFor = (f: keyof FieldErrors) => (touched[f] ? errors[f] : undefined);
 
-    const firstName = (formData.get("firstName") as string)?.trim();
-    const lastName = (formData.get("lastName") as string)?.trim();
-    const email = (formData.get("email") as string)?.trim();
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-    const terms = formData.get("terms");
+  const emailValid = !!values.email.trim() && isValidEmail(values.email.trim());
+  const passwordsMatch =
+    values.confirmPassword.length > 0 &&
+    values.password === values.confirmPassword;
 
-    if (!firstName) errs.firstName = "First name is required";
-    if (!lastName) errs.lastName = "Last name is required";
-
-    if (!email) {
-      errs.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errs.email = "Enter a valid email address";
-    }
-
-    if (!password) {
-      errs.password = "Password is required";
-    } else if (password.length < 8) {
-      errs.password = "Password must be at least 8 characters";
-    }
-
-    if (!confirmPassword) {
-      errs.confirmPassword = "Please confirm your password";
-    } else if (password !== confirmPassword) {
-      errs.confirmPassword = "Passwords do not match";
-    }
-
-    if (!terms) errs.terms = "You must agree to the terms";
-
-    return errs;
-  }
+  const set = (field: keyof Values, value: string | boolean) =>
+    setValues((prev) => ({ ...prev, [field]: value }));
+  const touch = (field: keyof Values) =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
-    const fieldErrors = validate(formData);
-
-    if (Object.keys(fieldErrors).length > 0) {
-      setErrors(fieldErrors);
+    if (Object.keys(errors).length > 0) {
+      // Reveal every error at once.
+      setTouched({
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        password: true,
+        confirmPassword: true,
+        terms: true,
+      });
       toastError("Please fix the highlighted fields and try again.");
       return;
     }
 
-    setErrors({});
     setLoading(true);
 
     try {
+      const formData = new FormData(e.currentTarget);
       const result = await registerUser(formData);
       if (result?.error) {
         toastError(result.error);
@@ -108,12 +148,17 @@ export function SignUpForm() {
             placeholder="Amara"
             name="firstName"
             autoComplete="given-name"
-            aria-invalid={!!errors.firstName || undefined}
-            aria-describedby={errors.firstName ? "signup-firstName-err" : undefined}
+            value={values.firstName}
+            onChange={(e) => set("firstName", e.target.value)}
+            onBlur={() => touch("firstName")}
+            aria-invalid={!!errFor("firstName") || undefined}
+            aria-describedby={
+              errFor("firstName") ? "signup-firstName-err" : undefined
+            }
           />
-          {errors.firstName && (
+          {errFor("firstName") && (
             <p id="signup-firstName-err" className="text-xs text-red-600 mt-1">
-              {errors.firstName}
+              {errFor("firstName")}
             </p>
           )}
         </div>
@@ -130,12 +175,17 @@ export function SignUpForm() {
             placeholder="Okonkwo"
             name="lastName"
             autoComplete="family-name"
-            aria-invalid={!!errors.lastName || undefined}
-            aria-describedby={errors.lastName ? "signup-lastName-err" : undefined}
+            value={values.lastName}
+            onChange={(e) => set("lastName", e.target.value)}
+            onBlur={() => touch("lastName")}
+            aria-invalid={!!errFor("lastName") || undefined}
+            aria-describedby={
+              errFor("lastName") ? "signup-lastName-err" : undefined
+            }
           />
-          {errors.lastName && (
+          {errFor("lastName") && (
             <p id="signup-lastName-err" className="text-xs text-red-600 mt-1">
-              {errors.lastName}
+              {errFor("lastName")}
             </p>
           )}
         </div>
@@ -148,19 +198,30 @@ export function SignUpForm() {
         >
           Email Address
         </label>
-        <input
-          id="signup-email"
-          className="input-base"
-          type="email"
-          placeholder="amara@email.com"
-          name="email"
-          autoComplete="email"
-          aria-invalid={!!errors.email || undefined}
-          aria-describedby={errors.email ? "signup-email-err" : undefined}
-        />
-        {errors.email && (
+        <div className="relative">
+          <input
+            id="signup-email"
+            className="input-base pr-10"
+            type="email"
+            placeholder="amara@email.com"
+            name="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={(e) => set("email", e.target.value)}
+            onBlur={() => touch("email")}
+            aria-invalid={!!errFor("email") || undefined}
+            aria-describedby={errFor("email") ? "signup-email-err" : undefined}
+          />
+          {emailValid && (
+            <CheckCircle2
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-green-600"
+              aria-label="Email looks valid"
+            />
+          )}
+        </div>
+        {errFor("email") && (
           <p id="signup-email-err" className="text-xs text-red-600 mt-1">
-            {errors.email}
+            {errFor("email")}
           </p>
         )}
       </div>
@@ -179,12 +240,15 @@ export function SignUpForm() {
           placeholder="+234 801 234 5678"
           name="phone"
           autoComplete="tel"
-          aria-invalid={!!errors.phone || undefined}
-          aria-describedby={errors.phone ? "signup-phone-err" : undefined}
+          value={values.phone}
+          onChange={(e) => set("phone", e.target.value)}
+          onBlur={() => touch("phone")}
+          aria-invalid={!!errFor("phone") || undefined}
+          aria-describedby={errFor("phone") ? "signup-phone-err" : undefined}
         />
-        {errors.phone && (
+        {errFor("phone") && (
           <p id="signup-phone-err" className="text-xs text-red-600 mt-1">
-            {errors.phone}
+            {errFor("phone")}
           </p>
         )}
       </div>
@@ -196,19 +260,22 @@ export function SignUpForm() {
         >
           Password
         </label>
-        <input
+        <PasswordInput
           id="signup-password"
-          className="input-base"
-          type="password"
           placeholder="Min. 8 characters"
           name="password"
           autoComplete="new-password"
-          aria-invalid={!!errors.password || undefined}
-          aria-describedby={errors.password ? "signup-password-err" : undefined}
+          value={values.password}
+          onChange={(e) => set("password", e.target.value)}
+          onBlur={() => touch("password")}
+          aria-invalid={!!errFor("password") || undefined}
+          aria-describedby={
+            errFor("password") ? "signup-password-err" : undefined
+          }
         />
-        {errors.password && (
+        {errFor("password") && (
           <p id="signup-password-err" className="text-xs text-red-600 mt-1">
-            {errors.password}
+            {errFor("password")}
           </p>
         )}
       </div>
@@ -220,23 +287,39 @@ export function SignUpForm() {
         >
           Confirm Password
         </label>
-        <input
+        <PasswordInput
           id="signup-confirmPassword"
-          className="input-base"
-          type="password"
           placeholder="Re-enter password"
           name="confirmPassword"
           autoComplete="new-password"
-          aria-invalid={!!errors.confirmPassword || undefined}
+          valid={passwordsMatch}
+          value={values.confirmPassword}
+          onChange={(e) => set("confirmPassword", e.target.value)}
+          onBlur={() => touch("confirmPassword")}
+          aria-invalid={!!errFor("confirmPassword") || undefined}
           aria-describedby={
-            errors.confirmPassword ? "signup-confirmPassword-err" : undefined
+            errFor("confirmPassword")
+              ? "signup-confirmPassword-err"
+              : passwordsMatch
+                ? "signup-confirmPassword-ok"
+                : undefined
           }
         />
-        {errors.confirmPassword && (
-          <p id="signup-confirmPassword-err" className="text-xs text-red-600 mt-1">
-            {errors.confirmPassword}
+        {errFor("confirmPassword") ? (
+          <p
+            id="signup-confirmPassword-err"
+            className="text-xs text-red-600 mt-1"
+          >
+            {errFor("confirmPassword")}
           </p>
-        )}
+        ) : passwordsMatch ? (
+          <p
+            id="signup-confirmPassword-ok"
+            className="text-xs text-green-600 mt-1 flex items-center gap-1"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Passwords match
+          </p>
+        ) : null}
       </div>
 
       <label className="flex items-start gap-2 text-xs text-charcoal-soft mb-5 cursor-pointer leading-relaxed">
@@ -244,8 +327,13 @@ export function SignUpForm() {
           type="checkbox"
           name="terms"
           className="accent-copper mt-0.5"
-          aria-invalid={!!errors.terms || undefined}
-          aria-describedby={errors.terms ? "signup-terms-err" : undefined}
+          checked={values.terms}
+          onChange={(e) => {
+            set("terms", e.target.checked);
+            touch("terms");
+          }}
+          aria-invalid={!!errFor("terms") || undefined}
+          aria-describedby={errFor("terms") ? "signup-terms-err" : undefined}
         />
         <span>
           I agree to the{" "}
@@ -258,9 +346,9 @@ export function SignUpForm() {
           </Link>
         </span>
       </label>
-      {errors.terms && (
+      {errFor("terms") && (
         <p id="signup-terms-err" className="text-xs text-red-600 -mt-4 mb-4">
-          {errors.terms}
+          {errFor("terms")}
         </p>
       )}
 
