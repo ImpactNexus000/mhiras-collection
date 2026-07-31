@@ -59,16 +59,60 @@ export interface RateLimitResult {
   reset: number;
 }
 
+/** Give up on Redis after this long and let the request through. */
+const LIMITER_TIMEOUT_MS = 2_000;
+
+/** The "we couldn't check, so allow it" result. */
+function allow(): RateLimitResult {
+  return { success: true, remaining: -1, reset: 0 };
+}
+
 /**
  * Run a limiter against a stable identifier (IP, userId, or `${ip}:${userId}`).
  * Returns `success: true` if the limiter is disabled — callers don't need to
  * branch on configuration.
+ *
+ * Fails **open** on any limiter failure, deliberately. Upstash deletes free
+ * databases after 14 days of inactivity; when that happened every `limit()`
+ * call rejected, and because this is the first statement in both the
+ * credentials `authorize()` and `requestPasswordReset()`, a throw here locked
+ * every user out of sign-in *and* password reset simultaneously. A rate
+ * limiter is a guard rail — losing it should cost us protection, never
+ * availability. The timeout covers the same failure mode's slow variant: a
+ * Redis that hangs instead of rejecting would otherwise hang sign-in.
  */
 export async function checkRateLimit(
   limiter: Ratelimit | null,
   identifier: string
 ): Promise<RateLimitResult> {
-  if (!limiter) return { success: true, remaining: -1, reset: 0 };
-  const { success, remaining, reset } = await limiter.limit(identifier);
-  return { success, remaining, reset };
+  if (!limiter) return allow();
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    const result = await Promise.race([
+      limiter.limit(identifier),
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), LIMITER_TIMEOUT_MS);
+      }),
+    ]);
+
+    if (!result) {
+      console.error(
+        `[rate-limit] timed out after ${LIMITER_TIMEOUT_MS}ms — allowing "${identifier}"`
+      );
+      return allow();
+    }
+
+    const { success, remaining, reset } = result;
+    return { success, remaining, reset };
+  } catch (error) {
+    console.error(
+      `[rate-limit] limiter unavailable — allowing "${identifier}"`,
+      error
+    );
+    return allow();
+  } finally {
+    clearTimeout(timer);
+  }
 }

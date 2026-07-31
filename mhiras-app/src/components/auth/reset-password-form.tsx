@@ -41,15 +41,23 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
     const formData = new FormData(e.currentTarget);
     formData.set("token", token);
-    const result = await resetPassword(formData);
-    setSaving(false);
 
-    if (result?.error) {
-      toastError(result.error);
-      return;
+    try {
+      const result = await resetPassword(formData);
+      if (result?.error) {
+        toastError(result.error);
+        return;
+      }
+      setDone(true);
+      setTimeout(() => router.push("/auth/signin"), 1500);
+    } catch (error) {
+      // Never leave the button stuck on "Saving..." — this is the last step
+      // of account recovery, so a silent hang here strands the user for good.
+      console.error("[reset-password] request failed", error);
+      toastError("Couldn't reset your password. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setDone(true);
-    setTimeout(() => router.push("/auth/signin"), 1500);
   }
 
   if (!token) {

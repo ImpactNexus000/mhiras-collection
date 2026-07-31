@@ -29,11 +29,11 @@ export function SignInForm() {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
-    const identifier = (formData.get("identifier") as string)?.trim();
+    const email = (formData.get("email") as string)?.trim();
     const password = formData.get("password") as string;
 
-    if (!identifier) {
-      toastError("Email or phone number is required.");
+    if (!email) {
+      toastError("Email is required.");
       return;
     }
 
@@ -46,22 +46,18 @@ export function SignInForm() {
 
     try {
       const result = await signIn("credentials", {
-        email: identifier,
+        email,
         password,
         redirect: false,
       });
 
       if (result?.code === "email_not_verified") {
-        router.push(
-          `/auth/verify-email?email=${encodeURIComponent(identifier)}`
-        );
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
         return;
       }
 
       if (result?.code === "admin_otp_required") {
-        router.push(
-          `/auth/admin-verify?email=${encodeURIComponent(identifier)}`
-        );
+        router.push(`/auth/admin-verify?email=${encodeURIComponent(email)}`);
         return;
       }
 
@@ -83,18 +79,18 @@ export function SignInForm() {
     <form onSubmit={handleSubmit} noValidate>
       <div className="mb-4">
         <label
-          htmlFor="signin-identifier"
+          htmlFor="signin-email"
           className="text-xs uppercase tracking-wider text-charcoal-soft mb-1 block"
         >
-          Email or Phone Number
+          Email
         </label>
         <input
-          id="signin-identifier"
+          id="signin-email"
           className="input-base"
-          type="text"
-          name="identifier"
+          type="email"
+          name="email"
           autoComplete="username"
-          placeholder="amara@email.com or +234 801 234 5678"
+          placeholder="youremail@gmail.com"
         />
       </div>
 
