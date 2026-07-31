@@ -24,16 +24,22 @@ export function VerifyEmailForm({ initialEmail }: { initialEmail: string }) {
 
     const formData = new FormData(e.currentTarget);
     setVerifying(true);
-    const result = await verifyEmail(formData);
-    setVerifying(false);
 
-    if (result?.error) {
-      toastError(result.error);
-      return;
+    try {
+      const result = await verifyEmail(formData);
+      if (result?.error) {
+        toastError(result.error);
+        return;
+      }
+
+      success("Email verified. Redirecting to sign in...");
+      router.push(`/auth/signin?email=${encodeURIComponent(email)}`);
+    } catch (error) {
+      console.error("[verify-email] request failed", error);
+      toastError("Couldn't verify the code. Please try again.");
+    } finally {
+      setVerifying(false);
     }
-
-    success("Email verified. Redirecting to sign in...");
-    router.push(`/auth/signin?email=${encodeURIComponent(email)}`);
   }
 
   function handleResend() {
@@ -42,11 +48,16 @@ export function VerifyEmailForm({ initialEmail }: { initialEmail: string }) {
       return;
     }
     startResend(async () => {
-      const result = await resendVerificationCode(email);
-      if (result?.error) {
-        toastError(result.error);
-      } else {
-        info("If that email is registered, a fresh code is on its way.");
+      try {
+        const result = await resendVerificationCode(email);
+        if (result?.error) {
+          toastError(result.error);
+        } else {
+          info("If that email is registered, a fresh code is on its way.");
+        }
+      } catch (error) {
+        console.error("[verify-email] resend failed", error);
+        toastError("Couldn't resend the code. Please try again.");
       }
     });
   }
