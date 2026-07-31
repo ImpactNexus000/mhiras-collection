@@ -13,13 +13,26 @@ export function ForgotPasswordForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSending(true);
-    const result = await requestPasswordReset(new FormData(e.currentTarget));
-    setSending(false);
-    if (result?.error) {
-      toastError(result.error);
-      return;
+
+    // Read the form before the first await — React pools the event and
+    // `currentTarget` is null by the time the action resolves.
+    const formData = new FormData(e.currentTarget);
+
+    try {
+      const result = await requestPasswordReset(formData);
+      if (result?.error) {
+        toastError(result.error);
+        return;
+      }
+      setDone(true);
+    } catch (error) {
+      // Without this the button sat on "Sending..." forever: a rejected
+      // action skipped setSending(false) and showed the user nothing at all.
+      console.error("[forgot-password] request failed", error);
+      toastError("Couldn't send the reset link. Please try again.");
+    } finally {
+      setSending(false);
     }
-    setDone(true);
   }
 
   if (done) {
