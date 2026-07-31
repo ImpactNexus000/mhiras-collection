@@ -203,7 +203,7 @@ export function SignUpForm() {
             id="signup-email"
             className="input-base pr-10"
             type="email"
-            placeholder="amara@email.com"
+            placeholder="youremail@gmail.com"
             name="email"
             autoComplete="email"
             value={values.email}

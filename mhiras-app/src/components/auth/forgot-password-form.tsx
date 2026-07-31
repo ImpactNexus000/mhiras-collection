@@ -62,7 +62,7 @@ export function ForgotPasswordForm() {
           type="email"
           autoComplete="email"
           required
-          placeholder="you@email.com"
+          placeholder="youremail@gmail.com"
           className="input-base"
         />
       </div>
