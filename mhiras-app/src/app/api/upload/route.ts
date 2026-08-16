@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadImage } from "@/lib/cloudinary";
 import { checkRateLimit, uploadLimiter } from "@/lib/rate-limit";
-import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE } from "@/lib/upload-file";
+import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/lib/upload-file";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -32,9 +32,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_UPLOAD_BYTES) {
     return NextResponse.json(
-      { error: "File too large. Maximum size is 5MB." },
+      { error: "File too large. Maximum size is 4MB." },
       { status: 400 }
     );
   }

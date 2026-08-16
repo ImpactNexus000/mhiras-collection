@@ -7,7 +7,23 @@
  * per-file progress bar.
  */
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+/**
+ * Biggest body we're willing to POST. Vercel rejects a serverless request body
+ * over 4.5MB at the edge — before any route code runs, so the server can't
+ * shrink an oversized photo itself. Anything above this gets resized in the
+ * browser first; 4MB leaves room for multipart overhead.
+ */
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+/** Biggest original we'll accept and try to shrink. */
+export const MAX_SOURCE_BYTES = 30 * 1024 * 1024;
+
+/**
+ * Longest edge kept when resizing. Cloudinary serves per-breakpoint copies
+ * anyway, so beyond this the extra pixels only cost upload time.
+ */
+const MAX_EDGE = 2400;
+
 export const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -20,18 +36,88 @@ export interface UploadedAsset {
   publicId: string;
 }
 
-/** Reject files the API would reject anyway, before spending the bandwidth. */
+/** Reject what we can't do anything useful with, before spending bandwidth. */
 export function checkFile(file: File): string | null {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return "Not a JPG, PNG, WebP or AVIF.";
   }
-  if (file.size > MAX_FILE_SIZE) {
-    return `Too large (${(file.size / 1024 / 1024).toFixed(1)}MB, max 5MB).`;
+  if (file.size > MAX_SOURCE_BYTES) {
+    return `Too large (${(file.size / 1024 / 1024).toFixed(1)}MB, max 30MB).`;
   }
   return null;
 }
 
-export function uploadFileWithProgress(
+function withExtension(name: string, extension: string): string {
+  return `${name.replace(/\.[^.]+$/, "")}.${extension}`;
+}
+
+/**
+ * Shrink a photo that's too big to POST. Straight-from-the-phone shots are
+ * routinely 4-8MB, and every one of them would otherwise die at Vercel's edge.
+ *
+ * Resizes to MAX_EDGE and re-encodes, dropping quality until it fits. WebP
+ * first, JPEG as a fallback for browsers whose canvas won't encode WebP.
+ * Photos already small enough are passed through untouched — no needless
+ * re-encode of an image that was fine.
+ */
+export async function prepareImage(file: File): Promise<File> {
+  if (file.size <= MAX_UPLOAD_BYTES) return file;
+
+  let canvas: HTMLCanvasElement;
+  try {
+    // `from-image` applies the EXIF rotation; without it, portrait phone
+    // photos come out on their side.
+    const bitmap = await createImageBitmap(file, {
+      imageOrientation: "from-image",
+    });
+
+    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("no 2d context");
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+  } catch {
+    // Undecodable or no canvas — send the original and let the size checks
+    // report it rather than failing here with something cryptic.
+    return file;
+  }
+
+  for (const type of ["image/webp", "image/jpeg"]) {
+    for (const quality of [0.85, 0.7, 0.55]) {
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, type, quality)
+      );
+      // A null blob means this browser can't encode that type at all.
+      if (!blob) break;
+      if (blob.size <= MAX_UPLOAD_BYTES) {
+        return new File(
+          [blob],
+          withExtension(file.name, type === "image/webp" ? "webp" : "jpg"),
+          { type, lastModified: file.lastModified }
+        );
+      }
+    }
+  }
+
+  throw new Error(
+    "Couldn't get this photo under 4MB — resize it and try again."
+  );
+}
+
+/** Resize if needed, then upload. */
+export async function uploadFileWithProgress(
+  file: File,
+  onProgress: (percent: number) => void,
+  signal?: AbortSignal
+): Promise<UploadedAsset> {
+  return postFile(await prepareImage(file), onProgress, signal);
+}
+
+function postFile(
   file: File,
   onProgress: (percent: number) => void,
   signal?: AbortSignal

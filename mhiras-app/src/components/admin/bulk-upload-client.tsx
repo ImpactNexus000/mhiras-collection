@@ -344,8 +344,8 @@ export function BulkUploadClient({
         </p>
         {counts.total === 0 && (
           <p className="text-xs text-charcoal-soft mt-1">
-            JPG, PNG, WebP or AVIF — max 5MB each — up to {MAX_BULK_IMAGES}{" "}
-            photos per batch
+            JPG, PNG, WebP or AVIF — large photos are resized automatically —
+            up to {MAX_BULK_IMAGES} photos per batch
           </p>
         )}
       </div>
