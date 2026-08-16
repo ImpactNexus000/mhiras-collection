@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Upload, X, GripVertical, Star } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { checkFile, prepareImage } from "@/lib/upload-file";
 
 export interface UploadedImage {
   url: string;
@@ -42,10 +43,18 @@ export function ImageUpload({
       const newImages: UploadedImage[] = [];
 
       for (const file of toUpload) {
-        const formData = new FormData();
-        formData.append("file", file);
+        const problem = checkFile(file);
+        if (problem) {
+          toastError(`${file.name} — ${problem}`);
+          continue;
+        }
 
         try {
+          // Phone photos routinely exceed what Vercel will accept as a
+          // request body; prepareImage shrinks those before they're sent.
+          const formData = new FormData();
+          formData.append("file", await prepareImage(file));
+
           const res = await fetch("/api/upload", {
             method: "POST",
             body: formData,
@@ -63,8 +72,13 @@ export function ImageUpload({
             publicId: data.publicId,
             isPrimary: images.length === 0 && newImages.length === 0,
           });
-        } catch {
-          toastError("Upload failed. Please try again.");
+        } catch (error) {
+          // prepareImage explains itself when it can't shrink a photo enough.
+          toastError(
+            error instanceof Error
+              ? error.message
+              : "Upload failed. Please try again."
+          );
         }
       }
 
@@ -152,7 +166,8 @@ export function ImageUpload({
             : "Drop images here or click to browse"}
         </p>
         <p className="text-xs text-charcoal-soft/60 mt-1">
-          JPG, PNG, or WebP — max 5MB each — up to {maxImages} images
+          JPG, PNG, or WebP — large photos are resized automatically — up to{" "}
+          {maxImages} images
         </p>
       </div>
 
