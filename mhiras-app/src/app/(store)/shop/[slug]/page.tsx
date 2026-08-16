@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { ProductCard } from "@/components/store/product-card";
+import { ProductGallery } from "@/components/store/product-gallery";
 import { ProductPurchase } from "@/components/store/product-purchase";
 import { SizeGuideModal } from "@/components/store/size-guide-modal";
 import { WishlistButton } from "@/components/store/wishlist-button";
@@ -119,7 +119,6 @@ export default async function ProductDetailPage({
 
   const isSoldOut = product.stock === 0;
   const isWholesale = product.category.kind === CategoryKind.WHOLESALE;
-  const primaryImage = product.images.find((img) => img.isPrimary) ?? product.images[0];
 
   // Product structured data for rich search results
   const jsonLd = {
@@ -189,47 +188,7 @@ export default async function ProductDetailPage({
       {/* Product detail grid */}
       <div className="grid md:grid-cols-[1.25fr_1fr]">
         {/* Gallery */}
-        <div className="bg-cream-dark flex items-center justify-center h-[420px] md:h-[560px] relative">
-          {primaryImage ? (
-            <Image
-              src={primaryImage.url}
-              alt={primaryImage.alt ?? product.name}
-              fill
-              sizes="(min-width: 768px) 55vw, 100vw"
-              priority
-              className="object-contain p-3"
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              className="w-40 h-56 bg-gradient-to-br from-gold to-copper-dark/50 opacity-60 rounded"
-            />
-          )}
-          {/* Thumbnails (display only — main image is fixed for now) */}
-          {product.images.length > 1 && (
-            <div
-              aria-hidden="true"
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2"
-            >
-              {product.images.map((img, i) => (
-                <div
-                  key={img.id}
-                  className={`relative w-12 h-16 bg-cream-dark border ${
-                    i === 0 ? "border-copper" : "border-border"
-                  } overflow-hidden`}
-                >
-                  <Image
-                    src={img.url}
-                    alt=""
-                    fill
-                    sizes="48px"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductGallery images={product.images} productName={product.name} />
 
         {/* Product info */}
         <div className="p-6 md:p-8">
