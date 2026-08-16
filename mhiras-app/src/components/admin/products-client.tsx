@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProductForm } from "@/components/admin/product-form";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Layers } from "lucide-react";
 
 interface Category {
   id: string;
@@ -98,12 +98,20 @@ export function ProductsClient({
         <h1 className="font-display text-3xl md:text-4xl font-light italic">
           Products
         </h1>
-        <Link href={newProductHref}>
-          <Button size="sm">
-            <Plus size={14} className="mr-1.5" aria-hidden="true" />
-            Add Product
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/admin/products/bulk">
+            <Button size="sm" variant="outline">
+              <Layers size={14} className="mr-1.5" aria-hidden="true" />
+              Bulk Upload
+            </Button>
+          </Link>
+          <Link href={newProductHref}>
+            <Button size="sm">
+              <Plus size={14} className="mr-1.5" aria-hidden="true" />
+              Add Product
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Search bar */}

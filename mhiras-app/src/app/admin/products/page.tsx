@@ -300,11 +300,20 @@ export default async function AdminProductsPage({
               ? `No products found for "${search}"`
               : "No products in this category yet."}
           </p>
-          <Link href="/admin/products?action=new">
-            <button className="text-sm text-copper hover:underline cursor-pointer">
+          <div className="flex items-center justify-center gap-4">
+            <Link
+              href="/admin/products?action=new"
+              className="text-sm text-copper hover:underline"
+            >
               + Add your first product
-            </button>
-          </Link>
+            </Link>
+            <Link
+              href="/admin/products/bulk"
+              className="text-sm text-copper hover:underline"
+            >
+              Bulk upload a drop
+            </Link>
+          </div>
         </div>
       )}
     </ProductsClient>

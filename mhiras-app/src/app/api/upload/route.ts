@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadImage } from "@/lib/cloudinary";
 import { checkRateLimit, uploadLimiter } from "@/lib/rate-limit";
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+import { ALLOWED_IMAGE_TYPES, MAX_FILE_SIZE } from "@/lib/upload-file";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -27,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return NextResponse.json(
       { error: "Invalid file type. Use JPG, PNG, or WebP." },
       { status: 400 }

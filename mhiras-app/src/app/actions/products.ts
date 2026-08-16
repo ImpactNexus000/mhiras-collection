@@ -4,18 +4,12 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { Condition, ProductStatus } from "@/generated/prisma/client";
+import { slugify } from "@/lib/slug";
 
 interface ImageInput {
   url: string;
   publicId: string;
   isPrimary: boolean;
-}
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }
 
 async function requireAdmin() {

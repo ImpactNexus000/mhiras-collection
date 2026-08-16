@@ -31,8 +31,12 @@ export const authLimiter = buildLimiter(5, "15 m");
 /** Order placement + payment init — keep at human pace. */
 export const checkoutLimiter = buildLimiter(10, "1 h");
 
-/** Admin image upload — generous for bulk listing days. */
-export const uploadLimiter = buildLimiter(60, "1 h");
+/**
+ * Admin image upload. Sized for the bulk-upload screen: a full 60-product
+ * batch with a few angles each can fire several hundred uploads in minutes,
+ * and a listing day is often two or three of those back to back.
+ */
+export const uploadLimiter = buildLimiter(400, "1 h");
 
 /** Generic write endpoints (stockpile delivery requests, etc.). */
 export const generalLimiter = buildLimiter(30, "1 h");
