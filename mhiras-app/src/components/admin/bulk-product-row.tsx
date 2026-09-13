@@ -1,6 +1,7 @@
 "use client";
 
-import { Layers, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Layers, Pencil, Trash2 } from "lucide-react";
 import { SIZE_CHART } from "@/lib/size-guide";
 import { StagedThumb } from "@/components/admin/bulk-staged-thumb";
 import type { StagedImage } from "@/components/admin/bulk-image-staging";
@@ -52,6 +53,7 @@ export function BulkProductRow({
   onRetryImage,
   onPromoteImage,
 }: BulkProductRowProps) {
+  const [editingSizes, setEditingSizes] = useState(false);
   const grouped = images.length > 1;
   const sizes = override.sizes ?? batchSizes;
   const customSizes = override.sizes !== undefined;
@@ -119,53 +121,64 @@ export function BulkProductRow({
         </div>
 
         {showSizes && (
-          <details className="sm:col-span-2">
-            <summary className="text-xs text-charcoal-soft cursor-pointer list-none">
-              <span className="underline decoration-dotted underline-offset-2">
-                Sizes: {sizes.length > 0 ? sizes.join(", ") : "all UK sizes"}
+          <div className="sm:col-span-2">
+            <label className="block text-[10px] uppercase tracking-wider text-charcoal-soft mb-1">
+              Sizes (UK)
+              {customSizes && (
+                <span className="ml-1.5 text-copper">custom</span>
+              )}
+            </label>
+            <button
+              type="button"
+              onClick={() => setEditingSizes((open) => !open)}
+              aria-expanded={editingSizes}
+              aria-label={`Edit sizes for ${override.name?.trim() || autoName}`}
+              className={`${inputClass} bg-white text-left flex items-center justify-between gap-2 cursor-pointer`}
+            >
+              <span className={sizes.length > 0 ? "" : "text-charcoal-soft"}>
+                {sizes.length > 0 ? sizes.join(", ") : "All UK sizes"}
               </span>
-              {customSizes && (
-                <span className="ml-1.5 text-copper text-[10px] uppercase tracking-wider">
-                  custom
-                </span>
-              )}
-            </summary>
-            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              {SIZE_CHART.map((row) => {
-                const on = sizes.includes(row.size);
-                return (
+              <Pencil size={12} className="shrink-0 text-charcoal-soft" />
+            </button>
+
+            {editingSizes && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                {SIZE_CHART.map((row) => {
+                  const on = sizes.includes(row.size);
+                  return (
+                    <button
+                      key={row.size}
+                      type="button"
+                      onClick={() =>
+                        onChange({
+                          sizes: on
+                            ? sizes.filter((s) => s !== row.size)
+                            : [...sizes, row.size],
+                        })
+                      }
+                      aria-pressed={on}
+                      className={`border rounded px-2 py-1 text-xs cursor-pointer ${
+                        on
+                          ? "border-copper bg-copper/5 text-charcoal"
+                          : "border-border text-charcoal-soft"
+                      }`}
+                    >
+                      {row.size}
+                    </button>
+                  );
+                })}
+                {customSizes && (
                   <button
-                    key={row.size}
                     type="button"
-                    onClick={() =>
-                      onChange({
-                        sizes: on
-                          ? sizes.filter((s) => s !== row.size)
-                          : [...sizes, row.size],
-                      })
-                    }
-                    aria-pressed={on}
-                    className={`border rounded px-2 py-1 text-xs cursor-pointer ${
-                      on
-                        ? "border-copper bg-copper/5 text-charcoal"
-                        : "border-border text-charcoal-soft"
-                    }`}
+                    onClick={() => onChange({ sizes: undefined })}
+                    className="text-xs text-copper hover:underline cursor-pointer ml-1"
                   >
-                    {row.size}
+                    Use batch sizes
                   </button>
-                );
-              })}
-              {customSizes && (
-                <button
-                  type="button"
-                  onClick={() => onChange({ sizes: undefined })}
-                  className="text-xs text-copper hover:underline cursor-pointer ml-1"
-                >
-                  Use batch sizes
-                </button>
-              )}
-            </div>
-          </details>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {issue && (
